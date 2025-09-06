@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Giới thiệu dự án
 
-## Getting Started
+Dự án này được tổ chức với cấu trúc thư mục rõ ràng, giúp dễ dàng quản lý và phát triển.
 
-First, run the development server:
+## Cấu trúc thư mục
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+.
+├── app/
+│   ├── (main)                      #Chỗ code những phần chính của hệ thống
+│   └── (auth)                      #Chỗ code những thứ liên quan đến xác thực đăng nhập của hệ thống
+├── helpers/                        
+│   ├── formatDate.js
+│   ├── logger.js
+│   └── validate-const-type.js
+├── types/
+│   └── menu.ts
+├── models/
+├── package.json
+└── README.md
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Giải thích các thư mục và file
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+#### helpers/
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Chứa các hàm tiện ích dùng chung trong dự án:
 
-## Learn More
+- **formatDate.ts**: Định dạng ngày tháng theo chuẩn mong muốn.
+- **logger.ts**: Ghi log các hoạt động của hệ thống.
+- **validate-const-type.ts**: Bắt lỗi nếu có chỗ đổi giá trị biến được quy định trong type khi thực thi.
 
-To learn more about Next.js, take a look at the following resources:
+#### types/
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Chứa các định nghĩa kiểu dữ liệu (TypeScript):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **menu.ts**: Định nghĩa kiểu dữ liệu và dữ liệu cho menu.
 
-## Deploy on Vercel
+#### src/
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Chứa mã nguồn chính của dự án:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **controllers/**: Xử lý logic cho các request.
+- **models/**: Định nghĩa các mô hình dữ liệu.
+- **routes/**: Định nghĩa các endpoint API.
+
+#### package.json
+
+Quản lý các dependencies và script của dự án.
+
+### Giải thích cách code trong thư mục type
+
+- Dữ liệu cố định và quy định về kiểu dữ liệu sẽ được viết trong file thư mục type
+- Phải gọi helper makeConstData<Schema> trong type để luôn có ràng buộc chặt chẽ với Schema đã quy định trong type
+- Nếu muốn sửa dữ liệu thì chỉ được phép sửa trong type
+
+## Hướng dẫn sử dụng Menu Template
+
+```typescript
+import { MenuData, MenuType } from "@/type/menu";
+import MenuTemplate from "./components/menu-template";
+const T...
+    const title = "Tài khoản"
+    return(
+        // Ví dụ cách truyền title cho menu
+        <MenuTemplate title={title}>
+            // Custome Nội dung cho Menu Profile
+            {title === MenuData.Profile.title && (
+                <div>
+                    <div className="mb-3">Đăng nhập để sử dụng ứng dụng</div>
+                    <Button className="w-full py-5" variant="main">
+                        Đăng Nhập
+                    </Button>
+                </div>
+            )}
+        </MenuTemplate>;
+    )
+export default T...
+```
+
+#### README.md
+
+Tài liệu giới thiệu và hướng dẫn sử dụng dự án.

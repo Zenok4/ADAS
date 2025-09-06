@@ -78,6 +78,26 @@ const T...
 export default T...
 ```
 
+### Cách commit lên github
+- Chuyển sang cho đúng với branch của mình:
+- Đầu tiên gõ lệnh bên dưới để kết nối và xem branch của mình tên gì
+```
+git remote add origin https://github.com/username/repo.git
+git fetch origin
+
+```
+- Kế tiếp, gõ lệnh bên dưới để chuyển sang branch của mình
+```
+git switch [branch của bản thân]
+
+```
+- Bước commit và push code lên github: nhấn Ctr + Shift + G hoặc icon Source Control trong VS Code -> Nhấn nút commit
+- Kế tiếp, gõ lệnh sau đây
+```
+git commit -m "[lời nhắn đang commit cái gì]"
+git push
+
+```
 #### README.md
 
 Tài liệu giới thiệu và hướng dẫn sử dụng dự án.

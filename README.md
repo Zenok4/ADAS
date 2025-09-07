@@ -108,10 +108,15 @@ git push
 ```
 
 ### Cách lấy dữ liệu mới từ nhánh main trên github
-- Gõ lệnh dưới:
+- Gõ lệnh dưới nếu đã commit code:
 ```
 git merge main
 ```
+- Gõ lệnh dưới nếu chưa commit code:
+```
+git stash
+git pull origin main 
+git stash pop
 ```
 #### README.md
 

@@ -1,16 +1,17 @@
 // src/app/(info)/gioi-thieu/page.tsx
-import Link from "next/link";
+"use client";
+
 import React from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
-export const metadata = {
-  title: "Giới thiệu ứng dụng ADAS",
-};
+export default function GioiThieuPage() {
+  const router = useRouter();
 
-export default function Page() {
   return (
     <main
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ backgroundColor: "#0a2a43", color: "#eaf6fb" }}
+      className="min-h-screen flex items-center justify-center px-4 bg-[#0a2a43] text-[#eaf6fb]"
+      style={{ fontFamily: "Roboto, Arial, sans-serif" }}
     >
       <div
         className="w-full max-w-xs mx-auto rounded-2xl shadow-lg"
@@ -21,8 +22,8 @@ export default function Page() {
         }}
       >
         <h1
-          className="text-2xl font-bold text-center mb-4"
-          style={{ color: "#80d4ff", fontSize: "2rem", letterSpacing: "1px" }}
+          className="text-center font-bold mb-4 text-[#80d4ff]"
+          style={{ fontSize: "2rem", letterSpacing: "1px" }}
         >
           Giới thiệu ứng dụng ADAS
         </h1>
@@ -36,18 +37,13 @@ export default function Page() {
           tiện ích khác.
         </p>
 
-        <Link href="/login">
-          <button
-            className="w-full rounded-md font-medium transition-transform duration-200"
-            style={{
-              backgroundColor: "#005c99",
-              color: "#ffffff",
-              padding: "12px 0",
-            }}
-          >
-            Đăng nhập & sử dụng ngay
-          </button>
-        </Link>
+        <Button
+          variant="main"
+          className="w-full py-3"
+          onClick={() => router.push("/login")}
+        >
+          Đăng nhập & sử dụng ngay
+        </Button>
       </div>
     </main>
   );

@@ -78,25 +78,40 @@ const T...
 export default T...
 ```
 
+### Cách clone dự án trên github
+- Đầu tiên gõ lệnh bên dưới:
+```
+git clone https://github.com/Zenok4/ADAS.git
+```
+- Kế tiếp, gõ lệnh dưới để tải thư viện:
+
+```
+cd ADAS
+npm i
+```
 ### Cách commit lên github
 - Chuyển sang cho đúng với branch của mình:
 - Đầu tiên gõ lệnh bên dưới để kết nối và xem branch của mình tên gì
 ```
 git remote add origin https://github.com/username/repo.git
 git fetch origin
-
 ```
 - Kế tiếp, gõ lệnh bên dưới để chuyển sang branch của mình
 ```
 git switch [branch của bản thân]
-
 ```
 - Bước commit và push code lên github: nhấn Ctr + Shift + G hoặc icon Source Control trong VS Code -> Nhấn nút commit
 - Kế tiếp, gõ lệnh sau đây
 ```
 git commit -m "[lời nhắn đang commit cái gì]"
 git push
+```
 
+### Cách lấy dữ liệu mới từ nhánh main trên github
+- Gõ lệnh dưới:
+```
+git merge main
+```
 ```
 #### README.md
 

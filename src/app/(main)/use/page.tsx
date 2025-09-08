@@ -41,7 +41,7 @@ const StepData: Record<string, StepType> = {
   },
 };
 
-const HuongDanPage = () => {
+const InformationPage = () => {
   const steps: StepType[] = Object.values(StepData);
 
   return (
@@ -81,4 +81,4 @@ const HuongDanPage = () => {
   );
 };
 
-export default HuongDanPage;
+export default InformationPage;

@@ -30,10 +30,6 @@ const HomePage = () => {
                   </Button>
                 </div>
               )}
-
-              {item.title === MenuData.LaneDetec.title && (
-                <div className="">Children Lane Detection Content</div>
-              )}
             </MenuTemplate>
           </div>
         ))}

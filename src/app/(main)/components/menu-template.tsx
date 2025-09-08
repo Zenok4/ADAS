@@ -18,7 +18,7 @@ const MenuTemplate = ({ title, href, Icon, children }: MenuProps) => {
   return (
     <div className="w-full h-full" onClick={() => handleClick(href)}>
       {Icon && <Icon />}
-      <p className="text-[#80d4ff] text-2xl font-bold mb-4">{title}</p>
+      <p className="text-[#80d4ff] text-xl font-extrabold mb-4">{title}</p>
       {children}
     </div>
   );

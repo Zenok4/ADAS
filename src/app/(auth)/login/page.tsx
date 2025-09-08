@@ -33,7 +33,7 @@ export default function LoginPage() {
       <Button
         variant="default"
         className="w-[90vw] max-w-xs flex items-center justify-center px-4 py-3"
-        onClick={() => router.push("/phone")}
+        onClick={() => router.push("/login/phone")}
       >
         <img
           src="https://img.icons8.com/fluency/48/phone.png"

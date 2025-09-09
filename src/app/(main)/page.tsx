@@ -23,6 +23,12 @@ import {
   Database,
   Info,
   Volume2,
+  Split,
+  EyeClosed,
+  Building2,
+  ScanEye,
+  Siren,
+  TriangleAlert,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -95,36 +101,13 @@ const HomePage = () => {
                       className="w-5 h-5"
                     />
                     <label htmlFor="audio-mode" className="text-white cursor-pointer">
-                      Chế độ dò âm (Bật)
+                      Chế độ đè âm (Bật)
                     </label>
                   </div>
 
                   <Button variant="main" className="w-full">
                     Cài đặt gốc
                   </Button>
-                </div>
-              )}
-
-              {/* PHÁT HIỆN LÀN ĐƯỜNG */}
-              {item.title === MenuData.LaneDetec.title && (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="flex items-center gap-5 w-full">
-                    <AudioLines className="h-10 w-10 text-[#36B0BB]" />
-                    <div className="flex flex-col">
-                      <p className="text-lg text-white">Cảnh báo lệch làn</p>
-                      <p className="text-[#b0d8ff] text-sm">
-                        Âm báo, độ nhạy, hướng dẫn làn đường
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    onClick={() => {}}
-                    className="w-full cursor-pointer"
-                  >
-                    <Button variant="main" className="w-full my-2">
-                      Bật/Tắt phát hiện làn đường
-                    </Button>
-                  </div>
                 </div>
               )}
 
@@ -148,7 +131,7 @@ const HomePage = () => {
                     onClick={() => router.push("/sign-navigation")}
                     className="flex items-center gap-3 p-2 hover:bg-[#1a4060] rounded-lg transition-colors cursor-pointer"
                   >
-                    <Navigation className="h-8 w-8 text-[#36B0BB]" />
+                    <Split className="h-8 w-8 text-[#36B0BB]" />
                     <div className="flex flex-col">
                       <p className="text-[#80d4ff] font-medium">Hướng cảnh báo Camera</p>
                       <p className="text-[#80d4ff] text-sm">Tất cả các hướng</p>
@@ -179,21 +162,9 @@ const HomePage = () => {
                     </div>
                   </div>
 
-                  {/* Vào/Ra khu dân cư */}
-                  <div
-                    onClick={() => router.push("/sign-residential")}
-                    className="flex items-center gap-3 p-2 hover:bg-[#1a4060] rounded-lg transition-colors cursor-pointer"
-                  >
-                    <Building className="h-8 w-8 text-[#36B0BB]" />
-                    <div className="flex flex-col">
-                      <p className="text-[#80d4ff] font-medium">Vào/Ra khu dân cư</p>
-                      <p className="text-[#80d4ff] text-sm">Cảnh báo trước: 100m</p>
-                    </div>
-                  </div>
-
                   {/* Biển tốc độ tối đa */}
                   <div
-                    onClick={() => router.push("/sign-speed-limit")}
+                    onClick=  {() => router.push("/sign-speed-limit")}
                     className="flex items-center gap-3 p-2 hover:bg-[#1a4060] rounded-lg transition-colors cursor-pointer"
                   >
                     <div className="h-8 w-8 rounded-full border-2 border-[#36B0BB] flex items-center justify-center">
@@ -203,67 +174,6 @@ const HomePage = () => {
                       <p className="text-[#80d4ff] font-medium">Biển tốc độ tối đa</p>
                       <p className="text-[#80d4ff] text-sm">Cảnh báo trước: 100m</p>
                     </div>
-                  </div>
-
-                  {/* Đèn tín hiệu giao thông */}
-                  <div
-                    onClick={() => router.push("/sign-light")}
-                    className="flex items-center gap-3 p-2 hover:bg-[#1a4060] rounded-lg transition-colors cursor-pointer"
-                  >
-                    <TrafficCone className="h-8 w-8 text-[#36B0BB]" />
-                    <div className="flex flex-col">
-                      <p className="text-[#80d4ff] font-medium">Đèn tín hiệu giao thông</p>
-                      <p className="text-[#80d4ff] text-sm">Cảnh báo trước: 50m</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* PHÁT HIỆN VẬT THỂ */}
-              {item.title === MenuData.ObjectDetect.title && (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="flex items-center gap-5 w-full">
-                    <ScanSearch className="h-10 w-10 text-[#36B0BB]" />
-                    <div className="flex flex-col">
-                      <p className="text-lg text-white">Cảnh báo vật thể phía trước</p>
-                      <p className="text-[#b0d8ff] text-sm">
-                        Người đi bộ, xe máy, ô tô, động vật...
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    onClick={() => {}}
-                    className="w-full cursor-pointer"
-                  >
-                    <Button variant="main" className="w-full my-2">
-                      Bật/Tắt phát hiện vật thể
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* PHÁT HIỆN BUỒN NGỦ */}
-              {item.title === MenuData.DrownsyDetect.title && (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="flex items-center gap-5 w-full">
-                    <div className="relative">
-                      <BedDouble className="h-10 w-10 text-[#36B0BB]" />
-                      <Moon className="h-4 w-4 text-[#36B0BB] absolute -top-1 -right-1" />
-                    </div>
-                    <div className="flex flex-col">
-                      <p className="text-lg text-white">Cảnh báo buồn ngủ</p>
-                      <p className="text-[#b0d8ff] text-sm">
-                        Phát hiện nhắm mắt, ngáp, mất tập trung
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    onClick={() => {}}
-                    className="w-full cursor-pointer"
-                  >
-                    <Button variant="main" className="w-full my-2">
-                      Bật/Tắt phát hiện buồn ngủ
-                    </Button>
                   </div>
                 </div>
               )}

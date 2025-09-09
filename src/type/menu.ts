@@ -16,12 +16,21 @@ export const MenuData = makeConstData<MenuSchema>({
   Settings: {
     title: "Cài đặt chung",
   },
+  LaneDetec: {
+    title: "Phát hiện làn đường",
+  },
   SignRegonize: {
     title: "Nhận diện biển báo giao thông",
   },
+  ObjectDetect: {
+    title: "Phát hiện vật thể",
+  },
+  DrownsyDetect: {
+    title: "Phát hiện buồn ngủ",
+  },
   Introduction: {
     title: "Giới thiệu",
-  }
+  },
 });
 
 export type MenuKey = keyof typeof MenuData;

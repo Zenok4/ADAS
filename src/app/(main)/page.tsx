@@ -195,18 +195,6 @@ const HomePage = () => {
                       <p className="text-[#80d4ff] text-sm">Cảnh báo trước: 100m</p>
                     </div>
                   </div>
-
-                  {/* Đèn tín hiệu giao thông */}
-                  <div
-                    onClick={() => router.push("/sign-light")}
-                    className="flex items-center gap-3 p-2 hover:bg-[#1a4060] rounded-lg transition-colors cursor-pointer"
-                  >
-                    <TrafficCone className="h-8 w-8 text-[#36B0BB]" />
-                    <div className="flex flex-col">
-                      <p className="text-[#80d4ff] font-medium">Đèn tín hiệu giao thông</p>
-                      <p className="text-[#80d4ff] text-sm">Cảnh báo trước: 50m</p>
-                    </div>
-                  </div>
                 </div>
               )}
 

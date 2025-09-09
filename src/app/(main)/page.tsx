@@ -170,17 +170,7 @@ const HomePage = () => {
                     </div>
                   </div>
 
-                  {/* Vào/Ra khu dân cư */}
-                  <div
-                    onClick={() => router.push("/sign-residential")}
-                    className="flex items-center gap-3 p-2 hover:bg-[#1a4060] rounded-lg transition-colors cursor-pointer"
-                  >
-                    <Building2 className="h-8 w-8 text-[#36B0BB]" />
-                    <div className="flex flex-col">
-                      <p className="text-[#80d4ff] font-medium">Vào/Ra khu dân cư</p>
-                      <p className="text-[#80d4ff] text-sm">Cảnh báo trước: 100m</p>
-                    </div>
-                  </div>
+
 
                   {/* Biển tốc độ tối đa */}
                   <div

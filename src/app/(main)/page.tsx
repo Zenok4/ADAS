@@ -224,7 +224,7 @@ const HomePage = () => {
               {item.title === MenuData.Introduction.title && (
                 <div className="flex flex-col gap-3">
                   <div
-                    onClick={() => router.push("/webgioithieu")}
+                    onClick={() => router.push("/info")}
                     className="flex items-center gap-3 w-full p-2 text-left text-white hover:bg-[#1a4060] rounded-lg transition-all cursor-pointer"
                   >
                     <Globe className="h-6 w-6 text-[#36B0BB]" />
@@ -233,7 +233,7 @@ const HomePage = () => {
                   </div>
 
                   <div
-                    onClick={() => router.push("/sudung")}
+                    onClick={() => router.push("/guides")}
                     className="flex items-center gap-3 w-full p-2 text-left text-white hover:bg-[#1a4060] rounded-lg transition-all cursor-pointer"
                   >
                     <BookOpen className="h-6 w-6 text-[#36B0BB]" />
@@ -242,7 +242,7 @@ const HomePage = () => {
                   </div>
 
                   <div
-                    onClick={() => router.push("/chinhsachbm")}
+                    onClick={() => router.push("/policy")}
                     className="flex items-center gap-3 w-full p-2 text-left text-white hover:bg-[#1a4060] rounded-lg transition-all cursor-pointer"
                   >
                     <Shield className="h-6 w-6 text-[#36B0BB]" />
@@ -251,7 +251,7 @@ const HomePage = () => {
                   </div>
 
                   <div
-                    onClick={() => router.push("/thongtindl")}
+                    onClick={() => router.push("/information")}
                     className="flex items-center gap-3 w-full p-2 text-left text-white hover:bg-[#1a4060] rounded-lg transition-all cursor-pointer"
                   >
                     <Database className="h-6 w-6 text-[#36B0BB]" />

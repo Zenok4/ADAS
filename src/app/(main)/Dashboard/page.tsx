@@ -1,12 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { CamCard } from "./components/cam-comp";
-
-import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import Header from "../components/header";
+import ModuleControl from "./components/module-control";
 
 export default function DashboardPage() {
   // State cho từng module
@@ -24,37 +20,13 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#0a2a43] text-white relative">
       {/* Thanh tiêu đề */}
-      <header className="sticky top-0 z-10 border-b border-[#80d4ff]/30 bg-[#0a2a43]/90 backdrop-blur">
-        <div className="mx-auto max-w-md sm:max-w-4xl px-3 sm:px-4 h-12 flex items-center justify-between">
-          {/* Logo + tiêu đề */}
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded bg-[#113a5c] border border-[#80d4ff] flex items-center justify-center text-xs font-bold text-[#80d4ff]">
-
-            </div>
-            <span className="text-base sm:text-lg font-semibold text-white">
-              Dashboard
-            </span>
-          </div>
-
-          {/* Nút icon 4 chấm */}
-          <button className="rounded-lg border border-[#80d4ff] bg-[#113a5c] p-1 shadow-md hover:scale-105 transition">
-            <div className="grid grid-cols-2 gap-0.5">
-              {[0, 1, 2, 3].map((i) => (
-                <span
-                  key={i}
-                  className="h-1.5 w-1.5 rounded-full bg-[#80d4ff]"
-                />
-              ))}
-            </div>
-          </button>
-        </div>
-      </header>
+      <Header header="Dasboard"/>
 
 
       {/* Cột trung tâm */}
-      <main className="mx-auto w-full max-w-md px-2 py-3 space-y-4 sm:px-4 sm:py-6">
+      <main className="mx-auto w-full max-w-lg px-2 py-3 space-y-4 sm:px-4 sm:py-6">
         {/* Khối Module */}
-        <section className="rounded-2xl border-2 border-[#80d4ff] bg-[#113a5c] p-3 sm:p-4">
+        {/* <section className="rounded-2xl border-2 border-[#80d4ff] bg-[#113a5c] p-3 sm:p-4">
           <h2 className="text-center text-xl sm:text-2xl font-extrabold text-[#80d4ff]">
             Chức năng
           </h2>
@@ -99,14 +71,9 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-        </section>
+        </section> */}
 
-        {/* Nút bắt đầu */}
-        <div className="flex justify-center">
-          <button className="w-full sm:w-auto rounded-xl px-6 py-3 text-lg font-semibold bg-[#0E6193] text-white">
-            Bắt đầu
-          </button>
-        </div>
+        <ModuleControl/>
 
         {/* Camera */}
         {/* Camera */}
@@ -128,10 +95,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </section>
-
-
       </main>
-
 
       <footer className="py-6 text-center text-xs text-[#b0d8ff]">
 

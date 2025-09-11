@@ -1,9 +1,10 @@
 "use client";
 
+import MenuButton from "@/components/menu-btn";
 import { Camera, Check, Navigation, ScanEye, TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function DashboardGuest() {
+const LandingPage = () => {
     const router = useRouter();
 
     return (
@@ -22,16 +23,7 @@ export default function DashboardGuest() {
                     </div>
 
                     {/* Nút icon 4 chấm */}
-                    <button className="rounded-lg border border-[#80d4ff] bg-[#113a5c] p-1 shadow-md hover:scale-105 transition">
-                        <div className="grid grid-cols-2 gap-0.5">
-                            {[0, 1, 2, 3].map((i) => (
-                                <span
-                                    key={i}
-                                    className="h-1.5 w-1.5 rounded-full bg-[#80d4ff]"
-                                />
-                            ))}
-                        </div>
-                    </button>
+                    <MenuButton/>
                 </header>
 
                 {/* BODY */}
@@ -156,3 +148,5 @@ export default function DashboardGuest() {
         </div>
     );
 }
+
+export default LandingPage;

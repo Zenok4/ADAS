@@ -1,5 +1,5 @@
+import Logo from "@/components/logo";
 import MenuButton from "@/components/menu-btn";
-import Image from "next/image";
 
 interface HeaderProps {
   header: string;
@@ -11,9 +11,7 @@ const Header = ({header}: HeaderProps) => {
       <div className="mx-auto max-w-lg px-3 sm:px-4 h-12 flex items-center justify-between">
         {/* Logo + tiêu đề */}
         <div className="flex items-center gap-2">
-          <div className="relative h-6 w-6">
-            <Image src={"/logo.png"} alt="Logo" fill className="object-cover" />
-          </div>
+          <Logo width={6}/>
           <span className="text-lg font-semibold text-white">
             {header}
           </span>

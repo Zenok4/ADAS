@@ -1,7 +1,23 @@
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { XCircle, AlertTriangle, CheckCircle, X } from "lucide-react";
+"use client";
 import { useState, useEffect } from "react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { X, AlertTriangle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import  NotifyDialog  from "@/components/NotifyDialog";
+import { NotifyType } from "@/type/notify";
 
 type RoleModalType = "edit" | "delete";
 
@@ -9,6 +25,7 @@ interface RoleEditModalProps {
   open: boolean;
   type: RoleModalType;
   role?: {
+    id?: number;
     name?: string;
     description?: string;
     status?: string;
@@ -33,21 +50,33 @@ export default function RoleEditModal({
   onClose,
   onConfirm,
 }: RoleEditModalProps) {
-  if (!open) return null;
-
-  // Quản lý trạng thái quyền hạn bằng state
   const [permissions, setPermissions] = useState(defaultPermissions);
 
-  // Nếu có role truyền vào thì cập nhật lại permissions
   useEffect(() => {
     setPermissions(role?.permissions ?? defaultPermissions);
   }, [role, open]);
 
+  //  xoá → dùng NotifyDialog luôn
   if (type === "delete") {
-    // Giao diện xác nhận xóa
     return (
-      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-        <Card className="w-full max-w-md relative">
+      <NotifyDialog
+        open={open}
+        type={NotifyType.Warning}
+        title="Xác nhận xoá"
+        message={`Bạn có chắc chắn muốn xoá vai trò "${role?.name}" không?`}
+        onClose={onClose}
+        primaryActionText="Xác nhận"
+        onPrimaryAction={onConfirm}
+      />
+    );
+  }
+
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl p-0 border-0 bg-transparent shadow-none" showCloseButton={false} >       
+        {/* Giữ nguyên UI bên trong */}
+        <Card className="w-full relative">
           <button
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             onClick={onClose}
@@ -55,75 +84,41 @@ export default function RoleEditModal({
             <X size={20} />
           </button>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="text-yellow-500" size={32} />
-              <CardTitle className="text-lg">Cảnh báo</CardTitle>
-            </div>
+            <CardTitle>Danh sách quyền truy cập</CardTitle>
+            <p className="text-sm text-gray-500">
+              Cấu hình quyền truy cập cho các API và tính năng
+            </p>
           </CardHeader>
           <CardContent>
-            <div className="text-gray-700 mb-4">
-              <span className="font-semibold">Cảnh báo:</span> Hành động này có thể ảnh hưởng đến dữ liệu của bạn. Bạn có chắc chắn muốn tiếp tục?
+            <div className="flex gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium mb-1">Tên vai trò:</label>
+                <input
+                  type="text"
+                  defaultValue={role?.name || ""}
+                  className="w-40 px-2 py-1 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Mô tả:</label>
+                <input
+                  type="text"
+                  defaultValue={role?.description || ""}
+                  className="w-60 px-2 py-1 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 ">Trạng thái:</label>
+                <select
+                  defaultValue={role?.status || "Kích hoạt"}
+                  className="w-32 px-2 py-1 border rounded "
+                >
+                  <option value="Kích hoạt" >Kích hoạt</option>
+                  <option value="Tạm ngưng">Tạm ngưng</option>
+                </select>
+              </div>
             </div>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2">
-            <Button variant="destructive" onClick={onConfirm} className="bg-orange-400 hover:bg-orange-500 text-white">
-              Xác nhận
-            </Button>
-            <Button variant="outline" onClick={onClose}>
-              Đóng
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
 
-  // Giao diện chỉnh sửa vai trò & quyền truy cập
-  return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <Card className="w-full max-w-3xl relative">
-        <button
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-          onClick={onClose}
-        >
-          <X size={20} />
-        </button>
-        <CardHeader>
-          <CardTitle>Danh sách quyền truy cập</CardTitle>
-          <p className="text-sm text-gray-500">
-            Cấu hình quyền truy cập cho các API và tính năng
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tên vai trò:</label>
-              <input
-                type="text"
-                defaultValue={role?.name || ""}
-                className="w-40 px-2 py-1 border rounded"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả:</label>
-              <input
-                type="text"
-                defaultValue={role?.description || ""}
-                className="w-60 px-2 py-1 border rounded"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái:</label>
-              <select
-                defaultValue={role?.status || "Kích hoạt"}
-                className="w-32 px-2 py-1 border rounded"
-              >
-                <option value="Kích hoạt">Kích hoạt</option>
-                <option value="Tạm ngưng">Tạm ngưng</option>
-              </select>
-            </div>
-          </div>
-          <div>
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50">
@@ -141,13 +136,13 @@ export default function RoleEditModal({
                       <input
                         type="checkbox"
                         checked={perm.enabled}
-                        onChange={() => {
-                          setPermissions(prev =>
+                        onChange={() =>
+                          setPermissions((prev) =>
                             prev.map((p, i) =>
                               i === idx ? { ...p, enabled: !p.enabled } : p
                             )
-                          );
-                        }}
+                          )
+                        }
                         className="w-5 h-5 accent-[#006DF0]"
                       />
                     </td>
@@ -155,17 +150,17 @@ export default function RoleEditModal({
                 ))}
               </tbody>
             </table>
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Đóng
-          </Button>
-          <Button variant="main" className="bg-[#006DF0] hover:bg-[#0055b3] text-white">
-            Lưu
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+          </CardContent>
+          <CardFooter className="flex justify-end gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Đóng
+            </Button>
+            <Button className="bg-[#006DF0] hover:bg-[#0055b3] text-white">
+              Lưu
+            </Button>
+          </CardFooter>
+        </Card>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -108,7 +108,12 @@ export default function RolesPage() {
         type={modalType}
         role={selectedRole}
         onClose={() => setModalOpen(false)}
-      />
+        onConfirm={() => {
+          console.log("Xác nhận xoá", selectedRole);
+          setModalOpen(false);
+        }}
+      />  
+
       
     </div>
   );

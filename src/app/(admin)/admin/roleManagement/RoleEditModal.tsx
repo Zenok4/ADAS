@@ -8,31 +8,22 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, AlertTriangle } from "lucide-react";
+import { X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import  NotifyDialog  from "@/components/NotifyDialog";
-import { NotifyType } from "@/type/notify";
-
-type RoleModalType = "edit" | "delete";
 
 interface RoleEditModalProps {
-  open: boolean;
-  type: RoleModalType;
+  open: boolean; // điều khiển modal hiển thị
   role?: {
     id?: number;
     name?: string;
     description?: string;
     status?: string;
     permissions?: { api: string; desc: string; enabled: boolean }[];
-  };
+  } | null;
   onClose: () => void;
-  onConfirm?: () => void;
 }
 
 const defaultPermissions = [
@@ -43,52 +34,37 @@ const defaultPermissions = [
   { api: "/api/settings", desc: "Cài đặt hệ thống", enabled: true },
 ];
 
-export default function RoleEditModal({
-  open,
-  type,
-  role,
-  onClose,
-  onConfirm,
-}: RoleEditModalProps) {
+export default function RoleEditModal({ open, role, onClose }: RoleEditModalProps) {
   const [permissions, setPermissions] = useState(defaultPermissions);
 
   useEffect(() => {
     setPermissions(role?.permissions ?? defaultPermissions);
   }, [role, open]);
 
-  //  xoá → dùng NotifyDialog luôn
-  if (type === "delete") {
-    return (
-      <NotifyDialog
-        open={open}
-        type={NotifyType.Warning}
-        title="Xác nhận xoá"
-        message={`Bạn có chắc chắn muốn xoá vai trò "${role?.name}" không?`}
-        onClose={onClose}
-        primaryActionText="Xác nhận"
-        onPrimaryAction={onConfirm}
-      />
-    );
-  }
-
-
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl p-0 border-0 bg-transparent shadow-none" showCloseButton={false} >       
-        {/* Giữ nguyên UI bên trong */}
+      <DialogContent
+        className="max-w-3xl p-0 border-0 bg-transparent shadow-none"
+        showCloseButton={false}
+      >
         <Card className="w-full relative">
+          {/* Close button */}
           <button
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             onClick={onClose}
           >
             <X size={20} />
           </button>
+
           <CardHeader>
-            <CardTitle>Danh sách quyền truy cập</CardTitle>
+            <CardTitle>
+              {role ? "Chỉnh sửa vai trò" : "Thêm vai trò mới"}
+            </CardTitle>
             <p className="text-sm text-gray-500">
               Cấu hình quyền truy cập cho các API và tính năng
             </p>
           </CardHeader>
+
           <CardContent>
             <div className="flex gap-4 mb-6">
               <div>
@@ -108,12 +84,15 @@ export default function RoleEditModal({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 ">Trạng thái:</label>
+                <label className="block text-sm font-medium mb-1">Trạng thái:</label>
                 <select
                   defaultValue={role?.status || "Kích hoạt"}
-                  className="w-32 px-2 py-1 border rounded "
+                  className="w-32 px-2 py-1 border rounded text-gray-700
+                             hover:bg-[#006DF0] hover:text-white
+                             focus:bg-[#006DF0] focus:text-white
+                             transition-colors"
                 >
-                  <option value="Kích hoạt" >Kích hoạt</option>
+                  <option value="Kích hoạt">Kích hoạt</option>
                   <option value="Tạm ngưng">Tạm ngưng</option>
                 </select>
               </div>
@@ -122,9 +101,9 @@ export default function RoleEditModal({
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500">API</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500">Mô tả</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500">Trạng thái</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold">API</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold">Mô tả</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold">Trạng thái</th>
                 </tr>
               </thead>
               <tbody>
@@ -151,6 +130,7 @@ export default function RoleEditModal({
               </tbody>
             </table>
           </CardContent>
+
           <CardFooter className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>
               Đóng

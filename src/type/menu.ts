@@ -30,7 +30,7 @@ export const MenuData = makeConstData<MenuSchema>({
   },
   Introduction: {
     title: "Giới thiệu",
-  }
+  },
 });
 
 export type MenuKey = keyof typeof MenuData;

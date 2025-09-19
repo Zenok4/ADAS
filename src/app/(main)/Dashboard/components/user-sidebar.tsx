@@ -2,7 +2,8 @@
 
 import { Home, Car, Map, Camera, Settings, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 type SidebarProps = {
   collapsed: boolean;
@@ -10,14 +11,16 @@ type SidebarProps = {
 };
 
 export const UserSidebar = ({ collapsed, onToggle }: SidebarProps) => {
+  const router = useRouter();
+
   const [active, setActive] = useState("dashboard");
 
   const menus = [
-    { key: "dashboard", label: "Trang chủ", icon: Home, href: "/user/dashboard" },
-    { key: "drive", label: "Hành trình", icon: Car, href: "/user/drive" },
-    { key: "map", label: "Bản đồ", icon: Map, href: "/user/map" },
-    { key: "camera", label: "Camera", icon: Camera, href: "/user/camera" },
-    { key: "settings", label: "Cài đặt", icon: Settings, href: "/user/settings" },
+    { key: "dashboard", label: "Trang chủ", icon: Home, href: "/dashboard" },
+    { key: "drive", label: "Hành trình", icon: Car, href: "/drive" },
+    { key: "map", label: "Bản đồ", icon: Map, href: "/map" },
+    { key: "camera", label: "Camera", icon: Camera, href: "/camera" },
+    { key: "settings", label: "Cài đặt", icon: Settings, href: "/settings" },
   ];
 
   return (
@@ -32,31 +35,32 @@ export const UserSidebar = ({ collapsed, onToggle }: SidebarProps) => {
             const Icon = menu.icon;
             return (
               <li key={menu.key}>
-                <Link
-                  href={menu.href}
-                  onClick={() => setActive(menu.key)}
+                <div
+                  onClick={() => { 
+                    setActive(menu.key); 
+                    router.push(menu.href) 
+                  }}
                   className={`flex items-center gap-3 px-4 py-2 rounded-lg transition 
-                  ${
-                    active === menu.key
+                  ${active === menu.key
                       ? "bg-blue-100 text-blue-600 font-medium"
                       : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   {!collapsed && <span>{menu.label}</span>}
-                </Link>
+                </div>
               </li>
             );
           })}
         </ul>
 
         {/* Collapse button */}
-        <button
+        <Button
           onClick={onToggle}
           className="flex items-center justify-center h-12 border-t hover:bg-gray-100"
         >
           {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-        </button>
+        </Button>
       </nav>
     </aside>
   );

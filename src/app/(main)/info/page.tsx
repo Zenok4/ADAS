@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-export default function GioiThieuPage() {
+export default function InfomationPage() {
   const router = useRouter();
 
   return (

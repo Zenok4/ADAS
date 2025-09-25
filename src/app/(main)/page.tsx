@@ -9,20 +9,19 @@ import {
   Settings,
   AudioLines,
   Camera,
-  Navigation,
   Gauge,
   Ban,
-  Building,
   TrafficCone,
-  ScanSearch,
-  BedDouble,
-  Moon,
   Globe,
   BookOpen,
   Shield,
   Database,
   Info,
   Volume2,
+  Split,
+  Building2,
+  ScanEye,
+  TriangleAlert,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -33,7 +32,7 @@ const HomePage = () => {
   console.log("Menu Data:", menu);
 
   return (
-    <div className="bg-[#0a2a43] min-h-screen pb-5">
+    <div className="bg-[#0a2a43] min-h-screen">
       <h1 className="flex justify-center py-10 text-4xl font-bold text-white">
         HỆ THỐNG
       </h1>
@@ -117,14 +116,6 @@ const HomePage = () => {
                       </p>
                     </div>
                   </div>
-                  <div
-                    onClick={() => {}}
-                    className="w-full cursor-pointer"
-                  >
-                    <Button variant="main" className="w-full my-2">
-                      Bật/Tắt phát hiện làn đường
-                    </Button>
-                  </div>
                 </div>
               )}
 
@@ -148,7 +139,7 @@ const HomePage = () => {
                     onClick={() => router.push("/sign-navigation")}
                     className="flex items-center gap-3 p-2 hover:bg-[#1a4060] rounded-lg transition-colors cursor-pointer"
                   >
-                    <Navigation className="h-8 w-8 text-[#36B0BB]" />
+                    <Split className="h-8 w-8 text-[#36B0BB]" />
                     <div className="flex flex-col">
                       <p className="text-[#80d4ff] font-medium">Hướng cảnh báo Camera</p>
                       <p className="text-[#80d4ff] text-sm">Tất cả các hướng</p>
@@ -179,17 +170,7 @@ const HomePage = () => {
                     </div>
                   </div>
 
-                  {/* Vào/Ra khu dân cư */}
-                  <div
-                    onClick={() => router.push("/sign-residential")}
-                    className="flex items-center gap-3 p-2 hover:bg-[#1a4060] rounded-lg transition-colors cursor-pointer"
-                  >
-                    <Building className="h-8 w-8 text-[#36B0BB]" />
-                    <div className="flex flex-col">
-                      <p className="text-[#80d4ff] font-medium">Vào/Ra khu dân cư</p>
-                      <p className="text-[#80d4ff] text-sm">Cảnh báo trước: 100m</p>
-                    </div>
-                  </div>
+
 
                   {/* Biển tốc độ tối đa */}
                   <div
@@ -204,18 +185,6 @@ const HomePage = () => {
                       <p className="text-[#80d4ff] text-sm">Cảnh báo trước: 100m</p>
                     </div>
                   </div>
-
-                  {/* Đèn tín hiệu giao thông */}
-                  <div
-                    onClick={() => router.push("/sign-light")}
-                    className="flex items-center gap-3 p-2 hover:bg-[#1a4060] rounded-lg transition-colors cursor-pointer"
-                  >
-                    <TrafficCone className="h-8 w-8 text-[#36B0BB]" />
-                    <div className="flex flex-col">
-                      <p className="text-[#80d4ff] font-medium">Đèn tín hiệu giao thông</p>
-                      <p className="text-[#80d4ff] text-sm">Cảnh báo trước: 50m</p>
-                    </div>
-                  </div>
                 </div>
               )}
 
@@ -223,21 +192,13 @@ const HomePage = () => {
               {item.title === MenuData.ObjectDetect.title && (
                 <div className="flex flex-col items-center gap-3">
                   <div className="flex items-center gap-5 w-full">
-                    <ScanSearch className="h-10 w-10 text-[#36B0BB]" />
+                    <TriangleAlert className="h-10 w-10 text-[#36B0BB]" />
                     <div className="flex flex-col">
                       <p className="text-lg text-white">Cảnh báo vật thể phía trước</p>
                       <p className="text-[#b0d8ff] text-sm">
                         Người đi bộ, xe máy, ô tô, động vật...
                       </p>
                     </div>
-                  </div>
-                  <div
-                    onClick={() => {}}
-                    className="w-full cursor-pointer"
-                  >
-                    <Button variant="main" className="w-full my-2">
-                      Bật/Tắt phát hiện vật thể
-                    </Button>
                   </div>
                 </div>
               )}
@@ -247,8 +208,7 @@ const HomePage = () => {
                 <div className="flex flex-col items-center gap-3">
                   <div className="flex items-center gap-5 w-full">
                     <div className="relative">
-                      <BedDouble className="h-10 w-10 text-[#36B0BB]" />
-                      <Moon className="h-4 w-4 text-[#36B0BB] absolute -top-1 -right-1" />
+                      <ScanEye className="h-10 w-10 text-[#36B0BB]" />
                     </div>
                     <div className="flex flex-col">
                       <p className="text-lg text-white">Cảnh báo buồn ngủ</p>
@@ -256,14 +216,6 @@ const HomePage = () => {
                         Phát hiện nhắm mắt, ngáp, mất tập trung
                       </p>
                     </div>
-                  </div>
-                  <div
-                    onClick={() => {}}
-                    className="w-full cursor-pointer"
-                  >
-                    <Button variant="main" className="w-full my-2">
-                      Bật/Tắt phát hiện buồn ngủ
-                    </Button>
                   </div>
                 </div>
               )}
@@ -281,7 +233,7 @@ const HomePage = () => {
                   </div>
 
                   <div
-                    onClick={() => router.push("/use")}
+                    onClick={() => router.push("/guides")}
                     className="flex items-center gap-3 w-full p-2 text-left text-white hover:bg-[#1a4060] rounded-lg transition-all cursor-pointer"
                   >
                     <BookOpen className="h-6 w-6 text-[#36B0BB]" />
@@ -299,7 +251,7 @@ const HomePage = () => {
                   </div>
 
                   <div
-                    onClick={() => router.push("/info")}
+                    onClick={() => router.push("/information")}
                     className="flex items-center gap-3 w-full p-2 text-left text-white hover:bg-[#1a4060] rounded-lg transition-all cursor-pointer"
                   >
                     <Database className="h-6 w-6 text-[#36B0BB]" />

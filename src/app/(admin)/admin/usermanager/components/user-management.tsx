@@ -331,8 +331,8 @@ export function UserManagement() {
                       <Checkbox
                         id={role}
                         checked={editingUser.role.includes(role)}
-                        onCheckedChange={(checked) =>
-                          handleRoleChange(role, checked as boolean)
+                        onCheckedChange={(checked: boolean) =>
+                          handleRoleChange(role, checked)
                         }
                       />
                       <label
@@ -434,8 +434,8 @@ export function UserManagement() {
                     <Checkbox
                       id={`new-${role}`}
                       checked={newUser.role.includes(role)}
-                      onCheckedChange={(checked) =>
-                        handleNewUserRoleChange(role, checked as boolean)
+                      onCheckedChange={(checked: boolean) =>
+                        handleNewUserRoleChange(role, checked)
                       }
                     />
                     <label

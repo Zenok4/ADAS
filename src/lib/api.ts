@@ -39,7 +39,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const res = await api.post<{ access_token: string }>(
-          ApiUrls.auth.refresh,
+          ApiUrls.authen.refresh,
           {},
           { withCredentials: true }
         );

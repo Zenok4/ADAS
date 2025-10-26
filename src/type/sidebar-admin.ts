@@ -14,7 +14,7 @@ export const sidebarItems = [
   {
     title: "Phân quyền",
     icon: KeyRound,
-    href: "/admin/authentication",
+    href: "/admin/roleManagement",
   },
   {
     title: "Settings",

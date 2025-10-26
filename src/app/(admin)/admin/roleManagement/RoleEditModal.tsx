@@ -9,10 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface RoleEditModalProps {
   open: boolean; // điều khiển modal hiển thị
@@ -34,7 +31,11 @@ const defaultPermissions = [
   { api: "/api/settings", desc: "Cài đặt hệ thống", enabled: true },
 ];
 
-export default function RoleEditModal({ open, role, onClose }: RoleEditModalProps) {
+export default function RoleEditModal({
+  open,
+  role,
+  onClose,
+}: RoleEditModalProps) {
   const [permissions, setPermissions] = useState(defaultPermissions);
 
   useEffect(() => {
@@ -68,7 +69,9 @@ export default function RoleEditModal({ open, role, onClose }: RoleEditModalProp
           <CardContent>
             <div className="flex gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium mb-1">Tên vai trò:</label>
+                <label className="block text-sm font-medium mb-1">
+                  Tên vai trò:
+                </label>
                 <input
                   type="text"
                   defaultValue={role?.name || ""}
@@ -84,16 +87,26 @@ export default function RoleEditModal({ open, role, onClose }: RoleEditModalProp
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Trạng thái:</label>
+                <label className="block text-sm font-medium mb-1">
+                  Trạng thái:
+                </label>
                 <select
                   defaultValue={role?.status || "Kích hoạt"}
                   className="w-32 px-2 py-1 border rounded text-gray-700
-                             hover:bg-[#006DF0] hover:text-white
-                             focus:bg-[#006DF0] focus:text-white
                              transition-colors"
                 >
-                  <option value="Kích hoạt">Kích hoạt</option>
-                  <option value="Tạm ngưng">Tạm ngưng</option>
+                  <option
+                    value="Kích hoạt"
+                    className="hover:bg-[#006DF0] hover:text-white"
+                  >
+                    Kích hoạt
+                  </option>
+                  <option
+                    value="Tạm ngưng"
+                    className="hover:bg-[#006DF0] hover:text-white"
+                  >
+                    Tạm ngưng
+                  </option>
                 </select>
               </div>
             </div>
@@ -101,9 +114,15 @@ export default function RoleEditModal({ open, role, onClose }: RoleEditModalProp
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="px-4 py-2 text-left text-xs font-semibold">API</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold">Mô tả</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold">Trạng thái</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold">
+                    API
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold">
+                    Mô tả
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold">
+                    Trạng thái
+                  </th>
                 </tr>
               </thead>
               <tbody>

@@ -18,6 +18,8 @@ const api: AxiosInstance = axios.create({
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = accessToken || loadToken();
+    console.log('Request URL:', config.url);
+    console.log('Token present:', !!token);
     if (token) {
       config.headers = config.headers ?? {};
       config.headers.Authorization = `Bearer ${token}`;
@@ -31,6 +33,11 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (res: AxiosResponse) => res,
   async (err: AxiosError) => {
+    console.log('Response Error:', {
+      status: err.response?.status,
+      data: err.response?.data,
+      config: err.config
+    });
     const originalRequest = err.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };

@@ -14,8 +14,6 @@ import {
 
 import FeatureCard from "./components/feature-card";
 import InfoCard from "./components/info-card";
-import {UserHeader} from "./components/user-header";
-import { UserSidebar } from "./components/user-sidebar";
 
 export default function DashboardPage() {
   const [collapsed, setCollapsed] = useState(false);
@@ -71,12 +69,9 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Header */}
-      <UserHeader />
 
       {/* Sidebar + Content */}
       <div className="flex flex-1">
-        <UserSidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
 
         {/* Main Content */}
         <main

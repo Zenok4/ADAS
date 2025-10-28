@@ -24,6 +24,7 @@ export const saveToken = (token: string): void => {
 };
 
 export const loadToken = (): string | null => {
+  if (typeof window === "undefined") return null;
   const encrypted = localStorage.getItem("access_token");
   if (!encrypted) return null;
   return decryptToken(encrypted);

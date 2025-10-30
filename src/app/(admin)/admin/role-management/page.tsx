@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
+import { AuthService } from "@/services/authService";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit2, Trash2 } from "lucide-react";
@@ -9,34 +11,24 @@ import { useNotifyDialog } from "@/hooks/useNotifyDialog";
 import NotifyDialog from "@/components/NotifyDialog";
 import { NotifyType } from "@/type/notify";
 
-const roles = [
-  {
-    id: 1,
-    name: "User",
-    status: "Kích hoạt",
-    description: "Vai trò cho người dùng",
-    createdDate: "2024-01-15",
-  },
-  {
-    id: 2,
-    name: "Test",
-    status: "Tạm ngưng",
-    description: "Vai trò test tạm dừng role",
-    createdDate: "2024-01-15",
-  },
-  {
-    id: 3,
-    name: "Test2",
-    status: "Kích hoạt",
-    description: "Vai trò cho test",
-    createdDate: "2024-01-15",
-  },
-];
+
 
 export default function RolesPage() {
   const [selectedRole, setSelectedRole] = useState<any>(undefined);
   const [modalType, setModalType] = useState<"edit" | null>(null);
-
+  const [roles, setRoles] = useState<any[]>([]);
+  useEffect(() => { 
+    loadRoles();
+  }, []);
+  const loadRoles = async () => {
+    try {
+      const res = await AuthService.listRoles();
+      setRoles(res.data.roles );
+    } catch (error) {
+      console.error("Lỗi tải danh sách vai trò:", error);
+    }
+  };
+  
   // NotifyDialog để xác nhận xóa
   const {
     open,
@@ -53,17 +45,24 @@ export default function RolesPage() {
     setSelectedRole(role);
     setModalType("edit");
   };
-
+// truyền id vao role: any
   const handleDelete = (role: any) => {
     showNotify({
       type: NotifyType.Warning,
       title: "Xác nhận xoá",
       message: `Bạn có chắc chắn muốn xoá vai trò "${role.name}" không?`,
       primaryActionText: "Xoá",
-      onPrimaryAction: () => {
-        console.log("Đã xoá role:", role);
+      onPrimaryAction:async () => {
+        //Logic xoá vai trò ở đây
+        try{
+          await AuthService.deleteRole(role.id);
+          await loadRoles();
+        }catch(error){
+          console.error("Lỗi xoá vai trò:", error);
+        }
       },
     });
+
   };
 
   const handleAdd = () => {
@@ -181,6 +180,7 @@ export default function RolesPage() {
         onClose={() => {
           setSelectedRole(undefined);
           setModalType(null);
+          loadRoles();
         }}
       />
 

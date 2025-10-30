@@ -1,4 +1,5 @@
 "use client";
+import { AuthService } from "@/services/authService";
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -10,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useNotifyDialog } from "@/hooks/useNotifyDialog";
+import { NotifyType } from "@/type/notify";
 
 interface RoleEditModalProps {
   open: boolean; // điều khiển modal hiển thị
@@ -37,10 +40,55 @@ export default function RoleEditModal({
   onClose,
 }: RoleEditModalProps) {
   const [permissions, setPermissions] = useState(defaultPermissions);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState("Kích hoạt");
 
   useEffect(() => {
     setPermissions(role?.permissions ?? defaultPermissions);
+    if (role) {
+      setName(role.name || "");
+      setDescription(role.description || "");
+      setStatus(role.status || "Kích hoạt");
+    }else {
+      setName("");
+      setDescription("");
+      setStatus("Kích hoạt");
+    }
   }, [role, open]);
+
+  const { showNotify } = useNotifyDialog();
+
+  const handleSave = async () => {
+  try {
+    const payload = { name, description, status };
+
+    if (role?.id) {
+      await AuthService.updateRole(role.id, payload);
+      showNotify({
+        type: NotifyType.Success,
+        title: "Thành công",
+        message: "Cập nhật vai trò thành công!"
+      });
+    } else {
+      await AuthService.createRole(payload);
+      showNotify({
+        type: NotifyType.Success,
+        title: "Thành công",
+        message: "Thêm vai trò thành công!"
+      });
+    }
+
+    onClose();
+  } catch (error) {
+    console.error("Lưu vai trò thất bại:", error);
+    showNotify({
+      type: NotifyType.Error,
+      title: "Lỗi",
+      message: "Lưu vai trò thất bại!"
+    });
+  }
+};
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -74,7 +122,9 @@ export default function RoleEditModal({
                 </label>
                 <input
                   type="text"
-                  defaultValue={role?.name || ""}
+                  value ={name}
+                  onChange={(e) => setName(e.target.value)}
+                //  defaultValue={role?.name || ""}
                   className="w-40 px-2 py-1 border rounded"
                 />
               </div>
@@ -82,7 +132,9 @@ export default function RoleEditModal({
                 <label className="block text-sm font-medium mb-1">Mô tả:</label>
                 <input
                   type="text"
-                  defaultValue={role?.description || ""}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                //  defaultValue={role?.description || ""}
                   className="w-60 px-2 py-1 border rounded"
                 />
               </div>
@@ -91,7 +143,9 @@ export default function RoleEditModal({
                   Trạng thái:
                 </label>
                 <select
-                  defaultValue={role?.status || "Kích hoạt"}
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                //  defaultValue={role?.status || "Kích hoạt"}
                   className="w-32 px-2 py-1 border rounded text-gray-700
                              transition-colors"
                 >
@@ -154,8 +208,8 @@ export default function RoleEditModal({
             <Button variant="outline" onClick={onClose}>
               Đóng
             </Button>
-            <Button className="bg-[#006DF0] hover:bg-[#0055b3] text-white">
-              Lưu
+            <Button onClick={handleSave} className="bg-[#006DF0] hover:bg-[#0055b3] text-white">              
+                Lưu
             </Button>
           </CardFooter>
         </Card>

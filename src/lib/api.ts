@@ -35,7 +35,10 @@ api.interceptors.response.use(
       _retry?: boolean;
     };
 
-    if (err.response?.status === HttpCode.unauthorized && !originalRequest._retry) {
+    if (
+      err.response?.status === HttpCode.unauthorized &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
       try {
         const res = await api.post<{ access_token: string }>(
@@ -65,11 +68,11 @@ api.interceptors.response.use(
 export const setAccessToken = (token: string): void => {
   accessToken = token;
   saveToken(token);
-}
+};
 
 export const removeAccessToken = (): void => {
   accessToken = null;
   clearToken();
-}
+};
 
 export default api;

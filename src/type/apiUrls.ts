@@ -16,4 +16,7 @@ export const ApiUrls = {
     list: "/users",
     detail: (id: number | string) => `/users/${id}`,
   },
+  core_functions: {
+    drowsy: "/drowsy/detect",
+  },
 } as const;

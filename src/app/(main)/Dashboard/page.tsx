@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Eye,
   AlertTriangle,
@@ -14,6 +14,10 @@ import {
 
 import FeatureCard from "./components/feature-card";
 import InfoCard from "./components/info-card";
+
+// 🧠 Hooks AI + Camera
+import { useDrowsy } from "@/hooks/useDrowsy";
+import { useCamera } from "@/hooks/useCamera";
 
 export default function DashboardPage() {
   const [collapsed, setCollapsed] = useState(false);
@@ -30,7 +34,18 @@ export default function DashboardPage() {
   const [temperature, setTemperature] = useState("...");
   const [time, setTime] = useState(new Date().toLocaleTimeString());
 
-  // Lấy thời gian realtime
+  // 🎥 Setup camera & AI buồn ngủ
+  const videoRef = useRef<HTMLVideoElement>(null!);
+  const { camReady, camError, openCamera, stopCamera } = useCamera(videoRef);
+  const { result, busy } = useDrowsy({
+    videoRef,
+    enabled: sleepAlert,
+    intervalMs: 1200,
+  });
+
+  console.log("Drowsy AI result:", process.env.NEXT_PUBLIC_BASE_URL);
+
+  // Đồng hồ realtime
   useEffect(() => {
     const interval = setInterval(() => {
       setTime(new Date().toLocaleTimeString());
@@ -67,12 +82,22 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Trạng thái AI
+  const danger = !!result?.is_drowsy;
+  const statusText = sleepAlert
+    ? result
+      ? `${result.message} (EAR: ${result.ratio_eyes ?? "-"})`
+      : "Đang bật..."
+    : "Đang tắt";
+
+  // Nút control
+  const handleToggleSleep = () => setSleepAlert((prev) => !prev);
+  const handleCameraToggle = () => (camReady ? stopCamera() : openCamera());
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-
       {/* Sidebar + Content */}
       <div className="flex flex-1">
-
         {/* Main Content */}
         <main
           className={`flex-1 p-6 flex gap-6 transition-all duration-300 ${
@@ -87,9 +112,9 @@ export default function DashboardPage() {
               <FeatureCard
                 icon={Eye}
                 title="Cảnh báo buồn ngủ"
-                status={sleepAlert ? "Đang bật" : "Đang tắt"}
+                status={statusText}
                 toggle={sleepAlert}
-                onToggle={() => setSleepAlert((prev) => !prev)}
+                onToggle={handleToggleSleep}
               />
               <FeatureCard
                 icon={AlertTriangle}
@@ -114,27 +139,78 @@ export default function DashboardPage() {
               />
             </div>
 
-            <div className="flex justify-center mt-2">
-              <button className="px-6 py-2 rounded-lg bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition">
-                Bắt đầu
+            {/* Nút điều khiển */}
+            <div className="flex gap-3 justify-center mt-4">
+              <button
+                className={`px-6 py-2 rounded-lg font-semibold text-white shadow transition ${
+                  sleepAlert
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "bg-blue-500 hover:bg-blue-600"
+                }`}
+                onClick={handleToggleSleep}
+              >
+                {sleepAlert ? "Dừng cảnh báo" : "Bắt đầu cảnh báo"}
+              </button>
+
+              <button
+                className="px-6 py-2 rounded-lg bg-slate-600 text-white font-semibold shadow hover:bg-slate-700 transition"
+                onClick={handleCameraToggle}
+              >
+                {camReady ? "Tắt camera" : "Mở camera"}
               </button>
             </div>
 
             {/* Camera */}
             <div className="grid grid-cols-2 gap-4 mt-4">
               {/* Camera trước */}
-              <div className="h-60 flex flex-col rounded-xl shadow-md border overflow-hidden">
-                <div className="flex items-center gap-2 text-blue-500 font-medium p-2 border-b">
-                  <Camera className="w-5 h-5" />
-                  <span>Camera trước</span>
+              <div
+                className={`h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden ${
+                  danger ? "border-red-500" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between text-blue-500 font-medium p-2 border-b">
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-5 h-5" />
+                    <span>Camera trước</span>
+                  </div>
+                  {result && (
+                    <span className="text-xs text-gray-400">
+                      {result.latency_ms}ms
+                    </span>
+                  )}
                 </div>
-                <div className="flex-1 flex items-center justify-center bg-gray-50">
-                  <span className="text-gray-400 text-sm">API Camera trước</span>
+
+                <div className="flex-1 bg-black flex items-center justify-center relative">
+                  <video
+                    ref={videoRef}
+                    className="w-full h-full object-contain"
+                    muted
+                    autoPlay
+                    playsInline
+                  />
+
+                  {!camReady && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-gray-400 text-sm">
+                        Nhấn “Mở camera” để khởi động IVCam
+                      </span>
+                    </div>
+                  )}
+                  {camError && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-red-400 text-xs p-2">
+                      {camError}
+                    </div>
+                  )}
+                  {busy && (
+                    <div className="absolute top-2 right-2 text-xs bg-blue-500 text-white px-2 py-1 rounded">
+                      Đang xử lý...
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Camera sau */}
-              <div className="h-60 flex flex-col rounded-xl shadow-md border overflow-hidden">
+              {/* Camera sau (chưa dùng) */}
+              <div className="h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden">
                 <div className="flex items-center gap-2 text-blue-500 font-medium p-2 border-b">
                   <Camera className="w-5 h-5" />
                   <span>Camera sau</span>

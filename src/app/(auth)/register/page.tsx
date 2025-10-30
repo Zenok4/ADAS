@@ -6,28 +6,41 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
 
   // === State ===
   const [emailOrPhone, setEmailOrPhone] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  // === Handler: submit login form ===
-  const handleLogin = async (e: React.FormEvent) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // === Handler: toggle visibility ===
+  const handleTogglePassword = () => setShowPassword(prev => !prev);
+  const handleToggleConfirmPassword = () => setShowConfirmPassword(prev => !prev);
+
+  // === Handler: submit form ===
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // TODO: Gọi API login tại đây
+    if (password !== confirmPassword) {
+      alert("Mật khẩu xác nhận không khớp.");
+      return;
+    }
+
+    // TODO: Gọi API đăng ký tại đây
     console.log({
       emailOrPhone,
+      username,
       password,
-      rememberMe,
+      confirmPassword,
     });
 
-    // Giả sử đăng nhập thành công
-    router.push("/dashboard");
+    // Giả sử đăng ký thành công
+    router.push("/login");
   };
 
   return (
@@ -51,12 +64,12 @@ export default function LoginPage() {
 
           {/* Right (Form) */}
           <div className="w-full md:w-1/2 p-10 flex items-center justify-center">
-            <form onSubmit={handleLogin} className="w-full space-y-4">
+            <form onSubmit={handleRegister} className="w-full space-y-4">
               <h3 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
-                <strong>Đăng nhập</strong>
+                <strong>Đăng ký</strong>
               </h3>
 
-              {/* Email / Phone */}
+              {/* Email or Phone */}
               <div>
                 <label className="block text-sm text-gray-600 mb-1">
                   Email hoặc Số điện thoại
@@ -66,7 +79,21 @@ export default function LoginPage() {
                   placeholder="Nhập email hoặc số điện thoại"
                   value={emailOrPhone}
                   onChange={(e) => setEmailOrPhone(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Username */}
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Tên đăng nhập
+                </label>
+                <input
+                  type="text"
+                  placeholder="Nhập tên đăng nhập"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -85,7 +112,7 @@ export default function LoginPage() {
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
+                    onClick={handleTogglePassword}
                     className="absolute inset-y-0 right-3 flex items-center text-gray-500"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -93,23 +120,27 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Remember + Forgot */}
-              <div className="flex items-center justify-between mt-2">
-                <label className="flex items-center text-sm text-gray-600">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
-                  />
-                  Ghi nhớ đăng nhập
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Nhập lại mật khẩu
                 </label>
-                <Link
-                  href="/ForgotPass"
-                  className="text-sm text-blue-500 hover:underline"
-                >
-                  Quên mật khẩu?
-                </Link>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Nhập lại mật khẩu"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleToggleConfirmPassword}
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
 
               {/* Submit */}
@@ -117,14 +148,17 @@ export default function LoginPage() {
                 type="submit"
                 className="w-full py-5 font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
               >
-                Đăng nhập
+                Đăng ký
               </Button>
 
-              {/* Register */}
+              {/* Back to login */}
               <p className="mt-4 text-center text-sm text-gray-600">
-                Chưa có tài khoản?{" "}
-                <Link href="/register" className="text-blue-500 font-medium hover:underline">
-                  Đăng ký ngay
+                Đã có tài khoản?{" "}
+                <Link
+                  href="/login"
+                  className="text-blue-500 font-medium hover:underline"
+                >
+                  Đăng nhập ngay
                 </Link>
               </p>
             </form>

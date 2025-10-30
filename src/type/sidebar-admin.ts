@@ -9,12 +9,12 @@ export const sidebarItems = [
   {
     title: "Quản lý người dùng",
     icon: Users,
-    href: "/admin/users",
+    href: "/admin/users-management",
   },
   {
     title: "Phân quyền",
     icon: KeyRound,
-    href: "/admin/authentication",
+    href: "/admin/role-management",
   },
   {
     title: "Settings",

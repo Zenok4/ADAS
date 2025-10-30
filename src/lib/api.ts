@@ -10,7 +10,7 @@ import { HttpCode } from "@/type/http-codes";
 let accessToken: string | null = loadToken();
 
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.BASE_URL,
+  baseURL: process.env.NEXT_PUBLIC_BASE_URL,
   withCredentials: true,
 });
 
@@ -39,7 +39,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const res = await api.post<{ access_token: string }>(
-          ApiUrls.auth.refresh,
+          ApiUrls.authen.refresh,
           {},
           { withCredentials: true }
         );

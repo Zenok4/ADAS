@@ -4,30 +4,44 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
-import Link from "next/link";
 
-export default function LoginPage() {
+// Component chính
+export default function ForgotPasswordPage() {
   const router = useRouter();
 
   // === State ===
   const [emailOrPhone, setEmailOrPhone] = useState("");
+  const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  // === Handler: submit login form ===
-  const handleLogin = async (e: React.FormEvent) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // === Handler: gửi OTP ===
+  const handleSendOtp = () => {
+    // TODO: Gọi API gửi OTP ở đây
+    alert("OTP đã gửi!");
+  };
+
+  // === Handler: submit form ===
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // TODO: Gọi API login tại đây
+    if (password !== confirmPassword) {
+      alert("Mật khẩu xác nhận không khớp.");
+      return;
+    }
+
+    // TODO: Gọi API reset password ở đây
     console.log({
       emailOrPhone,
+      otp,
       password,
-      rememberMe,
+      confirmPassword,
     });
 
-    // Giả sử đăng nhập thành công
-    router.push("/dashboard");
+    router.push("/login");
   };
 
   return (
@@ -51,15 +65,15 @@ export default function LoginPage() {
 
           {/* Right (Form) */}
           <div className="w-full md:w-1/2 p-10 flex items-center justify-center">
-            <form onSubmit={handleLogin} className="w-full space-y-4">
+            <form onSubmit={handleSubmit} className="w-full space-y-4">
               <h3 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
-                <strong>Đăng nhập</strong>
+                <strong>Quên mật khẩu</strong>
               </h3>
 
               {/* Email / Phone */}
               <div>
                 <label className="block text-sm text-gray-600 mb-1">
-                  Email hoặc Số điện thoại
+                  Email hoặc số điện thoại đã đăng ký
                 </label>
                 <input
                   type="text"
@@ -70,10 +84,34 @@ export default function LoginPage() {
                 />
               </div>
 
-              {/* Password */}
+              {/* OTP */}
               <div>
                 <label className="block text-sm text-gray-600 mb-1">
-                  Mật khẩu
+                  Nhập mã OTP
+                </label>
+                <div className="relative w-full">
+                  <input
+                    type="text"
+                    placeholder="Nhập mã OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-24 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <Button
+                    type="button"
+                    variant={"ghost"}
+                    onClick={handleSendOtp}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-600 hover:bg-blue-100 hover:text-blue-700 px-3 py-1"
+                  >
+                    Gửi OTP
+                  </Button>
+                </div>
+              </div>
+
+              {/* New Password */}
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Mật khẩu mới
                 </label>
                 <div className="relative">
                   <input
@@ -81,7 +119,7 @@ export default function LoginPage() {
                     placeholder="Nhập mật khẩu"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button
                     type="button"
@@ -93,23 +131,31 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Remember + Forgot */}
-              <div className="flex items-center justify-between mt-2">
-                <label className="flex items-center text-sm text-gray-600">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
-                  />
-                  Ghi nhớ đăng nhập
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Xác nhận lại mật khẩu
                 </label>
-                <Link
-                  href="/ForgotPass"
-                  className="text-sm text-blue-500 hover:underline"
-                >
-                  Quên mật khẩu?
-                </Link>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Nhập lại mật khẩu"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff size={20} />
+                    ) : (
+                      <Eye size={20} />
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* Submit */}
@@ -117,16 +163,8 @@ export default function LoginPage() {
                 type="submit"
                 className="w-full py-5 font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
               >
-                Đăng nhập
+                Tiếp tục
               </Button>
-
-              {/* Register */}
-              <p className="mt-4 text-center text-sm text-gray-600">
-                Chưa có tài khoản?{" "}
-                <Link href="/register" className="text-blue-500 font-medium hover:underline">
-                  Đăng ký ngay
-                </Link>
-              </p>
             </form>
           </div>
         </div>

@@ -24,10 +24,16 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AuthService } from "@/services/authService";
 
 const HomePage = () => {
   const menu: MenuType[] = Object.values(MenuData);
   const router = useRouter();
+
+
+  console.log("Access Token:", process.env.NEXT_PUBLIC_BASE_URL);
+
+  console.log("User Data:", AuthService.me());
 
   console.log("Menu Data:", menu);
 

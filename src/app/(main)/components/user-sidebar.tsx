@@ -1,21 +1,22 @@
+"use client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { sidebarItems } from "@/type/sidebar-admin";
+import { sidebarItems } from "@/type/sidebar-user";
 
-interface AdminSidebarProps {
+interface UserSidebarProps {
   className?: string;
   collapsed?: boolean;
   onToggle?: () => void;
 }
 
-export const AdminSidebar = ({
+export const UserSidebar = ({
   className,
   collapsed = false,
   onToggle,
-}: AdminSidebarProps) => {
+}: UserSidebarProps) => {
   const router = useRouter();
   return (
     <div

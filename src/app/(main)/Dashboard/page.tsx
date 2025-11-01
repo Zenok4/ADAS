@@ -15,7 +15,7 @@ import {
 import FeatureCard from "./components/feature-card";
 import InfoCard from "./components/info-card";
 
-// 🧠 Hooks AI + Camera
+// Hooks AI + Camera
 import { useDrowsy } from "@/hooks/useDrowsy";
 import { useCamera } from "@/hooks/useCamera";
 
@@ -42,8 +42,6 @@ export default function DashboardPage() {
     enabled: sleepAlert,
     intervalMs: 1200,
   });
-
-  console.log("Drowsy AI result:", process.env.NEXT_PUBLIC_BASE_URL);
 
   // Đồng hồ realtime
   useEffect(() => {
@@ -82,13 +80,22 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // Trạng thái AI
-  const danger = !!result?.is_drowsy;
+  //  Trạng thái AI
+  const danger = !!result?.data?.is_drowsy;
   const statusText = sleepAlert
     ? result
-      ? `${result.message} (EAR: ${result.ratio_eyes ?? "-"})`
+      ? `${result.message} (EAR: ${result?.data?.eye_aspect_ratio ?? "-"})`
       : "Đang bật..."
     : "Đang tắt";
+
+  //  Huy hiệu hiển thị trên video
+  const badge = result
+    ? result?.data.is_drowsy
+      ? { text: "Cảnh báo tài xế đang ngủ gật!", cls: "bg-red-600" }
+      : { text: "Tài xế bình thường", cls: "bg-green-600" }
+    : busy
+    ? { text: "Đang xử lý...", cls: "bg-blue-600" }
+    : null;
 
   // Nút control
   const handleToggleSleep = () => setSleepAlert((prev) => !prev);
@@ -96,9 +103,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Sidebar + Content */}
       <div className="flex flex-1">
-        {/* Main Content */}
         <main
           className={`flex-1 p-6 flex gap-6 transition-all duration-300 ${
             collapsed ? "ml-16" : "ml-64"
@@ -175,7 +180,7 @@ export default function DashboardPage() {
                   </div>
                   {result && (
                     <span className="text-xs text-gray-400">
-                      {result.latency_ms}ms
+                      {result.data.latency_ms}ms
                     </span>
                   )}
                 </div>
@@ -196,20 +201,39 @@ export default function DashboardPage() {
                       </span>
                     </div>
                   )}
+
+                  {/*  Huy hiệu cảnh báo / xử lý */}
+                  <div className="absolute top-2 right-2 flex flex-col items-end gap-2">
+                    {badge && (
+                      <div
+                        className={`text-xs text-white px-2 py-1 rounded shadow ${badge.cls}`}
+                      >
+                        {badge.text}
+                      </div>
+                    )}
+
+                    {result && (
+                      <div className="text-[10px] text-white/80 bg-black/40 px-2 py-0.5 rounded">
+                        EAR:{" "}
+                        {typeof result.data.eye_aspect_ratio === "number"
+                          ? result.data.eye_aspect_ratio.toFixed(2)
+                          : "-"}
+                        {typeof result.data.latency_ms === "number"
+                          ? ` • ${result.data.latency_ms}ms`
+                          : ""}
+                      </div>
+                    )}
+                  </div>
+
                   {camError && (
                     <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-red-400 text-xs p-2">
                       {camError}
                     </div>
                   )}
-                  {busy && (
-                    <div className="absolute top-2 right-2 text-xs bg-blue-500 text-white px-2 py-1 rounded">
-                      Đang xử lý...
-                    </div>
-                  )}
                 </div>
               </div>
 
-              {/* Camera sau (chưa dùng) */}
+              {/* Camera sau (placeholder) */}
               <div className="h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden">
                 <div className="flex items-center gap-2 text-blue-500 font-medium p-2 border-b">
                   <Camera className="w-5 h-5" />

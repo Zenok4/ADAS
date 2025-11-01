@@ -2,10 +2,16 @@ import { CoreFunctionService } from "@/services/coreFunctionService";
 import { useState, useEffect, useCallback } from "react";
 
 type DrowsyResult = {
-  is_drowsy: boolean;
+  code: number;
+  data: {
+    is_drowsy: boolean;
+    message: string;
+    eye_aspect_ratio: number;
+    latency_ms: number;
+    frame_count: number;
+  };
   message: string;
-  ratio_eyes: number;
-  latency_ms: number;
+  success: boolean;
 };
 
 type UseDrowsyOptions = {
@@ -50,6 +56,8 @@ export function useDrowsy({
     const timer = setInterval(captureAndSend, intervalMs);
     return () => clearInterval(timer);
   }, [enabled, intervalMs, captureAndSend]);
+
+  console.log("Drowsy result:", result);
 
   return { result, busy };
 }

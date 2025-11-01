@@ -10,7 +10,7 @@ export const ApiUrls = {
     me: "/authen/me",
   },
   author: {
-  //  myPermissions: "/author/permissions/list",
+    //  myPermissions: "/author/permissions/list",
     // Quyền & vai trò
     roles: {
       list: "/author/roles/list",
@@ -18,7 +18,8 @@ export const ApiUrls = {
       detail: (id: number | string) => `/author/roles/${id}/get`,
       update: (id: number | string) => `/author/roles/${id}/update`,
       delete: (id: number | string) => `/author/roles/${id}/delete`,
-      userRoles: (userId: number | string) => `/author/users/${userId}/roles/list`,
+      userRoles: (userId: number | string) =>
+        `/author/users/${userId}/roles/list`,
       assignToUser: (userId: number | string, roleId: number | string) =>
         `/author/users/${userId}/roles/${roleId}/assign`,
     },

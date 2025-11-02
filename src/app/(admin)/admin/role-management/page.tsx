@@ -23,7 +23,8 @@ export default function RolesPage() {
   const loadRoles = async () => {
     try {
       const res = await AuthService.listRoles();
-      setRoles(res.data.roles );
+      console.log("API response:", res.data);
+      setRoles(res.data.roles || []);
     } catch (error) {
       console.error("Lỗi tải danh sách vai trò:", error);
     }

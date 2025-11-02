@@ -51,3 +51,4 @@ export const AuthService = {
   removePermissionFromRole: (roleId: number, permId: number) =>
     api.delete(ApiUrls.author.permissions.removeFromRole(roleId, permId)),
 };
+    

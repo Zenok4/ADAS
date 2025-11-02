@@ -89,19 +89,19 @@ export default function ForgotPasswordPage() {
                 <label className="block text-sm text-gray-600 mb-1">
                   Nhập mã OTP
                 </label>
-                <div className="flex space-x-2">
+                <div className="relative w-full">
                   <input
                     type="text"
                     placeholder="Nhập mã OTP"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-24 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <Button
                     type="button"
-                    variant="outline"
-                    className="whitespace-nowrap px-4"
+                    variant={"ghost"}
                     onClick={handleSendOtp}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-600 hover:bg-blue-100 hover:text-blue-700 px-3 py-1"
                   >
                     Gửi OTP
                   </Button>

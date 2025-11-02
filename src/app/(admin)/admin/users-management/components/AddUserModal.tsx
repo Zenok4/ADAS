@@ -1,4 +1,3 @@
-// src/app/(admin)/admin/users-management/components/AddUserModal.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,13 @@ import { Input } from "@/components/ui/input";
 import { RoleData } from "@/services/type/user.type";
 import { NewUserForm } from "./types";
 
+type FormErrors = { username: string; email: string; phone: string };
+type Validators = {
+  validateUsername: (value: string) => string;
+  validateEmail: (value: string) => string;
+  validatePhone: (value: string) => string;
+};
+
 interface AddUserModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
@@ -29,6 +35,10 @@ interface AddUserModalProps {
   availableRoles: RoleData[];
   onRoleChange: (roleId: number, checked: boolean) => void;
   onAddUser: () => void;
+  userRoleId: number | null;
+  errors: FormErrors;
+  setErrors: React.Dispatch<React.SetStateAction<FormErrors>>;
+  validators: Validators;
 }
 
 export function AddUserModal({
@@ -39,7 +49,29 @@ export function AddUserModal({
   availableRoles,
   onRoleChange,
   onAddUser,
+  userRoleId,
+  errors,
+  setErrors,
+  validators,
 }: AddUserModalProps) {
+  const handleChange = (
+    field: keyof NewUserForm,
+    value: string,
+    validator: (val: string) => string
+  ) => {
+    setNewUser((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: validator(value) }));
+  };
+
+  const handleBlur = (
+    field: keyof NewUserForm,
+    value: string,
+    validator: (val: string) => string
+  ) => {
+    setErrors((prev) => ({ ...prev, [field]: validator(value) }));
+  };
+
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
@@ -48,7 +80,6 @@ export function AddUserModal({
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-6 py-4">
-          {/* Cột 1: Thông tin User */}
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
@@ -57,13 +88,16 @@ export function AddUserModal({
               <Input
                 value={newUser.username}
                 onChange={(e) =>
-                  setNewUser((prev) => ({
-                    ...prev,
-                    username: e.target.value,
-                  }))
+                  handleChange("username", e.target.value, validators.validateUsername)
                 }
-                placeholder="Nhập tên đăng nhập"
+                onBlur={(e) =>
+                  handleBlur("username", e.target.value, validators.validateUsername)
+                }
+                placeholder="Ít nhất 4 ký tự"
               />
+              {errors.username && (
+                <p className="text-xs text-red-600">{errors.username}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -74,10 +108,16 @@ export function AddUserModal({
                 type="email"
                 value={newUser.email}
                 onChange={(e) =>
-                  setNewUser((prev) => ({ ...prev, email: e.target.value }))
+                  handleChange("email", e.target.value, validators.validateEmail)
                 }
-                placeholder="Nhập địa chỉ email"
+                onBlur={(e) =>
+                  handleBlur("email", e.target.value, validators.validateEmail)
+                }
+                placeholder="vidu@email.com"
               />
+              {errors.email && (
+                <p className="text-xs text-red-600">{errors.email}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -88,12 +128,17 @@ export function AddUserModal({
                 type="tel"
                 value={newUser.phone}
                 onChange={(e) =>
-                  setNewUser((prev) => ({ ...prev, phone: e.target.value }))
+                  handleChange("phone", e.target.value, validators.validatePhone)
                 }
-                placeholder="Nhập số điện thoại"
+                onBlur={(e) =>
+                  handleBlur("phone", e.target.value, validators.validatePhone)
+                }
+                placeholder="10 chữ số, ví dụ: 0912345678"
               />
+              {errors.phone && (
+                <p className="text-xs text-red-600">{errors.phone}</p>
+              )}
             </div>
-
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Mật khẩu *
@@ -135,26 +180,31 @@ export function AddUserModal({
             </div>
           </div>
 
-          {/* Cột 2: Vai trò */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">
-              Vai trò (chỉ chọn 1)
+              Vai trò (chọn nhiều)
             </label>
-            <div className="space-y-3 p-3 border rounded-md bg-gray-50 h-fit">
+            <div className="space-y-3 p-3 border rounded-md bg-white-50 h-fit">
               {availableRoles.map((role) => (
                 <div key={role.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`add-${role.id}`}
-                    checked={newUser.selectedRoleId === role.id}
+                    checked={newUser.selectedRoleIds.includes(role.id)}
                     onCheckedChange={(checked: boolean) =>
                       onRoleChange(role.id, checked)
                     }
+                    disabled={role.id === userRoleId}
                   />
                   <label
                     htmlFor={`add-${role.id}`}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    className={`text-sm font-medium leading-none ${
+                      role.id === userRoleId
+                        ? "text-gray-500 cursor-not-allowed"
+                        : "peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    }`}
                   >
                     {role.name}
+                    {role.id === userRoleId && " (Mặc định)"}
                   </label>
                 </div>
               ))}

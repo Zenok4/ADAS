@@ -1,4 +1,3 @@
-// src/app/(admin)/admin/users-management/components/DeleteUserModal.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -27,10 +26,12 @@ export function DeleteUserModal({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
+        {/* =============== HEADER =============== */}
         <DialogHeader>
           <DialogTitle>Xác nhận xóa người dùng</DialogTitle>
         </DialogHeader>
 
+        {/* =============== BODY =============== */}
         {userToDelete && (
           <div className="py-4">
             <p className="text-gray-600 mb-4">
@@ -46,6 +47,7 @@ export function DeleteUserModal({
           </div>
         )}
 
+        {/* =============== FOOTER =============== */}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Hủy

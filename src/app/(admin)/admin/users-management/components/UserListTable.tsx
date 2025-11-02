@@ -1,4 +1,3 @@
-// src/app/(admin)/admin/users-management/components/UserListTable.tsx
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,12 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
 import { UserData } from "@/services/type/user.type";
+import { UserListSkeleton } from "./UserListSkeleton";
+import { PaginationComponent } from "./PaginationComponent";
 
 interface UserListTableProps {
   userList: UserData[];
   isLoading: boolean;
   onEditUser: (user: UserData) => void;
   onDeleteUser: (user: UserData) => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 export function UserListTable({
@@ -19,6 +23,9 @@ export function UserListTable({
   isLoading,
   onEditUser,
   onDeleteUser,
+  currentPage,
+  totalPages,
+  onPageChange,
 }: UserListTableProps) {
   return (
     <Card>
@@ -26,11 +33,9 @@ export function UserListTable({
         <CardTitle className="text-lg font-semibold">
           Danh sách người dùng
         </CardTitle>
-        <p className="text-sm text-gray-600">
-          Tất cả tài khoản trong hệ thống
-        </p>
+        <p className="text-sm text-gray-600">Tất cả tài khoản trong hệ thống</p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -57,11 +62,7 @@ export function UserListTable({
             </thead>
             <tbody>
               {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-500">
-                    Đang tải dữ liệu...
-                  </td>
-                </tr>
+                <UserListSkeleton rows={10} />
               ) : userList.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-8 text-gray-500">
@@ -141,6 +142,11 @@ export function UserListTable({
             </tbody>
           </table>
         </div>
+        <PaginationComponent
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
       </CardContent>
     </Card>
   );

@@ -24,18 +24,10 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { AuthService } from "@/services/authService";
 
 const HomePage = () => {
   const menu: MenuType[] = Object.values(MenuData);
   const router = useRouter();
-
-
-  console.log("Access Token:", process.env.NEXT_PUBLIC_BASE_URL);
-
-  console.log("User Data:", AuthService.me());
-
-  console.log("Menu Data:", menu);
 
   return (
     <div className="bg-[#0a2a43] min-h-screen">
@@ -99,7 +91,10 @@ const HomePage = () => {
                       defaultChecked
                       className="w-5 h-5"
                     />
-                    <label htmlFor="audio-mode" className="text-white cursor-pointer">
+                    <label
+                      htmlFor="audio-mode"
+                      className="text-white cursor-pointer"
+                    >
                       Chế độ dò âm (Bật)
                     </label>
                   </div>
@@ -136,7 +131,9 @@ const HomePage = () => {
                     <Camera className="h-8 w-8 text-[#36B0BB]" />
                     <div className="flex flex-col">
                       <p className="text-[#80d4ff] font-medium">Camera</p>
-                      <p className="text-[#80d4ff] text-sm">Cảnh báo trước: 200m</p>
+                      <p className="text-[#80d4ff] text-sm">
+                        Cảnh báo trước: 200m
+                      </p>
                     </div>
                   </div>
 
@@ -147,7 +144,9 @@ const HomePage = () => {
                   >
                     <Split className="h-8 w-8 text-[#36B0BB]" />
                     <div className="flex flex-col">
-                      <p className="text-[#80d4ff] font-medium">Hướng cảnh báo Camera</p>
+                      <p className="text-[#80d4ff] font-medium">
+                        Hướng cảnh báo Camera
+                      </p>
                       <p className="text-[#80d4ff] text-sm">Tất cả các hướng</p>
                     </div>
                   </div>
@@ -159,8 +158,12 @@ const HomePage = () => {
                   >
                     <Gauge className="h-8 w-8 text-[#36B0BB]" />
                     <div className="flex flex-col">
-                      <p className="text-[#80d4ff] font-medium">Camera giám sát tốc độ</p>
-                      <p className="text-[#80d4ff] text-sm">Cảnh báo trước: 400m</p>
+                      <p className="text-[#80d4ff] font-medium">
+                        Camera giám sát tốc độ
+                      </p>
+                      <p className="text-[#80d4ff] text-sm">
+                        Cảnh báo trước: 400m
+                      </p>
                     </div>
                   </div>
 
@@ -171,12 +174,14 @@ const HomePage = () => {
                   >
                     <Ban className="h-8 w-8 text-[#36B0BB]" />
                     <div className="flex flex-col">
-                      <p className="text-[#80d4ff] font-medium">Cấm vượt/Hết cấm vượt</p>
-                      <p className="text-[#80d4ff] text-sm">Cảnh báo trước: 100m</p>
+                      <p className="text-[#80d4ff] font-medium">
+                        Cấm vượt/Hết cấm vượt
+                      </p>
+                      <p className="text-[#80d4ff] text-sm">
+                        Cảnh báo trước: 100m
+                      </p>
                     </div>
                   </div>
-
-
 
                   {/* Biển tốc độ tối đa */}
                   <div
@@ -184,11 +189,17 @@ const HomePage = () => {
                     className="flex items-center gap-3 p-2 hover:bg-[#1a4060] rounded-lg transition-colors cursor-pointer"
                   >
                     <div className="h-8 w-8 rounded-full border-2 border-[#36B0BB] flex items-center justify-center">
-                      <span className="text-[#36B0BB] text-xs font-bold">60</span>
+                      <span className="text-[#36B0BB] text-xs font-bold">
+                        60
+                      </span>
                     </div>
                     <div className="flex flex-col">
-                      <p className="text-[#80d4ff] font-medium">Biển tốc độ tối đa</p>
-                      <p className="text-[#80d4ff] text-sm">Cảnh báo trước: 100m</p>
+                      <p className="text-[#80d4ff] font-medium">
+                        Biển tốc độ tối đa
+                      </p>
+                      <p className="text-[#80d4ff] text-sm">
+                        Cảnh báo trước: 100m
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -200,7 +211,9 @@ const HomePage = () => {
                   <div className="flex items-center gap-5 w-full">
                     <TriangleAlert className="h-10 w-10 text-[#36B0BB]" />
                     <div className="flex flex-col">
-                      <p className="text-lg text-white">Cảnh báo vật thể phía trước</p>
+                      <p className="text-lg text-white">
+                        Cảnh báo vật thể phía trước
+                      </p>
                       <p className="text-[#b0d8ff] text-sm">
                         Người đi bộ, xe máy, ô tô, động vật...
                       </p>

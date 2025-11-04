@@ -10,9 +10,22 @@ export const AuthService = {
 
   logout: () => api.post(ApiUrls.authen.logout),
 
-  me: () => api.get(ApiUrls.authen.me),
+  me: (access_token: string) =>
+    api.get(ApiUrls.authen.me, {
+      headers: { Authorization: `Bearer ${access_token}` },
+  }),
+
 
   refresh: () => api.post<{ access_token: string }>(ApiUrls.authen.refresh, {}),
 
   permission: () => api.get(ApiUrls.author.myPermissions),
+
+  registerWithUsername: (username: string, password: string) =>
+    api.post(ApiUrls.authen.registerWithUsername, { username, password }),
+
+  registerWithEmail: (email: string, password: string) =>
+    api.post(ApiUrls.authen.registerWithEmail, { email, password }),
+
+  registerWithPhone: (phone: string, password: string) =>
+    api.post(ApiUrls.authen.registerWithPhone, { phone, password }),
 };

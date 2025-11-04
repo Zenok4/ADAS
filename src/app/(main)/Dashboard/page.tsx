@@ -14,6 +14,8 @@ import {
 
 import FeatureCard from "./components/feature-card";
 import InfoCard from "./components/info-card";
+import { useSession } from "@/context/SessionContext";
+import { loadToken } from "@/lib/tokenStorage";
 
 export default function DashboardPage() {
   const [collapsed, setCollapsed] = useState(false);
@@ -29,6 +31,10 @@ export default function DashboardPage() {
   const [weather, setWeather] = useState("Đang tải...");
   const [temperature, setTemperature] = useState("...");
   const [time, setTime] = useState(new Date().toLocaleTimeString());
+
+  const token = loadToken();
+
+  console.log({token});
 
   // Lấy thời gian realtime
   useEffect(() => {

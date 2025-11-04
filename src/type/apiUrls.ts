@@ -1,3 +1,5 @@
+import { register } from "module";
+
 export const ApiUrls = {
   authen: {
     loginUsername: "/authen/login/username",
@@ -8,6 +10,11 @@ export const ApiUrls = {
     refresh: "/authen/refresh",
     logout: "/authen/logout",
     me: "/authen/me",
+
+    // register
+    registerWithUsername: "/authen/register/username",
+    registerWithEmail: "/authen/register/email",
+    registerWithPhone: "/authen/register/phone",
   },
   author: {
     myPermissions: "/author/permissions/list",

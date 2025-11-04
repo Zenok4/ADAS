@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import CameraLive from "@/app/(main)/components/CameraLive";
 import {
   Eye,
   AlertTriangle,
@@ -32,7 +33,7 @@ export default function DashboardPage() {
   const [location, setLocation] = useState("Đang lấy vị trí...");
   const [weather, setWeather] = useState("Đang tải...");
   const [temperature, setTemperature] = useState("...");
-  const [time, setTime] = useState(new Date().toLocaleTimeString());
+  const [time, setTime] = useState("--:--:--");
 
   // 🎥 Setup camera & AI buồn ngủ
   const videoRef = useRef<HTMLVideoElement>(null!);
@@ -45,9 +46,13 @@ export default function DashboardPage() {
 
   // Đồng hồ realtime
   useEffect(() => {
+    // Cập nhật ngay lần đầu khi client đã mount
+    setTime(new Date().toLocaleTimeString());
+
     const interval = setInterval(() => {
       setTime(new Date().toLocaleTimeString());
     }, 1000);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -60,7 +65,7 @@ export default function DashboardPage() {
           setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
 
           try {
-            const apiKey = "YOUR_API_KEY"; // 👉 thay bằng key thật
+            const apiKey = "YOUR_API_KEY"; // thay bằng key thật
             const res = await fetch(
               `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&lang=vi&appid=${apiKey}`
             );
@@ -73,9 +78,7 @@ export default function DashboardPage() {
             setTemperature("--");
           }
         },
-        () => {
-          setLocation("Không lấy được vị trí");
-        }
+        () => setLocation("Không lấy được vị trí")
       );
     }
   }, []);
@@ -234,13 +237,18 @@ export default function DashboardPage() {
               </div>
 
               {/* Camera sau (placeholder) */}
-              <div className="h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden">
-                <div className="flex items-center gap-2 text-blue-500 font-medium p-2 border-b">
+              <div className="h-120 flex flex-col rounded-xl shadow-md border overflow-hidden relative">
+                {/* Header */}
+                <div className="flex items-center gap-2 text-blue-500 font-medium p-2 border-b z-10 relative">
                   <Camera className="w-5 h-5" />
                   <span>Camera sau</span>
                 </div>
-                <div className="flex-1 flex items-center justify-center bg-gray-50">
-                  <span className="text-gray-400 text-sm">API Camera sau</span>
+                {/* Video live */}
+                <div className="absolute top-10 left-0 w-full bottom-0">
+                  <CameraLive
+                    enabled={signDetect}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
             </div>

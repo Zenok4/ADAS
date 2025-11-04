@@ -1,5 +1,15 @@
 import api from "@/lib/api";
 import { ApiUrls } from "@/type/apiUrls";
+import { List } from "lucide-react";
+
+export interface ListRolesParams {
+  page?: number;
+  limit?: number;
+  name?: string;
+  discription?: string;
+  is_active?: boolean | null;
+  list_permissions?: boolean;
+}
 
 export const AuthService = {
   loginWithUsername: (username: string, password: string) =>
@@ -17,9 +27,26 @@ export const AuthService = {
   permission: () => api.get(ApiUrls.author.permissions.list),
   
     // ===== Roles =====
-  listRoles: () => api.get(ApiUrls.author.roles.list),
+  // listRoles: (includePermissions: boolean = false) =>
+  //   api.get(ApiUrls.author.roles.list, {
+  //     data:{list_permissions: includePermissions},
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //   }),
+    ListRoles: (params: ListRolesParams = {}) =>
+      api.get(ApiUrls.author.roles.list, {
+        params: params,
+      }),
 
-  getRole: (id: number) => api.get(ApiUrls.author.roles.detail(id)),
+//  getRole: (id: number) => api.get(ApiUrls.author.roles.detail(id)),
+    getRole: (id: number, includePermissions: boolean = false) =>
+      api.get(ApiUrls.author.roles.detail(id), {
+        params:{
+          list_permissions: includePermissions 
+        }
+
+      }),
 
   createRole: (data: { name: string; description?: string }) =>
     api.post(ApiUrls.author.roles.create, data),
@@ -31,6 +58,9 @@ export const AuthService = {
 
   // ===== Permissions =====
   listPermissions: () => api.get(ApiUrls.author.permissions.list),
+
+  rolePermissions: (roleId: number) =>
+    api.get(ApiUrls.author.permissions.rolePermissions(roleId)),
 
   getPermission: (id: number) =>
     api.get(ApiUrls.author.permissions.detail(id)),
@@ -44,9 +74,14 @@ export const AuthService = {
   deletePermission: (id: number) =>
     api.delete(ApiUrls.author.permissions.delete(id)),
 
-  // ===== Mapping =====
-  assignPermissionToRole: (roleId: number, permId: number) =>
-    api.post(ApiUrls.author.permissions.assignToRole(roleId, permId)),
+  assignPermissionToRole: (roleId: number, permIds: number[]) =>
+    api.post(ApiUrls.author.permissions.assignToRole(roleId), { perm_ids: permIds },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  ),
 
   removePermissionFromRole: (roleId: number, permId: number) =>
     api.delete(ApiUrls.author.permissions.removeFromRole(roleId, permId)),

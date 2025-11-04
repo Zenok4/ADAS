@@ -17,9 +17,8 @@ export const useCamera = (videoRef: React.RefObject<HTMLVideoElement>) => {
 
         if (preferred === "ivcam") {
           selectedCam =
-            videoDevices.find((d) =>
-              d.label.toLowerCase().includes("ivcam")
-            ) || videoDevices[0];
+            videoDevices.find((d) => d.label.toLowerCase().includes("ivcam")) ||
+            videoDevices[0];
         } else {
           selectedCam =
             videoDevices.find(
@@ -28,7 +27,9 @@ export const useCamera = (videoRef: React.RefObject<HTMLVideoElement>) => {
                 d.label.toLowerCase().includes("webcam") ||
                 d.label.toLowerCase().includes("user facing")
             ) ||
-            videoDevices.find((d) => !d.label.toLowerCase().includes("ivcam")) ||
+            videoDevices.find(
+              (d) => !d.label.toLowerCase().includes("ivcam")
+            ) ||
             videoDevices[0];
         }
 

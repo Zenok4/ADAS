@@ -57,7 +57,6 @@ export function useDrowsy({
     return () => clearInterval(timer);
   }, [enabled, intervalMs, captureAndSend]);
 
-  console.log("Drowsy result:", result);
 
   return { result, busy };
 }

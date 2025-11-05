@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import CameraLive from "@/app/(main)/components/CameraLive";
 import {
   Eye,
   AlertTriangle,
@@ -25,43 +26,42 @@ export default function Dashboard() {
   const [location, setLocation] = useState("Đang lấy vị trí...");
   const [weather, setWeather] = useState("Đang tải...");
   const [temperature, setTemperature] = useState("...");
-  const [time, setTime] = useState(new Date().toLocaleTimeString());
+  const [time, setTime] = useState("--:--:--");
 
   // Lấy thời gian realtime
   useEffect(() => {
+  // Cập nhật ngay lần đầu khi client đã mount
+  setTime(new Date().toLocaleTimeString());
+
     const interval = setInterval(() => {
       setTime(new Date().toLocaleTimeString());
     }, 1000);
+
     return () => clearInterval(interval);
   }, []);
 
-  // Lấy vị trí từ trình duyệt
+
+  // Lấy vị trí từ trình duyệt và thời tiết
   useEffect(() => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const { latitude, longitude } = pos.coords;
-          setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
 
-          // Gọi API thời tiết (OpenWeatherMap)
-          try {
-            const apiKey = "YOUR_API_KEY"; // 👉 thay bằng key thật
-            const res = await fetch(
-              `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&lang=vi&appid=${apiKey}`
-            );
-            const data = await res.json();
-            setWeather(data.weather[0].description);
-            setTemperature(`${data.main.temp}°C`);
-          } catch (err) {
-            console.error(err);
-            setWeather("Lỗi tải thời tiết");
-            setTemperature("--");
-          }
-        },
-        () => {
-          setLocation("Không lấy được vị trí");
+        try {
+          const apiKey = "YOUR_API_KEY"; // thay bằng key thật
+          const res = await fetch(
+            `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&lang=vi&appid=${apiKey}`
+          );
+          const data = await res.json();
+          setWeather(data.weather[0].description);
+          setTemperature(`${data.main.temp}°C`);
+        } catch (err) {
+          console.error(err);
+          setWeather("Lỗi tải thời tiết");
+          setTemperature("--");
         }
-      );
+      }, () => setLocation("Không lấy được vị trí"));
     }
   }, []);
 
@@ -77,28 +77,28 @@ export default function Dashboard() {
             title="Cảnh báo buồn ngủ"
             status={sleepAlert ? "Đang bật" : "Đang tắt"}
             toggle={sleepAlert}
-            onToggle={() => setSleepAlert((prev) => !prev)}
+            onToggle={() => setSleepAlert(prev => !prev)}
           />
           <FeatureCard
             icon={AlertTriangle}
             title="Phát hiện vật cản"
             status={objectDetect ? "Đang bật" : "Đang tắt"}
             toggle={objectDetect}
-            onToggle={() => setObjectDetect((prev) => !prev)}
+            onToggle={() => setObjectDetect(prev => !prev)}
           />
           <FeatureCard
             icon={TrafficCone}
             title="Nhận diện biển báo"
             status={signDetect ? "Đang bật" : "Đang tắt"}
             toggle={signDetect}
-            onToggle={() => setSignDetect((prev) => !prev)}
+            onToggle={() => setSignDetect(prev => !prev)}
           />
           <FeatureCard
             icon={Route}
             title="Giám sát làn đường"
             status={laneMonitor ? "Đang bật" : "Đang tắt"}
             toggle={laneMonitor}
-            onToggle={() => setLaneMonitor((prev) => !prev)}
+            onToggle={() => setLaneMonitor(prev => !prev)}
           />
         </div>
 
@@ -122,13 +122,16 @@ export default function Dashboard() {
           </div>
 
           {/* Camera sau */}
-          <div className="h-60 flex flex-col rounded-xl shadow-md border overflow-hidden">
-            <div className="flex items-center gap-2 text-blue-500 font-medium p-2 border-b">
+          <div className="h-120 flex flex-col rounded-xl shadow-md border overflow-hidden relative">
+            {/* Header */}
+            <div className="flex items-center gap-2 text-blue-500 font-medium p-2 border-b z-10 relative">
               <Camera className="w-5 h-5" />
               <span>Camera sau</span>
             </div>
-            <div className="flex-1 flex items-center justify-center bg-gray-50">
-              <span className="text-gray-400 text-sm">API Camera sau</span>
+
+            {/* Video live */}
+            <div className="absolute top-10 left-0 w-full bottom-0">
+              <CameraLive enabled={signDetect} className="w-full h-full object-cover" />
             </div>
           </div>
         </div>

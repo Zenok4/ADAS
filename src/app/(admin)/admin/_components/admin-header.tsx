@@ -18,7 +18,7 @@ export const AdminHeader = () => {
         <Logo />
         <div>
           <p className="text-xl font-bold uppercase">Admin Dashboard</p>
-          <p className="text-xs">Hệ thống hỗ trợ lái xe tiên tiến</p>
+          <p className="text-xs">Hệ thống hỗ trợ lái xe nâng cao</p>
         </div>
       </div>
 

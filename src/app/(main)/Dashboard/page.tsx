@@ -157,7 +157,7 @@ export default function DashboardPage() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <div className="flex flex-1">
         {/* --- Cột trái: Chức năng --- */}
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 space-y-6 m-6">
           <h2 className="text-lg font-bold">Chức năng</h2>
 
           <div className="grid grid-cols-2 gap-4">

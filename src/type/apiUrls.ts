@@ -38,8 +38,8 @@ export const ApiUrls = {
       delete: (id: number | string) => `/author/permissions/${id}/delete`,
       rolePermissions: (roleId: number | string) =>
         `/author/roles/${roleId}/permissions/list`,
-      assignToRole: (roleId: number | string, permId: number | string) =>
-        `/author/roles/${roleId}/permissions/${permId}/assign`,
+      assignToRole: (roleId: number | string) =>
+        `/author/roles/${roleId}/permissions/assign`,
       removeFromRole: (roleId: number | string, permId: number | string) =>
         `/author/roles/${roleId}/permissions/${permId}/remove`,
     },

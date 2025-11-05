@@ -11,84 +11,194 @@ import {
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useNotifyDialog } from "@/hooks/useNotifyDialog";
+//import { useNotifyDialog } from "@/hooks/useNotifyDialog";
 import { NotifyType } from "@/type/notify";
 
-interface RoleEditModalProps {
-  open: boolean; // điều khiển modal hiển thị
-  role?: {
-    id?: number;
-    name?: string;
-    description?: string;
-    status?: string;
-    permissions?: { api: string; desc: string; enabled: boolean }[];
-  } | null;
-  onClose: () => void;
-}
 
-const defaultPermissions = [
-  { api: "/api/users", desc: "Quản lý người dùng", enabled: true },
-  { api: "/api/dashboard", desc: "Xem tổng quan hệ thống", enabled: true },
-  { api: "/api/alerts", desc: "Quản lý cảnh báo", enabled: false },
-  { api: "/api/vehicles", desc: "Quản lý phương tiện", enabled: true },
-  { api: "/api/settings", desc: "Cài đặt hệ thống", enabled: true },
-];
-
-export default function RoleEditModal({
-  open,
-  role,
-  onClose,
-}: RoleEditModalProps) {
-  const [permissions, setPermissions] = useState(defaultPermissions);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [status, setStatus] = useState("Kích hoạt");
-
-  useEffect(() => {
-    setPermissions(role?.permissions ?? defaultPermissions);
-    if (role) {
-      setName(role.name || "");
-      setDescription(role.description || "");
-      setStatus(role.status || "Kích hoạt");
-    }else {
-      setName("");
-      setDescription("");
-      setStatus("Kích hoạt");
-    }
-  }, [role, open]);
-
-  const { showNotify } = useNotifyDialog();
-
-  const handleSave = async () => {
-  try {
-    const payload = { name, description, status };
-
-    if (role?.id) {
-      await AuthService.updateRole(role.id, payload);
-      showNotify({
-        type: NotifyType.Success,
-        title: "Thành công",
-        message: "Cập nhật vai trò thành công!"
-      });
-    } else {
-      await AuthService.createRole(payload);
-      showNotify({
-        type: NotifyType.Success,
-        title: "Thành công",
-        message: "Thêm vai trò thành công!"
-      });
-    }
-
-    onClose();
-  } catch (error) {
-    console.error("Lưu vai trò thất bại:", error);
-    showNotify({
-      type: NotifyType.Error,
-      title: "Lỗi",
-      message: "Lưu vai trò thất bại!"
-    });
+  interface Permission{
+    id: number;
+    code: string;
+    description: string;
+    enabled: boolean;
   }
-};
+  interface Role{
+    id: number;
+    name: string;
+    description: string;
+    is_active: boolean;
+    permissions?: {id: number} [];
+  }
+  interface RoleEditModalProps {
+    open: boolean; // điều khiển modal hiển thị
+    role?: Role | null;
+    onClose: () => void;
+    existingRoles?: Role[];
+    showNotify: (args : any) => void;
+  }
+
+  export default function RoleEditModal({
+    open,
+    role,
+    onClose,
+    existingRoles,
+    showNotify
+  }: RoleEditModalProps) {
+    const [allPermissions, setAllPermissions] = useState<Omit<Permission, 'enabled'>[]>([]);
+    const [displayPermissions, setDisplayPermissions] = useState<Permission[]>([]);
+
+   //const [ownedPermIds, setOwnedPermIds] = useState<Set<number>>(new Set());
+
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [isActive, setIsActive] = useState(true);
+
+    const [isLoading, setIsLoading] = useState(false);
+
+    //const { showNotify } = useNotifyDialog();
+
+    useEffect(() => {
+      const fetchData = async () => {
+        setIsLoading(true);
+        try {
+          const allPermRes = await AuthService.listPermissions();
+          const allPerms = allPermRes.data.permissions || [];
+          let ownedIds = new Set<number>();
+          //setAllPermissions(allPerms);
+
+          if (role && role.id) {
+            const roleDetailsRes = await AuthService.getRole(role.id, true);
+            console.log(" Dữ liệu chi tiết vai trò:", roleDetailsRes.data);
+            const detailedRole= roleDetailsRes.data.role;
+
+            setName(detailedRole.name || "");
+            setDescription(detailedRole.description || "");
+            setIsActive(detailedRole.is_active !== undefined ? detailedRole.is_active : true);
+
+            const ownedPerms = detailedRole.permissions || [];
+            ownedIds = new Set(ownedPerms.map((p: any) => p.id));
+          //  setOwnedPermIds(ownedIds);
+          } else {
+            setName("");
+            setDescription("");
+            setIsActive(true);
+          //  setOwnedPermIds(new Set());
+          }
+
+            const mergedPermissions = allPerms.map((perm: any) => ({
+              ...perm,
+              enabled: ownedIds.has(perm.id),
+            }));
+
+
+            setDisplayPermissions(mergedPermissions);
+          
+        } catch (error) {
+          console.error("Lỗi khi tải dữ liệu quyền:", error);
+          showNotify({
+            type: NotifyType.Error,
+            title: "Lỗi",
+            message: "Không tải được dữ liệu quyền!",
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      if (open) {
+        fetchData();
+      }
+    }, [role, open, showNotify]);
+
+
+    const handleSave = async () => {
+      
+        const trimmedName = name.trim();
+        if (!trimmedName) {
+          showNotify({
+            type: NotifyType.Warning,
+            title: "Cảnh báo",
+            message: "Tên vai trò không được để trống!",
+          });
+          return;
+        }
+        if (!role?.id && existingRoles?.some(r => r.name === trimmedName)) {
+          showNotify({
+            type: NotifyType.Error,
+            title: "ên vai trò đã tồn tại",
+            message: `Vai trò với tên "${trimmedName}" đã tồn tại. Vui lòng chọn tên khác.`,
+          });
+          return;
+        }
+        const selectedPermsissionsIds = displayPermissions
+          .filter((perm) => perm.enabled)
+          .map((perm) => perm.id);
+
+        if(selectedPermsissionsIds.length === 0){
+          showNotify({
+            type: NotifyType.Warning,
+            title: "Cảnh báo",
+            message: "Vui lòng chọn ít nhất một quyền cho vai trò!",
+          });
+          return;
+        }
+      try {
+        const payload = { name: trimmedName, description, is_active: isActive };
+        if (role?.id) {
+          await AuthService.updateRole(role.id, payload);
+          await AuthService.assignPermissionToRole(role.id, selectedPermsissionsIds);
+          showNotify({
+            type: NotifyType.Success,
+            title: "Thành công",
+            message: "Cập nhật vai trò thành công!",
+          });
+        }
+        else {
+          const response = await AuthService.createRole(payload);
+          const newRoleId = response.data.role;
+          if (newRoleId && newRoleId.id) {
+            await AuthService.assignPermissionToRole(newRoleId.id, selectedPermsissionsIds);
+          }
+          showNotify({
+            type: NotifyType.Success,
+            title: "Thành công",
+            message: "Thêm vai trò thành công!",
+          });
+        }
+
+        // const selectedPermsissionsIds = displayPermissions
+        //   .filter((perm) => perm.enabled)
+        //   .map((perm) => perm.id);
+        // const payload = { name, description, is_active: isActive };
+        // if (role?.id) {
+        //   await AuthService.updateRole(role.id, payload);
+        //   await AuthService.assignPermissionToRole(role.id, selectedPermsissionsIds);
+        //   showNotify({
+        //     type: NotifyType.Success,
+        //     title: "Thành công",
+        //     message: "Cập nhật vai trò thành công!",
+        //   });
+        // } else {
+        //   const response = await AuthService.createRole(payload);
+        //   const newRoleId = response.data.role;
+        //   if (newRoleId && newRoleId.id) {
+        //     await AuthService.assignPermissionToRole(newRoleId.id, selectedPermsissionsIds);
+        //   }
+        //   showNotify({
+        //     type: NotifyType.Success,
+        //     title: "Thành công",
+        //     message: "Thêm vai trò thành công!",
+        //   });
+        // }
+        onClose();
+      } catch (error) {
+        console.error("Lưu vai trò thất bại:", error);
+        showNotify({
+          type: NotifyType.Error,
+          title: "Lỗi",
+          message: "Lưu vai trò thất bại!",
+        });
+      }
+    };
+  
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -143,20 +253,20 @@ export default function RoleEditModal({
                   Trạng thái:
                 </label>
                 <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
+                  value={isActive ? "true" : "false"}
+                  onChange={(e) => setIsActive(e.target.value === "true")}
                 //  defaultValue={role?.status || "Kích hoạt"}
                   className="w-32 px-2 py-1 border rounded text-gray-700
                              transition-colors"
                 >
                   <option
-                    value="Kích hoạt"
+                    value="true"
                     className="hover:bg-[#006DF0] hover:text-white"
                   >
                     Kích hoạt
                   </option>
                   <option
-                    value="Tạm ngưng"
+                    value="false"
                     className="hover:bg-[#006DF0] hover:text-white"
                   >
                     Tạm ngưng
@@ -180,16 +290,31 @@ export default function RoleEditModal({
                 </tr>
               </thead>
               <tbody>
-                {permissions.map((perm, idx) => (
-                  <tr key={perm.api} className="border-b">
-                    <td className="px-4 py-2">{perm.api}</td>
-                    <td className="px-4 py-2">{perm.desc}</td>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-2 text-center">
+                      Đang tải dữ liệu...
+                    </td>
+                  </tr>
+                ) : displayPermissions.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-2 text-center">
+                      Không có quyền nào để hiển thị.
+                    </td>
+                  </tr>
+                ) : (
+
+                
+                displayPermissions.map((perm, idx) => (
+                  <tr key={perm.id} className="border-b">
+                    <td className="px-4 py-2">{perm.code}</td>
+                    <td className="px-4 py-2">{perm.description}</td>
                     <td className="px-4 py-2">
                       <input
                         type="checkbox"
                         checked={perm.enabled}
                         onChange={() =>
-                          setPermissions((prev) =>
+                          setDisplayPermissions((prev) =>
                             prev.map((p, i) =>
                               i === idx ? { ...p, enabled: !p.enabled } : p
                             )
@@ -199,7 +324,8 @@ export default function RoleEditModal({
                       />
                     </td>
                   </tr>
-                ))}
+                ))
+              )}
               </tbody>
             </table>
           </CardContent>

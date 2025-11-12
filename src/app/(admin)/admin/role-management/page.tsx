@@ -11,10 +11,14 @@ import { useNotifyDialog } from "@/hooks/useNotifyDialog";
 import NotifyDialog from "@/components/NotifyDialog";
 import { NotifyType } from "@/type/notify";
 import { ListRolesParams } from "@/services/authService";
+import { useSession } from "@/context/SessionContext";
 
 
 
 export default function RolesPage() {
+
+//  const {user} = useSession();
+
   const [selectedRole, setSelectedRole] = useState<any>(undefined);
   const [modalType, setModalType] = useState<"edit" | null>(null);
   const [roles, setRoles] = useState<any[]>([]);
@@ -29,6 +33,9 @@ export default function RolesPage() {
     is_active: null as boolean | null,
   })
   const [nameInput, setNameInput] = useState("");
+
+  // console.log("Current User in RolesPage:", user);
+
   useEffect(() => { 
     loadRoles();
   }, [pagination.page,filters]);

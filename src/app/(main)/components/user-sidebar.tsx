@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { sidebarItems } from "@/type/sidebar-user";
 
 interface UserSidebarProps {
@@ -18,6 +18,7 @@ export const UserSidebar = ({
   onToggle,
 }: UserSidebarProps) => {
   const router = useRouter();
+  const pathName = usePathname();
   return (
     <div
       className={cn(
@@ -53,11 +54,12 @@ export const UserSidebar = ({
                 key={item.href}
                 variant="ghost"
                 className={cn(
-                  "flex w-full gap-3 h-10 justify-start hover:bg-[#006DF0] hover:text-white"
+                  "flex w-full gap-3 h-10 justify-start hover:bg-blue-700 hover:text-white",
+                  pathName === item.href && "bg-blue-600 text-white",
                 )}
                 onClick={() => router.push(item.href)}
               >
-                <div className="flex">
+                <div className="flex items-center">
                   <item.icon className="h-4 w-4 flex-shrink-0" />
                   <span
                     className={cn(

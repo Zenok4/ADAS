@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { UserSidebar } from "./components/user-sidebar"
-import { UserHeader } from "./components/header"
+import { UserHeader } from "./components/user-header"
 
 interface MainLayoutProps {
   children: React.ReactNode

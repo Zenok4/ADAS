@@ -26,7 +26,11 @@ export const AuthService = {
 
   logout: () => api.post(ApiUrls.authen.logout),
 
-  me: () => api.get(ApiUrls.authen.me),
+  me: (access_token: string) =>
+    api.get(ApiUrls.authen.me, {
+      headers: { Authorization: `Bearer ${access_token}` },
+  }),
+
 
   refresh: () => api.post<{ access_token: string }>(ApiUrls.authen.refresh, {}),
 

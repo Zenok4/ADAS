@@ -1,6 +1,6 @@
 import CryptoJS from "crypto-js";
 
-const SECRET_KEY = process.env.SECRET_KEY || "";
+const SECRET_KEY = process.env.NEXT_PUBLIC_SECRET_KEY || "";
 
 // ================= Encrypt / Decrypt =================
 export const encryptToken = (token: string): string => {
@@ -21,6 +21,7 @@ export const decryptToken = (cipher: string): string | null => {
 export const saveToken = (token: string): void => {
   const encrypted = encryptToken(token);
   localStorage.setItem("access_token", encrypted);
+  console.log("Token:", encrypted);
 };
 
 export const loadToken = (): string | null => {

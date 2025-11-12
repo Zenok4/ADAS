@@ -5,42 +5,102 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { AuthService } from "@/services/authService";
+import NotifyDialog from "@/components/NotifyDialog";
+import FullScreenLoader from "@/helper/loader";
+import { useNotifyDialog } from "@/hooks/useNotifyDialog";
+import { NotifyType } from "@/type/notify";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const notifyDialog = useNotifyDialog();
 
   // === State ===
-  const [emailOrPhone, setEmailOrPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // === Deconstruct dialog ====
+  const {
+    open: open,
+    type: type,
+    title,
+    message,
+    primaryActionText,
+    showNotify,
+    hideNotify,
+    handlePrimaryAction,
+  } = notifyDialog;
+
   // === Handler: toggle visibility ===
-  const handleTogglePassword = () => setShowPassword(prev => !prev);
-  const handleToggleConfirmPassword = () => setShowConfirmPassword(prev => !prev);
+  const handleTogglePassword = () => setShowPassword((prev) => !prev);
+  const handleToggleConfirmPassword = () =>
+    setShowConfirmPassword((prev) => !prev);
 
   // === Handler: submit form ===
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
-      alert("Mật khẩu xác nhận không khớp.");
+    if (!username) {
+      await showNotify({
+        message: "Vui lòng nhập tên đăng nhập.",
+        type: NotifyType.Warning,
+        title: "Thiếu trường cần thiết",
+      });
       return;
     }
 
-    // TODO: Gọi API đăng ký tại đây
-    console.log({
-      emailOrPhone,
-      username,
-      password,
-      confirmPassword,
+    if (!password) {
+      await showNotify({
+        message: "Vui lòng nhập mật khẩu.",
+        type: NotifyType.Warning,
+        title: "Thiếu trường cần thiết",
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      await showNotify({
+        message: "Mật khẩu xác nhận không khớp.",
+        type: NotifyType.Warning,
+        title: "Lỗi xác nhận mật khẩu",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    const res = await AuthService.registerWithUsername(username, password);
+
+    if(res != null && res?.data.success === false){
+      setIsLoading(false);
+      await showNotify({
+        message: "Đăng ký không thành công. Hãy thử lại sau.",
+        type: NotifyType.Error,
+        title: "Lỗi Đăng Ký",
+      });
+      return;
+    }
+
+    await showNotify({
+      message: "Đăng ký thành công!",
+      type: NotifyType.Success,
+      title: "Thành Công",
+      primaryActionText: "Đăng nhập ngay!",
+      onPrimaryAction: () => {
+        router.push("/login/username");
+      },
     });
 
+    setIsLoading(false);
+
     // Giả sử đăng ký thành công
-    router.push("/login");
   };
 
   return (
@@ -69,16 +129,30 @@ export default function RegisterPage() {
                 <strong>Đăng ký</strong>
               </h3>
 
-              {/* Email or Phone */}
+              {/* Email */}
               <div>
                 <label className="block text-sm text-gray-600 mb-1">
-                  Email hoặc Số điện thoại
+                  Email
                 </label>
                 <input
                   type="text"
                   placeholder="Nhập email hoặc số điện thoại"
-                  value={emailOrPhone}
-                  onChange={(e) => setEmailOrPhone(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Số điện thoại */}
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Số điện thoại
+                </label>
+                <input
+                  type="text"
+                  placeholder="Nhập email hoặc số điện thoại"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -138,7 +212,11 @@ export default function RegisterPage() {
                     onClick={handleToggleConfirmPassword}
                     className="absolute inset-y-0 right-3 flex items-center text-gray-500"
                   >
-                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {showConfirmPassword ? (
+                      <EyeOff size={20} />
+                    ) : (
+                      <Eye size={20} />
+                    )}
                   </button>
                 </div>
               </div>
@@ -155,7 +233,7 @@ export default function RegisterPage() {
               <p className="mt-4 text-center text-sm text-gray-600">
                 Đã có tài khoản?{" "}
                 <Link
-                  href="/login"
+                  href="/login/username"
                   className="text-blue-500 font-medium hover:underline"
                 >
                   Đăng nhập ngay
@@ -165,6 +243,18 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
+      <NotifyDialog
+        open={open}
+        onClose={hideNotify}
+        type={type}
+        title={title}
+        message={message}
+        primaryActionText={primaryActionText}
+        onPrimaryAction={handlePrimaryAction}
+      />
+
+      <FullScreenLoader show={isLoading} message="Đang đăng nhập..." />
     </div>
   );
 }

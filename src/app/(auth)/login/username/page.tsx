@@ -5,29 +5,87 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "@/context/SessionContext";
+import { useNotifyDialog } from "@/hooks/useNotifyDialog";
+import NotifyDialog from "@/components/NotifyDialog";
+import { NotifyType } from "@/type/notify";
+import FullScreenLoader from "@/helper/loader";
+import { HttpCode } from "@/type/http-codes";
 
-export default function LoginPage() {
+const LoginWithUserNamePage = () => {
+  const { loginWithUsername } = useSession();
+  const notifyDialog = useNotifyDialog();
   const router = useRouter();
 
   // === State ===
-  const [emailOrPhone, setEmailOrPhone] = useState("");
+  const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // === Deconstruct dialog ====
+  const {
+    open: open,
+    type: type,
+    title,
+    message,
+    primaryActionText,
+    showNotify,
+    hideNotify,
+    handlePrimaryAction,
+  } = notifyDialog;
 
   // === Handler: submit login form ===
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // TODO: Gọi API login tại đây
-    console.log({
-      emailOrPhone,
-      password,
-      rememberMe,
-    });
+    if (!userName) {
+      await showNotify({
+        message: "Vui lòng nhập tên đăng nhập.",
+        type: NotifyType.Warning,
+        title: "Thiếu trường cần thiết",
+      });
+      return;
+    }
 
-    // Giả sử đăng nhập thành công
-    router.push("/dashboard");
+    if (!password) {
+      await showNotify({
+        message: "Vui lòng nhập mật khẩu.",
+        type: NotifyType.Warning,
+        title: "Thiếu trường cần thiết",
+      });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const res:any = await loginWithUsername(userName, password);
+
+      // Handle unauthorized
+      if(res != null && res?.code === HttpCode.unauthorized){
+        await showNotify({
+          message: "Tên đăng nhập hoặc mật khẩu không đúng.",
+          type: NotifyType.Error,
+          title: "Lỗi Đăng Nhập",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Handle other errors
+      if (!res) throw new Error;
+
+      // On success, redirect to homepage
+      router.push("/");
+    } catch (err) {
+      await showNotify({
+        message: "Đã có lỗi xảy ra, vui lòng thử lại sau.",
+        type: NotifyType.Error,
+        title: "Lỗi Đăng Nhập",
+      });
+    }
+    setIsLoading(false);
   };
 
   return (
@@ -58,25 +116,33 @@ export default function LoginPage() {
 
               {/* Email / Phone */}
               <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  Email hoặc Số điện thoại
+                <label
+                  htmlFor="username"
+                  className="block text-sm text-gray-600 mb-1"
+                >
+                  Tên Đăng Nhập
                 </label>
                 <input
+                  id="username"
                   type="text"
                   placeholder="Nhập email hoặc số điện thoại"
-                  value={emailOrPhone}
-                  onChange={(e) => setEmailOrPhone(e.target.value)}
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               {/* Password */}
               <div>
-                <label className="block text-sm text-gray-600 mb-1">
+                <label
+                  htmlFor="password"
+                  className="block text-sm text-gray-600 mb-1"
+                >
                   Mật khẩu
                 </label>
                 <div className="relative">
                   <input
+                    id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Nhập mật khẩu"
                     value={password}
@@ -86,7 +152,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 cursor-pointer"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -115,7 +181,7 @@ export default function LoginPage() {
               {/* Submit */}
               <Button
                 type="submit"
-                className="w-full py-5 font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+                className="w-full py-5 font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer"
               >
                 Đăng nhập
               </Button>
@@ -123,7 +189,10 @@ export default function LoginPage() {
               {/* Register */}
               <p className="mt-4 text-center text-sm text-gray-600">
                 Chưa có tài khoản?{" "}
-                <Link href="/register" className="text-blue-500 font-medium hover:underline">
+                <Link
+                  href="/register"
+                  className="text-blue-500 font-medium hover:underline"
+                >
                   Đăng ký ngay
                 </Link>
               </p>
@@ -131,6 +200,20 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      <NotifyDialog
+        open={open}
+        onClose={hideNotify}
+        type={type}
+        title={title}
+        message={message}
+        primaryActionText={primaryActionText}
+        onPrimaryAction={handlePrimaryAction}
+      />
+
+      <FullScreenLoader show={isLoading} message="Đang đăng nhập..." />
     </div>
   );
-}
+};
+
+export default LoginWithUserNamePage;

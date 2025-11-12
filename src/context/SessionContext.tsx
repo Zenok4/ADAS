@@ -11,10 +11,17 @@ type User = {
   // thêm các field khác nếu cần
 };
 
+type ReponseData<T> = {
+  data: T[];
+  message: string;
+  code: number;
+};
+
 type SessionContextType = {
   user: User | null;
   loading: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
+  loginWithUsername: (username: string, password: string) => Promise<ReponseData<any> | boolean>;
+  loginWithEmail: (username: string, password: string, otp_code?: string) => Promise<ReponseData<any> | boolean>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
 };
@@ -33,16 +40,33 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
       return;
     }
 
-    AuthService.me()
+    AuthService.me(token)
       .then((res) => setUser(res.data))
       .catch(() => clearToken())
       .finally(() => setLoading(false));
   }, []);
 
   // ================== Hàm login ==================
-  const login = async (username: string, password: string) => {
+  const loginWithUsername = async (username: string, password: string) => {
     try {
       const res = await AuthService.loginWithUsername(username, password);
+      console.log("res", res);
+      const { access_token, user } = res.data.data;
+
+      console.log("user", user);
+
+      saveToken(access_token);
+      setUser(user);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  
+  const loginWithEmail = async (username: string, password: string, otp_code?: string) => {
+    try {
+      const res = await AuthService.loginWithEmail(username, password, otp_code);
       const { access_token, user } = res.data;
 
       saveToken(access_token);
@@ -67,7 +91,12 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
   // ================== Refresh session ==================
   const refreshSession = async () => {
     try {
-      const res = await AuthService.me();
+      const token = loadToken();
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      const res = await AuthService.me(token);
       setUser(res.data);
     } catch {
       clearToken();
@@ -77,7 +106,7 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
 
   return (
     <SessionContext.Provider
-      value={{ user, loading, login, logout, refreshSession }}
+      value={{ user, loading, loginWithUsername, loginWithEmail, logout, refreshSession }}
     >
       {children}
     </SessionContext.Provider>

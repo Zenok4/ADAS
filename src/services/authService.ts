@@ -29,6 +29,15 @@ export const AuthService = {
   refresh: () => api.post<{ access_token: string }>(ApiUrls.authen.refresh, {}),
 
   permission: () => api.get(ApiUrls.author.permissions.list),
+
+  registerWithUsername: (username: string, password: string) =>
+    api.post(ApiUrls.authen.registerWithUsername, { username, password }),
+
+  registerWithEmail: (email: string, password: string) =>
+    api.post(ApiUrls.authen.registerWithEmail, { email, password }),
+
+  registerWithPhone: (phone: string, password: string) =>
+    api.post(ApiUrls.authen.registerWithPhone, { phone, password }),
   
     // ===== Roles =====
   // listRoles: (includePermissions: boolean = false) =>

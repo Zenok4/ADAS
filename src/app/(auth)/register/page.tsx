@@ -254,7 +254,7 @@ export default function RegisterPage() {
         onPrimaryAction={handlePrimaryAction}
       />
 
-      <FullScreenLoader show={isLoading} message="Đang đăng nhập..." />
+      <FullScreenLoader show={isLoading} message="Đang đăng ký..." />
     </div>
   );
 }

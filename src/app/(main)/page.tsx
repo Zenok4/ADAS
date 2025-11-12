@@ -24,10 +24,16 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "@/context/SessionContext";
 
 const HomePage = () => {
   const menu: MenuType[] = Object.values(MenuData);
   const router = useRouter();
+  const {user, loading} = useSession();
+
+  if(!loading && user){
+    console.log("user home page", user);
+  }
 
   return (
     <div className="bg-[#0a2a43] min-h-screen">

@@ -51,7 +51,7 @@ import { NotifyType } from "@/type/notify";
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [isActive, setIsActive] = useState(true);
-
+    const [level, setLevel] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
 
     //const { showNotify } = useNotifyDialog();
@@ -73,7 +73,7 @@ import { NotifyType } from "@/type/notify";
             setName(detailedRole.name || "");
             setDescription(detailedRole.description || "");
             setIsActive(detailedRole.is_active !== undefined ? detailedRole.is_active : true);
-
+            setLevel(detailedRole.level || 1);
             const ownedPerms = detailedRole.permissions || [];
             ownedIds = new Set(ownedPerms.map((p: any) => p.id));
           //  setOwnedPermIds(ownedIds);
@@ -81,6 +81,7 @@ import { NotifyType } from "@/type/notify";
             setName("");
             setDescription("");
             setIsActive(true);
+            setLevel(1);
           //  setOwnedPermIds(new Set());
           }
 
@@ -123,7 +124,7 @@ import { NotifyType } from "@/type/notify";
         if (!role?.id && existingRoles?.some(r => r.name === trimmedName)) {
           showNotify({
             type: NotifyType.Error,
-            title: "ên vai trò đã tồn tại",
+            title: "Tên vai trò đã tồn tại",
             message: `Vai trò với tên "${trimmedName}" đã tồn tại. Vui lòng chọn tên khác.`,
           });
           return;
@@ -141,7 +142,7 @@ import { NotifyType } from "@/type/notify";
           return;
         }
       try {
-        const payload = { name: trimmedName, description, is_active: isActive };
+        const payload = { name: trimmedName, description, is_active: isActive, level: level };
         if (role?.id) {
           await AuthService.updateRole(role.id, payload);
           await AuthService.assignPermissionToRole(role.id, selectedPermsissionsIds);
@@ -246,6 +247,18 @@ import { NotifyType } from "@/type/notify";
                   onChange={(e) => setDescription(e.target.value)}
                 //  defaultValue={role?.description || ""}
                   className="w-60 px-2 py-1 border rounded"
+                />
+              </div>
+              <div> 
+                <label className="block text-sm font-medium mb-1">
+                  Cấp độ:
+                </label>
+                <input
+                  type="number"
+                  value={level}
+                  onChange={(e) => setLevel(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-20 px-2 py-1 border rounded"
+                  min ="1"
                 />
               </div>
               <div>

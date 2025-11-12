@@ -225,6 +225,12 @@ export default function RolesPage() {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
+                      Cấp độ
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Trạng thái
                     </th>
                     <th
@@ -255,6 +261,11 @@ export default function RolesPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900 line-clamp-1">
                           {role.name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {role.level}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

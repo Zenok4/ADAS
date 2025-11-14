@@ -1,7 +1,14 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface PaginationComponentProps {
   currentPage: number;
@@ -96,51 +103,80 @@ export function PaginationComponent({
 
   const paginationItems = usePagination({ currentPage, totalPages });
 
+  const handlePageClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    page: number
+  ) => {
+    e.preventDefault(); // Ngăn hành vi mặc định của thẻ <a>
+    onPageChange(page);
+  };
+
+  const handlePrevious = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (currentPage > 1) {
+      onPageChange(currentPage - 1);
+    }
+  };
+
+  const handleNext = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (currentPage < totalPages) {
+      onPageChange(currentPage + 1);
+    }
+  };
+
   return (
     <div className="flex items-center justify-end gap-4 py-4 px-6">
-      <span className="text-sm text-gray-700">
-        Trang {currentPage} / {totalPages}
-      </span>
-      <div className="flex items-center gap-1">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-9 px-0"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          <span className="sr-only">Trang trước</span>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              href="#"
+              onClick={handlePrevious}
+              className={
+                currentPage === 1
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
+            />
+          </PaginationItem>
 
-        {paginationItems.map((page, index) => (
-          <Button
-            key={index}
-            variant={page === currentPage ? "default" : "outline"}
-            size="sm"
-            className="w-9"
-            onClick={() => typeof page === "number" && onPageChange(page)}
-            disabled={typeof page !== "number"}
-          >
-            {typeof page === "number" ? (
-              page
-            ) : (
-              <MoreHorizontal className="h-4 w-4" />
-            )}
-          </Button>
-        ))}
+          {paginationItems.map((page, index) => {
+            if (typeof page !== "number") {
+              return (
+                <PaginationItem key={index}>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              );
+            }
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-9 px-0"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          <span className="sr-only">Trang sau</span>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
+            return (
+              <PaginationItem key={index}>
+                <PaginationLink
+                  href="#"
+                  onClick={(e) => handlePageClick(e, page)}
+                  isActive={page === currentPage}
+                  className="cursor-pointer"
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          })}
+
+          <PaginationItem>
+            <PaginationNext
+              href="#"
+              onClick={handleNext}
+              className={
+                currentPage === totalPages
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   );
 }

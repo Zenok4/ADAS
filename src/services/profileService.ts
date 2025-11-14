@@ -4,7 +4,7 @@ import api from "@/lib/api";
 import { ApiUrls } from "@/type/apiUrls";
 
 // ===================================
-// == ĐỊNH NGHĨA TYPE (MỚI) ==
+// == ĐỊNH NGHĨA TYPE (HIỆN CÓ) ==
 // ===================================
 
 export interface ProfileData {
@@ -32,7 +32,30 @@ export type ProfileUpdatePayload = {
 };
 
 // ===================================
-// == PROFILE SERVICE (MỚI) ==
+// == CÁC TYPE MỚI (Thêm vào) ==
+// ===================================
+
+/**
+ * Payload cho API đổi mật khẩu.
+ * Phải khớp với backend:
+ * data.get("old_password")
+ * data.get("new_password")
+ */
+export type ChangePasswordPayload = {
+  old_password: string;
+  new_password: string;
+};
+
+// Kiểu trả về chung khi thành công (không có data)
+export interface SuccessResponse {
+  success: boolean;
+  message: string;
+  code: number;
+  data: any;
+}
+
+// ===================================
+// == PROFILE SERVICE (Gộp) ==
 // ===================================
 
 export const ProfileService = {
@@ -50,5 +73,27 @@ export const ProfileService = {
    */
   updateProfile: (payload: ProfileUpdatePayload) => {
     return api.put<ProfileResponse>(ApiUrls.profile.update, payload);
+  },
+
+  // ===================================
+  // == HÀM MỚI (Thêm vào) ==
+  // ===================================
+
+  /**
+   * API: Đổi mật khẩu của người dùng (tự đổi)
+   * Tương ứng với: UserService.change_password()
+   *
+   * @param userId ID của người dùng (lấy từ session/context)
+   * @param payload Dữ liệu (mật khẩu cũ, mật khẩu mới)
+   */
+  changePassword: (
+    userId: number | string,
+    payload: ChangePasswordPayload
+  ) => {
+    // Backend API là PATCH /users/change-password/<int:user_id>
+    return api.patch<SuccessResponse>(
+      ApiUrls.users.changePassword(userId),
+      payload
+    );
   },
 };

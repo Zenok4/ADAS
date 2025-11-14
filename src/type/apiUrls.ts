@@ -1,4 +1,4 @@
-// services/apiUrls.ts
+// services/type/apiUrls.ts
 
 export const ApiUrls = {
   authen: {
@@ -17,14 +17,13 @@ export const ApiUrls = {
     registerWithPhone: "/authen/register/phone",
   },
 
-  // THÊM MỚI: Endpoint cho profile
   profile: {
     // Backend cho endpoint này là file 'services/user/update-profile.py'
-    update: "/profile/update", 
+    update: "/profile/update",
   },
 
   author: {
-    // ... (giữ nguyên phần còn lại từ file gốc)
+    // ... (Giữ nguyên phần author của bạn)
     roles: {
       list: "/author/roles/list",
       create: "/author/roles/create",
@@ -40,13 +39,21 @@ export const ApiUrls = {
     listRoles: "/author/roles/list",
   },
   users: {
-    // ... (giữ nguyên phần còn lại từ file gốc)
+    // ... (Giữ nguyên phần users của bạn)
     list: "/users/list",
     create: "/users/create",
     detail: (id: number | string) => `/users/id/${id}`,
     delete: (id: number | string) => `/users/delete/${id}`,
     toggleStatus: (id: number | string) => `/users/status/${id}`,
     update: (id: number | string) => `/users/update/${id}`,
+
+    // === THÊM MỚI TẠI ĐÂY ===
+    /**
+     * API: Đổi mật khẩu của người dùng (tự đổi)
+     * Backend: usermanage_endpoints.py -> change_password()
+     */
+    changePassword: (id: number | string) => `/users/change-password/${id}`,
+    // === KẾT THÚC THÊM MỚI ===
   },
   core_functions: {
     drowsy: "/drowsy/detect",

@@ -8,7 +8,16 @@ type User = {
   id: number;
   username: string;
   email: string;
-  // thêm các field khác nếu cần
+  roles: string[];
+  phone?: string;
+  is_active: boolean;
+};
+
+type Permissions = {
+  id: number;
+  name: string;
+  code: string;
+  description?: string;
 };
 
 type ReponseData<T> = {
@@ -24,6 +33,7 @@ type SessionContextType = {
   loginWithEmail: (username: string, password: string, otp_code?: string) => Promise<ReponseData<any> | boolean>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  myPermissions: () => Promise<Permissions[]>;
 };
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -104,9 +114,21 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
     }
   };
 
+  // =================== My permissions ===================
+  const myPermissions = async () => {
+    if (!user) return;
+    try {
+      const res = await AuthService.myPermissions(user.id);
+      return res.data;
+    } catch {
+      return [];
+    }
+  };
+
+
   return (
     <SessionContext.Provider
-      value={{ user, loading, loginWithUsername, loginWithEmail, logout, refreshSession }}
+      value={{ user, loading, loginWithUsername, loginWithEmail, logout, refreshSession, myPermissions }}
     >
       {children}
     </SessionContext.Provider>

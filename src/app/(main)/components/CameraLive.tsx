@@ -118,7 +118,7 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (startCamera && enabled) {
-      interval = setInterval(() => sendFrameToAI(), 1200);
+      interval = setInterval(() => sendFrameToAI(), 500);
     } else {
       setDetections([]);
     }

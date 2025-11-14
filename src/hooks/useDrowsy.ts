@@ -35,14 +35,17 @@ export function useDrowsy({
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext("2d");
-    ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise<Blob>((res) =>
-      canvas.toBlob((b) => res(b!), "image/jpeg")
-    );
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Lấy data URL base64 (JPEG)
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.8); 
+    // dataUrl dạng: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD..."
 
     setBusy(true);
     try {
-      const { data } = await CoreFunctionService.drowsy(blob);
+      const { data } = await CoreFunctionService.drowsy(dataUrl);
       setResult(data);
     } catch (err) {
       console.error("Lỗi gửi ảnh lên AI:", err);
@@ -56,7 +59,6 @@ export function useDrowsy({
     const timer = setInterval(captureAndSend, intervalMs);
     return () => clearInterval(timer);
   }, [enabled, intervalMs, captureAndSend]);
-
 
   return { result, busy };
 }

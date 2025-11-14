@@ -25,6 +25,9 @@ export const AuthService = {
       headers: { Authorization: `Bearer ${access_token}` },
   }),
 
+  myPermissions: (userId: number | string) =>
+    api.get(ApiUrls.users.permissions(userId)),
+
 
   refresh: () => api.post<{ access_token: string }>(ApiUrls.authen.refresh, {}),
 

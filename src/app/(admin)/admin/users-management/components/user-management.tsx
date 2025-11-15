@@ -540,7 +540,7 @@ export function UserManagement() {
               Trạng thái
             </label>
             <Select value={uiFilterStatus} onValueChange={setUiFilterStatus}>
-              <SelectTrigger id="status">
+              <SelectTrigger id="status" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -560,7 +560,7 @@ export function UserManagement() {
               Vai trò
             </label>
             <Select value={uiFilterRole} onValueChange={setUiFilterRole}>
-              <SelectTrigger id="role">
+              <SelectTrigger id="role" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -576,8 +576,8 @@ export function UserManagement() {
 
           {/* Buttons */}
           <div className="flex gap-2 self-end pt-5">
-            <Button onClick={handleApplyFilters}>
-              <Search className="h-4 w-4 mr-2" />
+            <Button onClick={handleApplyFilters} className="flex items-center gap-2">
+              <Search className="h-4 w-4" />
               Lọc
             </Button>
             <Button variant="outline" onClick={handleClearFilters}>

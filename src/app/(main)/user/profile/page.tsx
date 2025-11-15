@@ -22,10 +22,7 @@ import { UserHeader } from "../../../(main)/components/user-header";
 import { UserSidebar } from "../../../(main)/components/user-sidebar";
 
 // Import Service và Context
-import {
-  ProfileService,
-  ProfileData,
-} from "@/services/profileService"; //
+import { ProfileService, ProfileData } from "@/services/profileService"; //
 import { useSession } from "@/context/SessionContext"; //
 
 // Component con (Giữ nguyên)
@@ -96,20 +93,9 @@ export default function ProfilePage() {
   if (loading || sessionLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
-        <UserHeader />
-        <div className="flex flex-1">
-          <UserSidebar
-            collapsed={collapsed}
-            onToggle={() => setCollapsed(!collapsed)}
-          />
-          <main
-            className={`flex-1 p-6 transition-all duration-300 ${
-              collapsed ? "ml-16" : "ml-64"
-            } flex items-center justify-center`}
-          >
-            <Loader2 size={32} className="text-blue-500 animate-spin" />
-            <p className="ml-2 text-gray-600">Đang tải dữ liệu...</p>
-          </main>
+        <div className="flex flex-1 p-6 transition-all duration-300 items-center justify-center">
+          <Loader2 size={32} className="text-blue-500 animate-spin" />
+          <p className="ml-2 text-gray-600">Đang tải dữ liệu...</p>
         </div>
       </div>
     );
@@ -119,22 +105,11 @@ export default function ProfilePage() {
   if (error || !profileData) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
-        <UserHeader />
-        <div className="flex flex-1">
-          <UserSidebar
-            collapsed={collapsed}
-            onToggle={() => setCollapsed(!collapsed)}
-          />
-          <main
-            className={`flex-1 p-6 transition-all duration-300 ${
-              collapsed ? "ml-16" : "ml-64"
-            } flex items-center justify-center`}
-          >
-            <AlertCircle size={32} className="text-red-500" />
-            <p className="ml-2 text-red-600">
-              {error || "Không thể tải dữ liệu."}
-            </p>
-          </main>
+        <div className="flex flex-1 p-6 transition-all duration-300 items-center justify-center">
+          <AlertCircle size={32} className="text-red-500" />
+          <p className="ml-2 text-red-600">
+            {error || "Không thể tải dữ liệu."}
+          </p>
         </div>
       </div>
     );
@@ -142,18 +117,9 @@ export default function ProfilePage() {
 
   // === 5. HIỂN THỊ DỮ LIỆU ĐỘNG ===
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <UserHeader />
-      <div className="flex flex-1">
-        <UserSidebar
-          collapsed={collapsed}
-          onToggle={() => setCollapsed(!collapsed)}
-        />
-        <main
-          className={`flex-1 p-6 transition-all duration-300 ${
-            collapsed ? "ml-16" : "ml-64"
-          }`}
-        >
+    <div className="flex flex-col bg-gray-50">
+      <div className="flex">
+        <main className={`flex-1 p-6 transition-all duration-300`}>
           <h1 className="text-2xl font-bold text-gray-900">
             Thông tin cá nhân
           </h1>
@@ -170,9 +136,12 @@ export default function ProfilePage() {
               <p className="text-sm text-gray-500">Driver</p>
               <div className="flex justify-center md:justify-start gap-2 mt-2">
                 {/* === DỮ LIỆU ĐỘNG === */}
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                  {profileData.vehicle_name} - {profileData.license_plate}
-                </span>
+                {profileData.vehicle_name && profileData.license_plate && (
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                    {profileData.vehicle_name} - {profileData.license_plate}
+                  </span>
+                )}
+
                 <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
                   Hệ thống hoạt động
                 </span>
@@ -197,11 +166,7 @@ export default function ProfilePage() {
                 Thông tin cá nhân
               </h3>
               {/* === DỮ LIỆU ĐỘNG === */}
-              <InfoItem
-                icon={Mail}
-                label="Email"
-                value={profileData.email}
-              />
+              <InfoItem icon={Mail} label="Email" value={profileData.email} />
               <InfoItem
                 icon={Phone}
                 label="Số điện thoại"

@@ -131,7 +131,7 @@ export default function Dashboard() {
 
             {/* Video live */}
             <div className="absolute top-10 left-0 w-full bottom-0">
-              <CameraLive enabled={signDetect} className="w-full h-full object-cover" />
+              <CameraLive enabled={signDetect} className="w-full h-full object-cover" startCamera={false} />
             </div>
           </div>
         </div>

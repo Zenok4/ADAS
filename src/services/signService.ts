@@ -1,13 +1,13 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export const signService = {
-  predictSign: async (image: File) => {
-    const formData = new FormData();
-    formData.append("image", image);
-
+  predictSign: async (imageBase64: string) => {
     const response = await fetch(`${API_URL}/sign/predict`, {
       method: "POST",
-      body: formData,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ image_base64: imageBase64 }),
     });
 
     if (!response.ok) {

@@ -61,31 +61,23 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
   }, [startCamera]);
 
   // 🔹 Capture frame hiện tại
-  const captureFrame = (): Promise<File | null> => {
-    return new Promise((resolve) => {
-      if (!videoRef.current || !canvasRef.current) return resolve(null);
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
+  const captureFrameBase64 = (): string | null => {
+    if (!videoRef.current || !canvasRef.current) return null;
 
-      if (video.videoWidth === 0 || video.videoHeight === 0) return resolve(null);
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return resolve(null);
+    if (video.videoWidth === 0 || video.videoHeight === 0) return null;
 
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) return resolve(null);
-          const file = new File([blob], "frame.jpg", { type: "image/jpeg" });
-          resolve(file);
-        },
-        "image/jpeg",
-        0.8
-      );
-    });
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    return canvas.toDataURL("image/jpeg", 0.8); // trả base64 URL
   };
 
   // 🔹 Gửi frame đến backend AI
@@ -93,18 +85,23 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
     if (!enabled || !startCamera || loadingRef.current) return;
     loadingRef.current = true;
 
-    const file = await captureFrame();
-    if (!file) {
+    const base64 = captureFrameBase64();
+    if (!base64) {
       loadingRef.current = false;
       return;
     }
 
+    // Loại bỏ "data:image/jpeg;base64,"
+    const onlyBase64 = base64.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+
     try {
-      const res = await signService.predictSign(file);
+      const res = await signService.predictSign(onlyBase64);
+
       const detectionsArray =
         res?.data?.data?.data && Array.isArray(res.data.data.data)
           ? res.data.data.data
           : [];
+
       setDetections(detectionsArray);
     } catch (err) {
       console.error("❌ Lỗi gửi frame:", err);
@@ -113,6 +110,7 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
       loadingRef.current = false;
     }
   };
+
 
   // 🔹 Gửi frame định kỳ khi bật chức năng và camera đang hoạt động
   useEffect(() => {

@@ -1,4 +1,4 @@
-// services/userService.ts (ĐÃ SỬA)
+// services/userService.ts (PHIÊN BẢN ĐÃ SỬA LỖI)
 
 import api from "@/lib/api";
 import { ApiUrls } from "@/type/apiUrls";
@@ -10,24 +10,55 @@ import {
   UserToggleStatusPayload,
   RolesResponse,
   AssignRolesPayload,
-  // THÊM IMPORT MỚI
   UserUpdatePayload,
 } from "./type/user.type"; // Giữ nguyên đường dẫn tương đối này
 
 /**
  * Service xử lý các nghiệp vụ liên quan đến User Management.
- * Được viết theo phong cách của authService.ts
  */
 export const UserService = {
   /**
-   * API: Lấy danh sách user (phân trang)
+   * API: Lấy danh sách user (phân trang, lọc)
    * Tương ứng với: UserService.get_all_users()
-   *
    */
-  getAllUsers: (page = 1, limit = 20, keyword = "") =>
-    api.get<PaginatedUsersResponse>(ApiUrls.users.list, {
-      params: { page, limit, keyword },
-    }),
+  // ===================================
+  // == BẮT ĐẦU SỬA: getAllUsers() ==
+  // ===================================
+  getAllUsers: (
+    page = 1,
+    limit = 20,
+    search: string, // Tham số cho tìm kiếm
+    status: string, // Tham số cho trạng thái
+    role: string // Tham số cho vai trò
+  ) => {
+    // Xây dựng query params tự động
+    const params = new URLSearchParams();
+    params.append("page", String(page));
+    params.append("limit", String(limit));
+
+    if (search) {
+      params.append("search", search);
+    }
+
+    if (status && status !== "all") {
+      // Giả định backend nhận 'true'/'false' cho trạng thái
+      const isActive = status === "active" ? "true" : "false";
+      params.append("is_active", isActive);
+    }
+
+    if (role && role !== "all") {
+      // Giả định backend nhận 'role_id'
+      params.append("role_id", role);
+    }
+
+    // Gửi request với các params đã được xây dựng
+    return api.get<PaginatedUsersResponse>(ApiUrls.users.list, {
+      params: params,
+    });
+  },
+  // ===================================
+  // == KẾT THÚC SỬA: getAllUsers() ==
+  // ===================================
 
   /**
    * API: Lấy chi tiết user
@@ -35,11 +66,8 @@ export const UserService = {
    *
    */
   getUserDetail: (userId: number | string, includeRoles = false) =>
-    // Lưu ý: Backend API này đọc body từ request GET
-    // Nếu bạn đã sửa backend dùng query param, đổi 'data' thành 'params'
     api.get<UserResponse>(ApiUrls.users.detail(userId), {
-      // SỬA ĐỔI: Đổi 'data' thành 'params' để gửi qua query string
-      params: { include_roles: includeRoles },
+      params: { include_roles: includeRoles }, 
     }),
 
   /**
@@ -48,7 +76,6 @@ export const UserService = {
    *
    */
   createUser: (payload: UserCreatePayload) =>
-    // API trả về { data: {user} }
     api.post<UserResponse>(ApiUrls.users.create, payload),
 
   /**
@@ -68,16 +95,13 @@ export const UserService = {
     userId: number | string,
     payload: UserToggleStatusPayload
   ) =>
-    // API trả về { data: {user} }
     api.patch<UserResponse>(ApiUrls.users.toggleStatus(userId), payload),
 
-  // ============ THÊM HÀM MỚI NÀY ============
   /**
    * API: Cập nhật thông tin user (username, email, phone...)
    * Tương ứng với: UserService.update_user()
    */
   updateUser: (userId: number | string, payload: UserUpdatePayload) =>
-    // API trả về { data: {user} }
     api.put<UserResponse>(ApiUrls.users.update(userId), payload),
 };
 
@@ -91,13 +115,7 @@ export const AuthorService = {
    * Tương ứng với: RoleService.list_roles()
    *
    */
-  // ===================================
-  // == BẮT ĐẦU SỬA: getAllRoles() ==
-  // ===================================
   getAllRoles: () => api.get<RolesResponse | any>(ApiUrls.author.listRoles),
-  // ===================================
-  // == KẾT THÚC SỬA: getAllRoles() ==
-  // ===================================
 
   /**
    * API: Gán vai trò cho User

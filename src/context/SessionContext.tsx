@@ -51,7 +51,11 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
     }
 
     AuthService.me(token)
-      .then((res) => setUser(res.data))
+      .then((res) => {
+        // === SỬA TẠI ĐÂY ===
+        // API /me trả về { message: "...", data: { user object } }
+        setUser(res.data.data); 
+      })
       .catch(() => clearToken())
       .finally(() => setLoading(false));
   }, []);
@@ -61,7 +65,8 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
     try {
       const res = await AuthService.loginWithUsername(username, password);
       console.log("res", res);
-      const { access_token, user } = res.data.data;
+      // Hàm này có vẻ đúng vì bạn lấy user từ res.data.data.user
+      const { access_token, user } = res.data.data; 
 
       console.log("user", user);
 
@@ -77,7 +82,8 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
   const loginWithEmail = async (username: string, password: string, otp_code?: string) => {
     try {
       const res = await AuthService.loginWithEmail(username, password, otp_code);
-      const { access_token, user } = res.data;
+      // Cần đảm bảo cấu trúc response này là đúng
+      const { access_token, user } = res.data; 
 
       saveToken(access_token);
       setUser(user);
@@ -107,7 +113,8 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
         return;
       }
       const res = await AuthService.me(token);
-      setUser(res.data);
+      // === SỬA TẠI ĐÂY ===
+      setUser(res.data.data); // Lấy đối tượng user từ trường data
     } catch {
       clearToken();
       setUser(null);

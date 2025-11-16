@@ -10,6 +10,12 @@ export interface ListRolesParams {
   is_active?: boolean | null;
   list_permissions?: boolean;
 }
+export interface RolePayload {
+  name: string;
+  description?: string;
+  is_active?: boolean;
+  level?: number;
+}
 
 export const AuthService = {
   loginWithUsername: (username: string, password: string) =>
@@ -64,10 +70,10 @@ export const AuthService = {
 
       }),
 
-  createRole: (data: { name: string; description?: string }) =>
+  createRole: (data: RolePayload) =>
     api.post(ApiUrls.author.roles.create, data),
 
-  updateRole: (id: number, data: any) =>
+  updateRole: (id: number, data: RolePayload) =>
     api.put(ApiUrls.author.roles.update(id), data),
 
   deleteRole: (id: number) => api.delete(ApiUrls.author.roles.delete(id)),

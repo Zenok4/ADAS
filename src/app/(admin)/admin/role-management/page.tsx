@@ -11,10 +11,14 @@ import { useNotifyDialog } from "@/hooks/useNotifyDialog";
 import NotifyDialog from "@/components/NotifyDialog";
 import { NotifyType } from "@/type/notify";
 import { ListRolesParams } from "@/services/authService";
+import { useSession } from "@/context/SessionContext";
 
 
 
 export default function RolesPage() {
+
+//  const {user} = useSession();
+
   const [selectedRole, setSelectedRole] = useState<any>(undefined);
   const [modalType, setModalType] = useState<"edit" | null>(null);
   const [roles, setRoles] = useState<any[]>([]);
@@ -29,6 +33,9 @@ export default function RolesPage() {
     is_active: null as boolean | null,
   })
   const [nameInput, setNameInput] = useState("");
+
+  // console.log("Current User in RolesPage:", user);
+
   useEffect(() => { 
     loadRoles();
   }, [pagination.page,filters]);
@@ -225,6 +232,12 @@ export default function RolesPage() {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
+                      Cấp độ
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Trạng thái
                     </th>
                     <th
@@ -255,6 +268,11 @@ export default function RolesPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900 line-clamp-1">
                           {role.name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {role.level}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

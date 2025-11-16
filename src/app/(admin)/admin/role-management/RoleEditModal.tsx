@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-//import { useNotifyDialog } from "@/hooks/useNotifyDialog";
 import { NotifyType } from "@/type/notify";
 
 
@@ -27,6 +26,7 @@ import { NotifyType } from "@/type/notify";
     description: string;
     is_active: boolean;
     permissions?: {id: number} [];
+    
   }
   interface RoleEditModalProps {
     open: boolean; // điều khiển modal hiển thị
@@ -34,6 +34,7 @@ import { NotifyType } from "@/type/notify";
     onClose: () => void;
     existingRoles?: Role[];
     showNotify: (args : any) => void;
+    currentUserLevel: number;
   }
 
   export default function RoleEditModal({
@@ -41,12 +42,13 @@ import { NotifyType } from "@/type/notify";
     role,
     onClose,
     existingRoles,
-    showNotify
+    showNotify,
+    currentUserLevel,
   }: RoleEditModalProps) {
     const [allPermissions, setAllPermissions] = useState<Omit<Permission, 'enabled'>[]>([]);
     const [displayPermissions, setDisplayPermissions] = useState<Permission[]>([]);
 
-   //const [ownedPermIds, setOwnedPermIds] = useState<Set<number>>(new Set());
+  
 
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
@@ -54,7 +56,7 @@ import { NotifyType } from "@/type/notify";
     const [level, setLevel] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
 
-    //const { showNotify } = useNotifyDialog();
+    
 
     useEffect(() => {
       const fetchData = async () => {
@@ -63,7 +65,7 @@ import { NotifyType } from "@/type/notify";
           const allPermRes = await AuthService.listPermissions();
           const allPerms = allPermRes.data.permissions || [];
           let ownedIds = new Set<number>();
-          //setAllPermissions(allPerms);
+          
 
           if (role && role.id) {
             const roleDetailsRes = await AuthService.getRole(role.id, true);
@@ -76,13 +78,13 @@ import { NotifyType } from "@/type/notify";
             setLevel(detailedRole.level || 1);
             const ownedPerms = detailedRole.permissions || [];
             ownedIds = new Set(ownedPerms.map((p: any) => p.id));
-          //  setOwnedPermIds(ownedIds);
+          
           } else {
             setName("");
             setDescription("");
             setIsActive(true);
             setLevel(1);
-          //  setOwnedPermIds(new Set());
+          
           }
 
             const mergedPermissions = allPerms.map((perm: any) => ({
@@ -141,8 +143,16 @@ import { NotifyType } from "@/type/notify";
           });
           return;
         }
+        if (level >= currentUserLevel) {
+          showNotify({
+            type: NotifyType.Error,
+            title: "Lỗi quyền hạn",
+            message: `Bạn không thể tạo hoặc gán level (${level}) cao hơn hoặc bằng level của chính bạn (${currentUserLevel}).`,
+        });
+          return; // Dừng lại, không gọi API
+        }
       try {
-        const payload = { name: trimmedName, description, is_active: isActive, level: level };
+        const payload = { name: trimmedName, description, is_active: isActive, level: level, current_user_level: currentUserLevel };
         if (role?.id) {
           await AuthService.updateRole(role.id, payload);
           await AuthService.assignPermissionToRole(role.id, selectedPermsissionsIds);
@@ -165,30 +175,7 @@ import { NotifyType } from "@/type/notify";
           });
         }
 
-        // const selectedPermsissionsIds = displayPermissions
-        //   .filter((perm) => perm.enabled)
-        //   .map((perm) => perm.id);
-        // const payload = { name, description, is_active: isActive };
-        // if (role?.id) {
-        //   await AuthService.updateRole(role.id, payload);
-        //   await AuthService.assignPermissionToRole(role.id, selectedPermsissionsIds);
-        //   showNotify({
-        //     type: NotifyType.Success,
-        //     title: "Thành công",
-        //     message: "Cập nhật vai trò thành công!",
-        //   });
-        // } else {
-        //   const response = await AuthService.createRole(payload);
-        //   const newRoleId = response.data.role;
-        //   if (newRoleId && newRoleId.id) {
-        //     await AuthService.assignPermissionToRole(newRoleId.id, selectedPermsissionsIds);
-        //   }
-        //   showNotify({
-        //     type: NotifyType.Success,
-        //     title: "Thành công",
-        //     message: "Thêm vai trò thành công!",
-        //   });
-        // }
+
         onClose();
       } catch (error) {
         console.error("Lưu vai trò thất bại:", error);
@@ -254,7 +241,7 @@ import { NotifyType } from "@/type/notify";
                   Cấp độ:
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   value={level}
                   onChange={(e) => setLevel(Math.max(1, parseInt(e.target.value) || 1))}
                   className="w-20 px-2 py-1 border rounded"
@@ -292,7 +279,7 @@ import { NotifyType } from "@/type/notify";
               <thead>
                 <tr className="bg-gray-50">
                   <th className="px-4 py-2 text-left text-xs font-semibold">
-                    API
+                    Tên quyền
                   </th>
                   <th className="px-4 py-2 text-left text-xs font-semibold">
                     Mô tả

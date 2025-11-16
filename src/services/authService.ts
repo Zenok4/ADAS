@@ -31,9 +31,6 @@ export const AuthService = {
       headers: { Authorization: `Bearer ${access_token}` },
   }),
 
-  myPermissions: (userId: number | string) =>
-    api.get(ApiUrls.users.permissions(userId)),
-
 
   refresh: () => api.post<{ access_token: string }>(ApiUrls.authen.refresh, {}),
 
@@ -49,25 +46,17 @@ export const AuthService = {
     api.post(ApiUrls.authen.registerWithPhone, { phone, password }),
   
     // ===== Roles =====
-  // listRoles: (includePermissions: boolean = false) =>
-  //   api.get(ApiUrls.author.roles.list, {
-  //     data:{list_permissions: includePermissions},
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //     },
-  //   }),
+
     ListRoles: (params: ListRolesParams = {}) =>
       api.get(ApiUrls.author.roles.list, {
         params: params,
       }),
 
-//  getRole: (id: number) => api.get(ApiUrls.author.roles.detail(id)),
     getRole: (id: number, includePermissions: boolean = false) =>
       api.get(ApiUrls.author.roles.detail(id), {
         params:{
           list_permissions: includePermissions 
         }
-
       }),
 
   createRole: (data: RolePayload) =>
@@ -76,7 +65,11 @@ export const AuthService = {
   updateRole: (id: number, data: RolePayload) =>
     api.put(ApiUrls.author.roles.update(id), data),
 
-  deleteRole: (id: number) => api.delete(ApiUrls.author.roles.delete(id)),
+  deleteRole: (id: number, currentUserLevel: number) => api.delete(ApiUrls.author.roles.delete(id), {
+      params: {
+        current_user_level: currentUserLevel
+      },
+    }),
 
   // ===== Permissions =====
   listPermissions: () => api.get(ApiUrls.author.permissions.list),

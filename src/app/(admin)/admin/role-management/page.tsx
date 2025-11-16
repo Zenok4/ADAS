@@ -28,11 +28,16 @@ import {
 export default function RolesPage() {
 
   const {user} = useSession();
+
   const highestLevel = useMemo(() => {
-    const userRoles = (user as any)?.data?.roles;
-    if (!user || !userRoles || userRoles.length === 0) {
-      return 0; // Level 0 cho khách hoặc user không có role
-    }
+  const userRoles = (user as any)?.roles;
+
+  console.log("User Data:", user);
+  console.log("Role Data:", userRoles);
+  
+  if (!user || !userRoles || userRoles.length === 0) {
+    return 0; // Level 0 cho khách hoặc user không có role
+  }
     console.log("User Roles:", userRoles);
     const highest_Level = Math.max(...userRoles.map((role: any) => role.level));
     console.log("Highest Role Level:", highest_Level);
@@ -54,8 +59,6 @@ export default function RolesPage() {
     is_active: null as boolean | null,
   })
   const [nameInput, setNameInput] = useState("");
-
-   console.log("Current User in RolesPage:", user);
 
   useEffect(() => { 
     loadRoles();

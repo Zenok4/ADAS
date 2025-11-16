@@ -47,17 +47,17 @@ export const AuthService = {
   
     // ===== Roles =====
 
-    ListRoles: (params: ListRolesParams = {}) =>
-      api.get(ApiUrls.author.roles.list, {
-        params: params,
-      }),
+  ListRoles: (params: ListRolesParams = {}) =>
+    api.get(ApiUrls.author.roles.list, {
+      params: params,
+  }),
 
-    getRole: (id: number, includePermissions: boolean = false) =>
-      api.get(ApiUrls.author.roles.detail(id), {
-        params:{
-          list_permissions: includePermissions 
-        }
-      }),
+  getRole: (id: number, includePermissions: boolean = false) =>
+    api.get(ApiUrls.author.roles.detail(id), {
+      params:{
+        list_permissions: includePermissions 
+      }
+  }),
 
   createRole: (data: RolePayload) =>
     api.post(ApiUrls.author.roles.create, data),

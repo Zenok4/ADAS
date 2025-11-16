@@ -111,6 +111,8 @@ import { NotifyType } from "@/type/notify";
       }
     }, [role, open, showNotify]);
 
+    console.log("Display role:", role);
+
 
     const handleSave = async () => {
       

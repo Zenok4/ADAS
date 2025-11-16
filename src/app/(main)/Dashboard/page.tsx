@@ -125,7 +125,7 @@ export default function DashboardPage() {
     : "Đang tắt";
 
   const badge = result
-    ? result?.data.is_drowsy
+    ? result?.data?.is_drowsy
       ? { text: "Cảnh báo tài xế đang ngủ gật!", cls: "bg-red-600" }
       : { text: "Tài xế bình thường", cls: "bg-green-600" }
     : busy
@@ -216,7 +216,7 @@ export default function DashboardPage() {
                 </div>
                 {result && (
                   <span className="text-xs text-gray-400">
-                    {result.data.latency_ms}ms
+                    {result.data?.latency_ms}ms
                   </span>
                 )}
               </div>
@@ -248,11 +248,11 @@ export default function DashboardPage() {
                   {result && (
                     <div className="text-[10px] text-white/80 bg-black/40 px-2 py-0.5 rounded">
                       EAR:{" "}
-                      {typeof result.data.eye_aspect_ratio === "number"
-                        ? result.data.eye_aspect_ratio.toFixed(2)
+                      {typeof result.data?.eye_aspect_ratio === "number"
+                        ? result.data?.eye_aspect_ratio.toFixed(2)
                         : "-"}
-                      {typeof result.data.latency_ms === "number"
-                        ? ` • ${result.data.latency_ms}ms`
+                      {typeof result.data?.latency_ms === "number"
+                        ? ` • ${result.data?.latency_ms}ms`
                         : ""}
                     </div>
                   )}

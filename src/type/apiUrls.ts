@@ -43,7 +43,6 @@ export const ApiUrls = {
       removeFromRole: (roleId: number | string, permId: number | string) =>
         `/author/roles/${roleId}/permissions/${permId}/remove`,
     },
-    myPermissions: "/author/permissions/list",
     // THÊM MỚI: URL gán vai trò
     assignRolesToUser: (userId: number | string) =>
       `/author/users/${userId}/roles/assign`,
@@ -63,6 +62,9 @@ export const ApiUrls = {
     toggleStatus: (id: number | string) => `/users/status/${id}`,
     // THÊM MỚI: ĐƯỜNG DẪN UPDATE
     update: (id: number | string) => `/users/update/${id}`,
+
+    // Lấy toàn bộ perm của user
+    permissions: (userId: number | string) => `/users/${userId}/permissions/list`,
   },
   core_functions: {
     drowsy: "/drowsy/detect",

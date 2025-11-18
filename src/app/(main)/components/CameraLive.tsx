@@ -10,11 +10,10 @@ interface Detection {
 
 interface CameraLiveProps {
   className?: string;
-  startCamera: boolean; // Bật/tắt camera vật lý
-  enabled: boolean; // Bật/tắt nhận diện biển báo
+  startCamera: boolean;
+  enabled: boolean;
 }
 
-// 🎨 Màu theo nhóm biển báo
 const getBoxColor = (className: string): string => {
   const name = className.toLowerCase();
   if (name.includes("phụ")) return "#a020f0";
@@ -30,15 +29,15 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const loadingRef = useRef(false);
+  const animationRef = useRef<number>(0);
   const [detections, setDetections] = useState<Detection[]>([]);
 
-  // 🔹 Khởi động camera vật lý
+  // 🔹 Khởi động camera
   useEffect(() => {
     if (!startCamera) return;
 
     const startCam = async () => {
       try {
-        console.log("🎥 Khởi động camera sau...");
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" },
           audio: false,
@@ -51,7 +50,6 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
 
     startCam();
 
-    // cleanup
     return () => {
       if (videoRef.current && videoRef.current.srcObject) {
         const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
@@ -60,7 +58,7 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
     };
   }, [startCamera]);
 
-  // 🔹 Capture frame hiện tại
+  // 🔹 Capture frame base64
   const captureFrameBase64 = (): string | null => {
     if (!videoRef.current || !canvasRef.current) return null;
 
@@ -76,11 +74,10 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
     if (!ctx) return null;
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    return canvas.toDataURL("image/jpeg", 0.8); // trả base64 URL
+    return canvas.toDataURL("image/jpeg", 0.8);
   };
 
-  // 🔹 Gửi frame đến backend AI
+  // 🔹 Gửi frame đến backend
   const sendFrameToAI = async () => {
     if (!enabled || !startCamera || loadingRef.current) return;
     loadingRef.current = true;
@@ -91,18 +88,11 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
       return;
     }
 
-    // Loại bỏ "data:image/jpeg;base64,"
     const onlyBase64 = base64.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
 
     try {
       const res = await signService.predictSign(onlyBase64);
-
-      const detectionsArray =
-        res?.data?.data?.data && Array.isArray(res.data.data.data)
-          ? res.data.data.data
-          : [];
-
-      setDetections(detectionsArray);
+      setDetections(res.data || []);
     } catch (err) {
       console.error("❌ Lỗi gửi frame:", err);
       setDetections([]);
@@ -111,18 +101,21 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
     }
   };
 
+  // 🔹 Animation loop
+  const frameLoop = () => {
+    sendFrameToAI();
+    animationRef.current = requestAnimationFrame(frameLoop);
+  };
 
-  // 🔹 Gửi frame định kỳ khi bật chức năng và camera đang hoạt động
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
     if (startCamera && enabled) {
-      interval = setInterval(() => sendFrameToAI(), 500);
+      animationRef.current = requestAnimationFrame(frameLoop);
     } else {
       setDetections([]);
     }
 
     return () => {
-      if (interval) clearInterval(interval);
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, [startCamera, enabled]);
 
@@ -162,7 +155,6 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
 
   return (
     <div className={`${className} relative overflow-hidden`}>
-      {/* Thông báo chỉ khi bật nhận diện */}
       {enabled && startCamera && (
         <div className="absolute bottom-2 left-2 bg-black/60 text-white p-2 rounded text-sm z-10">
           {detections.length > 0
@@ -171,7 +163,6 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
         </div>
       )}
 
-      {/* Video */}
       {startCamera ? (
         <video
           ref={videoRef}
@@ -182,11 +173,10 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
-          Nhấn “Mở camera” để bật iVCam
+        
         </div>
       )}
 
-      {/* Canvas ẩn + overlay */}
       <canvas ref={canvasRef} style={{ display: "none" }} />
       <canvas
         ref={overlayRef}

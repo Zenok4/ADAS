@@ -16,8 +16,6 @@ import { useNotifyDialog } from "@/hooks/useNotifyDialog";
 import NotifyDialog from "@/components/NotifyDialog";
 import { NotifyType } from "@/type/notify";
 import { PaginationComponent } from "./PaginationComponent";
-
-// Import thêm cho UI Lọc
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,7 +32,6 @@ const PAGE_LIMIT = 10;
 type FormErrors = { username: string; email: string; phone: string };
 const initialErrors: FormErrors = { username: "", email: "", phone: "" };
 
-// (Hàm getErrorNotify giữ nguyên - không thay đổi)
 const getErrorNotify = (error: any, defaultMessage: string) => {
   const responseData = error.response?.data;
   let finalErrorMessage: string = defaultMessage;
@@ -139,26 +136,21 @@ export function UserManagement() {
     is_active: true,
     selectedRoleIds: [],
   });
-
-  // === THAY ĐỔI VỀ STATE PHÂN TRANG VÀ LỌC ===
-  const [page, setPage] = useState(1); // Đổi tên từ currentPage
+  const [page, setPage] = useState(1); 
   const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState({
     search: "",
     status: "all",
     role: "all",
   });
-  // State cho các trường input UI (trước khi bấm "Lọc")
   const [uiSearchTerm, setUiSearchTerm] = useState("");
   const [uiFilterStatus, setUiFilterStatus] = useState("all");
   const [uiFilterRole, setUiFilterRole] = useState("all");
-  // =============================================
 
   const [addFormErrors, setAddFormErrors] = useState<FormErrors>(initialErrors);
   const [editFormErrors, setEditFormErrors] =
     useState<FormErrors>(initialErrors);
 
-  // (Hàm Validators giữ nguyên - không thay đổi)
   const validateEmail = (email: string): string => {
     if (!email) return "Email là bắt buộc.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Email không hợp lệ.";
@@ -166,8 +158,11 @@ export function UserManagement() {
   };
   const validatePhone = (phone: string): string => {
     if (!phone) return "Số điện thoại là bắt buộc.";
-    if (!/^(0[3|5|7|8|9])(\d{8})$/.test(phone)) return "Số điện thoại không hợp lệ (phải 10 số, bắt đầu bằng 0).";
-    return "";
+   if (!/^(03|05|07|08|09)\d{7,8}$/.test(phone)) {
+  return "Số điện thoại không hợp lệ.";
+}
+return "";
+
   };
   const validateUsername = (username: string): string => {
     if (!username) return "Tên đăng nhập là bắt buộc.";
@@ -177,7 +172,6 @@ export function UserManagement() {
   };
   const validators = { validateEmail, validatePhone, validateUsername };
 
-  // (Hàm fetchRoles giữ nguyên - chỉ bỏ fetchUsers)
   const fetchRoles = async () => {
     try {
       const response = await AuthorService.getAllRoles();
@@ -213,12 +207,9 @@ export function UserManagement() {
       });
     }
   };
-
-  // === CẬP NHẬT fetchUsers ĐỂ DÙNG STATE ===
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      // GỌI VỚI 5 THAM SỐ
       const response = await UserService.getAllUsers(
         page, 
         PAGE_LIMIT,
@@ -248,19 +239,14 @@ export function UserManagement() {
     }
   };
 
-  // === CẬP NHẬT useEffect ===
-  // Chỉ fetch roles 1 lần
   useEffect(() => {
     fetchRoles();
   }, []);
 
-  // Fetch users khi 'page' hoặc 'filters' thay đổi
   useEffect(() => {
     fetchUsers();
   }, [page, filters]);
-  // ==========================
 
-  // (handleOpenAddModal giữ nguyên)
   const handleOpenAddModal = () => {
     setNewUser({
       username: "",
@@ -274,7 +260,6 @@ export function UserManagement() {
     setIsAddModalOpen(true);
   };
 
-  // (handleNewUserRoleChange giữ nguyên)
   const handleNewUserRoleChange = (roleId: number, checked: boolean) => {
     if (roleId === userRoleId && !checked) {
       return;
@@ -287,7 +272,6 @@ export function UserManagement() {
     });
   };
 
-  // === CẬP NHẬT handleAddUser (gọi fetchUsers) ===
   const handleAddUser = async () => {
     const errors: FormErrors = {
       username: validateUsername(newUser.username),
@@ -345,18 +329,12 @@ export function UserManagement() {
         message: "Đã thêm người dùng mới.",
       });
       setIsAddModalOpen(false);
-      
-      // Tải lại trang hiện tại (hoặc trang 1 nếu muốn)
-      // Nếu bộ lọc đang được áp dụng, người dùng mới có thể không xuất hiện
-      // Tốt nhất là về trang 1 và xóa bộ lọc
-      handleClearFilters(); // Về trang 1 và xóa bộ lọc
     } catch (error: any) {
       console.error("LỖI GỐC TỪ BACKEND:", error.response?.data);
       showNotify(getErrorNotify(error, "Tạo người dùng thất bại."));
     }
   };
 
-  // (handleEditUser giữ nguyên)
   const handleEditUser = async (user: UserData) => {
     try {
       const response = await UserService.getUserDetail(user.id, true);
@@ -389,7 +367,6 @@ export function UserManagement() {
     }
   };
   
-  // (handleEditRoleChange giữ nguyên)
   const handleEditRoleChange = (roleId: number, checked: boolean) => {
     if (roleId === userRoleId && !checked) {
       return;
@@ -403,8 +380,6 @@ export function UserManagement() {
       return { ...prev, selectedRoleIds: newRoleIds };
     });
   };
-
-  // === CẬP NHẬT handleSaveUser (gọi fetchUsers) ===
   const handleSaveUser = async () => {
     if (!editingUser) return;
     const errors: FormErrors = {
@@ -444,14 +419,13 @@ export function UserManagement() {
       });
       setIsEditModalOpen(false);
       setEditingUser(null);
-      await fetchUsers(); // Tải lại dữ liệu trang hiện tại
+      await fetchUsers();
     } catch (error: any) {
       console.error("LỖI GỐC TỪ BACKEND:", error.response?.data);
       showNotify(getErrorNotify(error, "Cập nhật thất bại."));
     }
   };
 
-  // (handleDeleteUser giữ nguyên)
   const handleDeleteUser = (user: UserData) => {
     showNotify({
       type: NotifyType.Warning,
@@ -461,8 +435,6 @@ export function UserManagement() {
       onPrimaryAction: () => confirmDeleteUser(user.id),
     });
   };
-
-  // === CẬP NHẬT confirmDeleteUser (gọi fetchUsers/setPage) ===
   const confirmDeleteUser = async (userId: number | string) => {
     try {
       await UserService.deleteUser(userId);
@@ -472,9 +444,9 @@ export function UserManagement() {
         message: "Đã xóa người dùng.",
       });
       if (userList.length === 1 && page > 1) {
-        setPage(page - 1); // Trở về trang trước
+        setPage(page - 1);
       } else {
-        fetchUsers(); // Tải lại trang hiện tại
+        fetchUsers();
       }
     } catch (error: any) {
       console.error("LỖI GỐC TỪ BACKEND:", error.response?.data);
@@ -482,10 +454,9 @@ export function UserManagement() {
     }
   };
 
-  // === THÊM HÀM HANDLER CHO BỘ LỌC ===
   const handleApplyFilters = () => {
-    setPage(1); // Quay về trang 1
-    setFilters({ // Áp dụng bộ lọc
+    setPage(1);
+    setFilters({ 
       search: uiSearchTerm,
       status: uiFilterStatus,
       role: uiFilterRole,
@@ -493,25 +464,22 @@ export function UserManagement() {
   };
 
   const handleClearFilters = () => {
-    setPage(1); // Quay về trang 1
-    // Xóa state UI
+    setPage(1); 
     setUiSearchTerm("");
     setUiFilterStatus("all");
     setUiFilterRole("all");
-    // Xóa bộ lọc đã áp dụng
     setFilters({
       search: "",
       status: "all",
       role: "all",
     });
   };
-  // ===================================
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <UserManagementHeader onOpenAddModal={handleOpenAddModal} />
 
-      {/* =============== THÊM THANH LỌC =============== */}
+
       <Card className="mb-6">
         <CardContent className="p-4 flex flex-col md:flex-row flex-wrap gap-4">
           {/* Search Input */}
@@ -593,9 +561,9 @@ export function UserManagement() {
         isLoading={isLoading}
         onEditUser={handleEditUser}
         onDeleteUser={handleDeleteUser}
-        currentPage={page} // Cập nhật prop
+        currentPage={page} 
         totalPages={totalPages}
-        onPageChange={(newPage) => setPage(newPage)} // Cập nhật prop
+        onPageChange={(newPage) => setPage(newPage)}
       />
 
       <EditUserModal

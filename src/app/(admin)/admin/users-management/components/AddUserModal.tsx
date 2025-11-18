@@ -71,7 +71,6 @@ export function AddUserModal({
     setErrors((prev) => ({ ...prev, [field]: validator(value) }));
   };
 
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
@@ -81,6 +80,7 @@ export function AddUserModal({
 
         <div className="grid grid-cols-2 gap-6 py-4">
           <div className="space-y-4">
+            {/* Tên đăng nhập */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Tên đăng nhập *
@@ -100,6 +100,22 @@ export function AddUserModal({
               )}
             </div>
 
+            {/* === TÊN HIỂN THỊ === */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Tên hiển thị
+              </label>
+              <Input
+                value={newUser.display_name || ""}
+                onChange={(e) =>
+                  setNewUser((prev) => ({ ...prev, display_name: e.target.value }))
+                }
+                placeholder="Tên hiển thị (Tùy chọn)"
+              />
+            </div>
+            {/* ============================== */}
+
+            {/* Email */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Email *
@@ -120,6 +136,7 @@ export function AddUserModal({
               )}
             </div>
 
+            {/* Số điện thoại */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Số điện thoại *
@@ -139,6 +156,8 @@ export function AddUserModal({
                 <p className="text-xs text-red-600">{errors.phone}</p>
               )}
             </div>
+            
+            {/* Mật khẩu */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Mật khẩu *
@@ -180,6 +199,7 @@ export function AddUserModal({
             </div>
           </div>
 
+          {/* Cột phải: Vai trò */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">
               Vai trò (chọn nhiều)

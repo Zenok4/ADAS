@@ -83,6 +83,7 @@ export function EditUserModal({
         {/* =============== LEFT COLUMN =============== */}
         <div className="grid grid-cols-2 gap-6 py-4">
           <div className="space-y-4">
+            {/* Tên đăng nhập */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Tên đăng nhập
@@ -110,6 +111,24 @@ export function EditUserModal({
               )}
             </div>
 
+            {/* === THÊM MỚI: TÊN HIỂN THỊ === */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Tên hiển thị
+              </label>
+              <Input
+                value={editingUser.display_name || ""}
+                onChange={(e) =>
+                  setEditingUser((prev) =>
+                    prev ? { ...prev, display_name: e.target.value } : null
+                  )
+                }
+                placeholder="Tên hiển thị"
+              />
+            </div>
+            {/* ============================== */}
+
+            {/* Email */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Email</label>
               <Input
@@ -128,6 +147,7 @@ export function EditUserModal({
               )}
             </div>
 
+            {/* Số điện thoại */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Số điện thoại
@@ -148,6 +168,7 @@ export function EditUserModal({
               )}
             </div>
 
+            {/* Trạng thái */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Trạng thái

@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, ShieldAlert } from "lucide-react";
 import { UserData } from "@/services/type/user.type";
 import { UserListSkeleton } from "./UserListSkeleton";
 import { PaginationComponent } from "./PaginationComponent";
@@ -22,6 +22,7 @@ interface UserListTableProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  currentUserLevel: number; // Level người dùng hiện tại
 }
 
 export function UserListTable({
@@ -32,6 +33,7 @@ export function UserListTable({
   currentPage,
   totalPages,
   onPageChange,
+  currentUserLevel,
 }: UserListTableProps) {
   const MAX_ROLES_DISPLAYED = 2;
 
@@ -50,7 +52,7 @@ export function UserListTable({
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
+                <tr className="border-b border-gray-200 bg-gray-50/50">
                   <th className="text-left py-3 px-4 font-medium text-gray-700">
                     Tên đăng nhập
                   </th>
@@ -82,21 +84,28 @@ export function UserListTable({
                   </tr>
                 ) : (
                   userList.map((user) => {
+                    // 1. SẮP XẾP ROLE: Level cao nhất lên trước
                     const sortedRoles = user.roles
                       ? [...user.roles].sort((a: any, b: any) => (b.level || 0) - (a.level || 0))
                       : [];
+                    
+                    // 2. CHECK QUYỀN: Level cao nhất của user này
+                    const targetHighestLevel = sortedRoles.length > 0 ? sortedRoles[0].level || 0 : 0;
+                    // User hiện tại phải có level cao hơn hẳn target (hoặc bằng nếu admin cao nhất)
+                    // Logic ở đây: Không được xóa/sửa người có level >= mình
+                    const isActionDisabled = targetHighestLevel >= currentUserLevel;
 
                     return (
                       <tr
                         key={user.id}
-                        className="border-b border-gray-100 hover:bg-gray-50"
+                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                       >
                         <td className="py-4 px-4 font-medium text-gray-900">
                           {user.username}
                         </td>
                         <td className="py-4 px-4 text-gray-600">{user.email}</td>
                         
-                        {/* =============== CẬP NHẬT Ô VAI TRÒ =============== */}
+                        {/* Hiển thị Role đã sắp xếp */}
                         <td className="py-4 px-4">
                           <div className="flex flex-wrap items-center gap-1">
                             {sortedRoles.length > 0 ? (
@@ -107,7 +116,12 @@ export function UserListTable({
                                     <Badge
                                       key={role.id}
                                       variant="secondary"
-                                      className="text-xs"
+                                      // Highlight role cao nhất
+                                      className={`text-xs ${
+                                          (role.level || 0) === targetHighestLevel 
+                                          ? "bg-blue-100 text-blue-800 border-blue-200" 
+                                          : "bg-gray-100 text-gray-700"
+                                      }`}
                                     >
                                       {role.name}
                                     </Badge>
@@ -144,42 +158,60 @@ export function UserListTable({
                             )}
                           </div>
                         </td>
-                        {/* =================================================== */}
 
                         <td className="py-4 px-4">
                           <Badge
                             variant={user.is_active ? "default" : "destructive"}
                             className={
                               user.is_active
-                                ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                : "bg-red-100 text-red-800 hover:bg-red-100"
+                                ? "bg-green-100 text-green-800 hover:bg-green-200 shadow-none"
+                                : "bg-red-100 text-red-800 hover:bg-red-200 shadow-none"
                             }
                           >
                             {user.is_active ? "Hoạt động" : "Tạm khóa"}
                           </Badge>
                         </td>
-                        <td className="py-4 px-4 text-gray-600">
+                        <td className="py-4 px-4 text-gray-600 text-sm">
                           {new Date(user.created_at).toLocaleDateString("vi-VN")}
                         </td>
+
+                        {/* Cột thao tác: Disable nếu không đủ quyền */}
                         <td className="py-4 px-4">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-gray-100"
-                              onClick={() => onEditUser(user)}
-                            >
-                              <Edit className="h-4 w-4 text-gray-600" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-red-50"
-                              onClick={() => onDeleteUser(user)}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
-                          </div>
+                          {isActionDisabled ? (
+                             <Tooltip>
+                               <TooltipTrigger asChild>
+                                 <div className="flex items-center gap-2 opacity-40 cursor-not-allowed">
+                                    <Button variant="ghost" size="sm" disabled className="h-8 w-8 p-0">
+                                        <ShieldAlert className="h-4 w-4 text-gray-500" />
+                                    </Button>
+                                 </div>
+                               </TooltipTrigger>
+                               <TooltipContent>
+                                 <p className="max-w-xs text-center">
+                                   Bạn không có quyền tác động lên tài khoản có cấp độ cao hơn hoặc bằng bạn.
+                                 </p>
+                               </TooltipContent>
+                             </Tooltip>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                                onClick={() => onEditUser(user)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                                onClick={() => onDeleteUser(user)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );

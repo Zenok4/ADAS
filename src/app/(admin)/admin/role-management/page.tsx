@@ -1,7 +1,7 @@
 "use client";
 
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { AuthService } from "@/services/authService";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,40 @@ import { useNotifyDialog } from "@/hooks/useNotifyDialog";
 import NotifyDialog from "@/components/NotifyDialog";
 import { NotifyType } from "@/type/notify";
 import { ListRolesParams } from "@/services/authService";
+import { useSession } from "@/context/SessionContext";
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 
 
 export default function RolesPage() {
+
+  const {user} = useSession();
+
+  const highestLevel = useMemo(() => {
+  const userRoles = (user as any)?.roles;
+
+  console.log("User Data:", user);
+  console.log("Role Data:", userRoles);
+  
+  if (!user || !userRoles || userRoles.length === 0) {
+    return 0; // Level 0 cho khách hoặc user không có role
+  }
+    console.log("User Roles:", userRoles);
+    const highest_Level = Math.max(...userRoles.map((role: any) => role.level));
+    console.log("Highest Role Level:", highest_Level);
+    // Tìm level cao nhất từ mảng roles 
+    return highest_Level;
+  }, [user]);
+
   const [selectedRole, setSelectedRole] = useState<any>(undefined);
   const [modalType, setModalType] = useState<"edit" | null>(null);
   const [roles, setRoles] = useState<any[]>([]);
@@ -29,6 +59,7 @@ export default function RolesPage() {
     is_active: null as boolean | null,
   })
   const [nameInput, setNameInput] = useState("");
+
   useEffect(() => { 
     loadRoles();
   }, [pagination.page,filters]);
@@ -61,9 +92,7 @@ export default function RolesPage() {
         ...prev,
         total: res.data.data.total || 0,
       }));
-      // const res = await AuthService.listRoles(true);
-      // console.log("API response:", res.data);
-      // setRoles(res.data.roles || []);
+
     } catch (error) {
       console.error("Lỗi tải danh sách vai trò:", error);
     }
@@ -82,11 +111,27 @@ export default function RolesPage() {
   } = useNotifyDialog();
 
   const handleEdit = (role: any) => {
+    if(role.level >= highestLevel){
+      showNotify({
+        type: NotifyType.Error,
+        title: "Lỗi quyền hạn",
+        message: `Bạn không thể chỉnh sửa vai trò có level (${role.level}) cao hơn hoặc bằng level của chính bạn (${highestLevel}).`,
+    });
+      return; // Dừng lại, không mở modal
+    }
     setSelectedRole(role);
     setModalType("edit");
   };
 // truyền id vao role: any
   const handleDelete = (role: any) => {
+    if(role.level >= highestLevel){
+      showNotify({
+        type: NotifyType.Error,
+        title: "Lỗi quyền hạn",
+        message: `Bạn không thể xoá vai trò có level (${role.level}) cao hơn hoặc bằng level của chính bạn (${highestLevel}).`,
+    });
+      return; // Dừng lại, không mở modal
+    }
     showNotify({
       type: NotifyType.Warning,
       title: "Xác nhận xoá",
@@ -95,7 +140,7 @@ export default function RolesPage() {
       onPrimaryAction:async () => {
         //Logic xoá vai trò ở đây
         try{
-          await AuthService.deleteRole(role.id);
+          await AuthService.deleteRole(role.id, highestLevel);
           await loadRoles();
 
           showNotify({
@@ -123,11 +168,15 @@ export default function RolesPage() {
     setModalType("edit");
   };
 
+  const totalPages = Math.ceil(pagination.total / pagination.limit);
   const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({
-      ...prev,
-      page: newPage,
-    }));
+    // Đảm bảo newPage nằm trong giới hạn
+    if (newPage > 0 && newPage <= totalPages) {
+      setPagination(prev => ({
+        ...prev,
+        page: newPage,
+      }));
+    }
   };
 
   const handleFilterSubmit = () => {
@@ -225,6 +274,12 @@ export default function RolesPage() {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
+                      Cấp độ
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Trạng thái
                     </th>
                     <th
@@ -255,6 +310,11 @@ export default function RolesPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900 line-clamp-1">
                           {role.name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {role.level}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -306,28 +366,63 @@ export default function RolesPage() {
             
             {/* === THÊM PHÂN TRANG === */}
             <div className="p-4 border-t">
+              <Pagination>
+                <PaginationContent>
+                  {/* Nút Lùi (Previous) */}
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(pagination.page - 1);
+                      }}
+                      // Vô hiệu hóa nếu là trang đầu
+                      className={
+                        pagination.page <= 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
 
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">
-                  Trang {pagination.page} / {Math.ceil(pagination.total / pagination.limit)}
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page <= 1}
-                    className="bg-[#006DF0] hover:bg-[#0055b3] text-white disabled:opacity-60"
-                  >
-                    Trang trước
-                  </Button>
-                  <Button
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page >= Math.ceil(pagination.total / pagination.limit)}
-                    className="bg-[#006DF0] hover:bg-[#0055b3] text-white disabled:opacity-60"
-                  >
-                    Trang sau
-                  </Button>
-                </div>
-              </div>
+                  {/* Logic hiển thị các số trang */}
+                  {/* (có thể thêm '...' sau) */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(page);
+                          }}
+                          isActive={pagination.page === page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  )}
+                  {/* ( có thể thêm <PaginationEllipsis /> ở đây nếu cần) */}
+
+                  {/* Nút Tới (Next) */}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(pagination.page + 1);
+                      }}
+                      // Vô hiệu hóa nếu là trang cuối
+                      className={
+                        pagination.page >= totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
             {/* === KẾT THÚC PHÂN TRANG === */}
 
@@ -341,6 +436,7 @@ export default function RolesPage() {
         role={selectedRole}
         existingRoles={roles}
         showNotify={showNotify}
+        currentUserLevel={highestLevel}
         onClose={() => {
           setSelectedRole(undefined);
           setModalType(null);

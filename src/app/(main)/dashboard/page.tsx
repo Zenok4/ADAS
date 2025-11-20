@@ -15,7 +15,6 @@ import {
 import FeatureCard from "./components/feature-card";
 import InfoCard from "./components/info-card";
 
-// Hooks AI + Camera
 import { useDrowsy } from "@/hooks/useDrowsy";
 import { useCamera } from "@/hooks/useCamera";
 import CameraLive from "../components/CameraLive";
@@ -23,16 +22,21 @@ import CameraLive from "../components/CameraLive";
 export default function DashboardPage() {
   const [sleepAlert, setSleepAlert] = useState(false);
   const [objectDetect, setObjectDetect] = useState(false);
-  const [signDetect, setSignDetect] = useState(false); // điều khiển CameraLive
+  const [signDetect, setSignDetect] = useState(false);
   const [laneMonitor, setLaneMonitor] = useState(false);
-  const [cameraOn, setCameraOn] = useState(false); // điều khiển bật camera vật lý
+  const [cameraOn, setCameraOn] = useState(false);
 
+  const [soundEnabled, setSoundEnabled] = useState(true); // 🔊 state âm thanh
+
+  // 🔹 State giọng
+  const [voiceList, setVoiceList] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
+  
   const [location, setLocation] = useState("Đang lấy vị trí...");
   const [weather, setWeather] = useState("Đang tải...");
   const [temperature, setTemperature] = useState("...");
   const [time, setTime] = useState("--:--:--");
 
-  // 🎥 Camera trước = webcam
   const frontRef = useRef<HTMLVideoElement>(null!);
   const {
     camReady: frontReady,
@@ -41,45 +45,34 @@ export default function DashboardPage() {
     stopCamera: stopFront,
   } = useCamera(frontRef);
 
-  // AI buồn ngủ chạy trên camera trước
   const { result, busy } = useDrowsy({
     videoRef: frontRef,
     enabled: sleepAlert,
     intervalMs: 1200,
   });
 
-  // Tự động mở webcam khi bật chức năng Cảnh báo buồn ngủ
+  // Tự động mở webcam khi bật cảnh báo buồn ngủ
   useEffect(() => {
-    if (sleepAlert && !frontReady) {
-      openFront("webcam");
-    }
-    // Nếu muốn tắt webcam khi tắt hết các chức năng dùng webcam, có thể:
-    // else if (!sleepAlert) { stopFront(); }
+    if (sleepAlert && !frontReady) openFront("webcam");
   }, [sleepAlert, frontReady, openFront]);
 
-  // Tự bật camera khi bật chức năng nhận diện
+  // Tự bật/tắt camera vật lý khi bật/tắt chức năng nhận diện
   useEffect(() => {
-    // Chỉ tự bật camera nếu người dùng đang bật tính năng, KHÔNG trong quá trình tắt
-    if (signDetect && !cameraOn) {
-      setCameraOn(true);
-    } else if (
+    if (signDetect && !cameraOn) setCameraOn(true);
+    else if (
       !signDetect &&
       cameraOn &&
       !sleepAlert &&
       !objectDetect &&
       !laneMonitor
     ) {
-      // Nếu tắt hết các tính năng → tự tắt camera
       setCameraOn(false);
     }
   }, [signDetect, sleepAlert, objectDetect, laneMonitor]);
 
   useEffect(() => {
-    if (!cameraOn && signDetect) {
-      setSignDetect(false);
-    }
+    if (!cameraOn && signDetect) setSignDetect(false);
     if (!cameraOn && frontReady) {
-      // Tắt camera vật lý thì tắt luôn webcam
       stopFront();
       setSignDetect(false);
     }
@@ -132,23 +125,18 @@ export default function DashboardPage() {
     ? { text: "Đang xử lý...", cls: "bg-blue-600" }
     : null;
 
-  const handleCameraToggle = async () => {
+  // Toggle camera vật lý
+  const handleCameraToggle = () => {
     setCameraOn((prev) => {
       const newState = !prev;
-
-      if (newState) {
-        // 🟢 Bật camera
-        openFront("webcam");
-      } else {
-        // 🔴 Tắt toàn bộ chức năng trước khi tắt camera
+      if (newState) openFront("webcam");
+      else {
         setSleepAlert(false);
         setSignDetect(false);
         setObjectDetect(false);
         setLaneMonitor(false);
-
         stopFront();
       }
-
       return newState;
     });
   };
@@ -159,7 +147,6 @@ export default function DashboardPage() {
         {/* --- Cột trái: Chức năng --- */}
         <div className="flex-1 space-y-6 m-6">
           <h2 className="text-lg font-bold">Chức năng</h2>
-
           <div className="grid grid-cols-2 gap-4">
             <FeatureCard
               icon={Eye}
@@ -191,19 +178,29 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Nút điều khiển */}
-          <div className="flex gap-3 justify-center mt-4">
+          {/* Nút điều khiển camera & âm thanh */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center items-center mt-4">
+            {/* Nút bật/tắt camera */}
             <button
               className="px-6 py-2 rounded-lg bg-slate-600 text-white font-semibold shadow hover:bg-slate-700 transition"
               onClick={handleCameraToggle}
             >
               {frontReady || signDetect ? "Tắt camera" : "Mở camera"}
             </button>
+
+            {/* Nút bật/tắt âm thanh */}
+            <button
+              className="px-6 py-2 rounded-lg bg-yellow-500 text-white font-semibold shadow hover:bg-yellow-600 transition"
+              onClick={() => setSoundEnabled((prev) => !prev)}
+            >
+              {soundEnabled ? "Bật âm thanh" : "Tắt âm thanh"}
+            </button>
           </div>
+
 
           {/* Camera */}
           <div className="grid grid-cols-2 gap-4 mt-4">
-            {/* Camera trước (webcam) */}
+            {/* Camera trước */}
             <div
               className={`h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden ${
                 danger ? "border-red-500" : ""
@@ -266,7 +263,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Camera sau — chỉ hiển thị CameraLive, KHÔNG render video chồng lên */}
+            {/* Camera sau */}
             <div className="h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden relative">
               <div className="flex items-center gap-2 text-blue-500 font-medium p-2 border-b z-10 relative">
                 <Camera className="w-5 h-5" />
@@ -274,11 +271,11 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex-1 bg-black relative">
-                {/* Chỉ CameraLive — không có <video> phía sau để tránh đè */}
                 <div className="absolute inset-0 w-full object-cover">
                   <CameraLive
                     enabled={signDetect}
                     startCamera={cameraOn}
+                    soundEnabled={soundEnabled} // truyền prop âm thanh
                     className="w-full h-full object-contain"
                   />
                 </div>

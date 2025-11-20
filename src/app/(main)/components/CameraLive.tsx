@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useRef, useState, useEffect } from "react";
 import { signService } from "@/services/signService";
 
@@ -10,10 +11,12 @@ interface Detection {
 
 interface CameraLiveProps {
   className?: string;
-  startCamera: boolean;
-  enabled: boolean;
+  startCamera: boolean; // bật camera vật lý
+  enabled: boolean; // bật AI nhận diện
+  soundEnabled?: boolean; // bật/tắt âm thanh
 }
 
+// Hàm chọn màu theo loại biển báo
 const getBoxColor = (className: string): string => {
   const name = className.toLowerCase();
   if (name.includes("phụ")) return "#a020f0";
@@ -24,15 +27,21 @@ const getBoxColor = (className: string): string => {
   return "#ffff00";
 };
 
-export default function CameraLive({ className, startCamera, enabled }: CameraLiveProps) {
+export default function CameraLive({
+  className,
+  startCamera,
+  enabled,
+  soundEnabled = true, // mặc định bật
+}: CameraLiveProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const loadingRef = useRef(false);
   const animationRef = useRef<number>(0);
   const [detections, setDetections] = useState<Detection[]>([]);
+  const [lastSpoken, setLastSpoken] = useState<string | null>(null);
 
-  // 🔹 Khởi động camera
+  // ===================== Khởi động camera =====================
   useEffect(() => {
     if (!startCamera) return;
 
@@ -50,6 +59,7 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
 
     startCam();
 
+    // Dừng camera khi unmount hoặc tắt startCamera
     return () => {
       if (videoRef.current && videoRef.current.srcObject) {
         const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
@@ -58,7 +68,7 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
     };
   }, [startCamera]);
 
-  // 🔹 Capture frame base64
+  // ===================== Capture frame base64 =====================
   const captureFrameBase64 = (): string | null => {
     if (!videoRef.current || !canvasRef.current) return null;
 
@@ -77,7 +87,7 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
     return canvas.toDataURL("image/jpeg", 0.8);
   };
 
-  // 🔹 Gửi frame đến backend
+  // ===================== Gửi frame đến backend =====================
   const sendFrameToAI = async () => {
     if (!enabled || !startCamera || loadingRef.current) return;
     loadingRef.current = true;
@@ -101,7 +111,7 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
     }
   };
 
-  // 🔹 Animation loop
+  // ===================== Animation loop =====================
   const frameLoop = () => {
     sendFrameToAI();
     animationRef.current = requestAnimationFrame(frameLoop);
@@ -119,7 +129,7 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
     };
   }, [startCamera, enabled]);
 
-  // 🔹 Vẽ bounding boxes
+  // ===================== Vẽ bounding boxes =====================
   useEffect(() => {
     const canvas = overlayRef.current;
     const video = videoRef.current;
@@ -138,9 +148,12 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
       const h = y2 - y1;
       const color = getBoxColor(det.class_name);
 
+      // Vẽ khung
       ctx.strokeStyle = color;
       ctx.lineWidth = 3;
       ctx.strokeRect(x1, y1, w, h);
+
+      // Vẽ label
       ctx.fillStyle = "rgba(0,0,0,0.6)";
       ctx.fillRect(x1, y1 - 25, w, 25);
       ctx.fillStyle = color;
@@ -153,8 +166,68 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
     });
   }, [detections]);
 
+  // 🔹 State lưu giọng
+const [voiceList, setVoiceList] = useState<SpeechSynthesisVoice[]>([]);
+const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
+
+// 🔹 Load voices khi component mount
+useEffect(() => {
+  const loadVoices = () => {
+    const voices = window.speechSynthesis.getVoices();
+    setVoiceList(voices);
+
+    // Chọn giọng Việt đầu tiên nếu chưa có
+    if (!selectedVoice) {
+      const viVoice = voices.find(v => v.lang.startsWith("vi")) || voices[0];
+      if (viVoice) setSelectedVoice(viVoice);
+    }
+  };
+
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}, []);
+
+// 🔹 Hàm speak
+const speak = (text: string) => {
+  if (!soundEnabled) return;
+    if (!window.speechSynthesis) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    console.log("Utterance created:", text); // ===================== Âm thanh đọc tên biển báo =====================
+
+    // 🔹 Chọn giọng Việt đã lưu, fallback nếu chưa load
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+    } else {
+      const voices = window.speechSynthesis.getVoices();
+      const viVoice = voices.find(v => v.lang.startsWith("vi")) || voices[0];
+      utterance.voice = viVoice;
+    }
+
+    utterance.lang = "vi-VN"; // đặt ngôn ngữ
+    utterance.rate = 1;
+    utterance.pitch = 1;
+
+    console.log("Đang đọc:", utterance);
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // 🔹 Tự động đọc khi có detections mới
+  useEffect(() => {
+    if (!detections || detections.length === 0) return;
+
+    const detectedSign = detections[0].class_name;
+    if (detectedSign !== lastSpoken) {
+      speak(detectedSign);
+      setLastSpoken(detectedSign);
+    }
+  }, [detections, soundEnabled]);
+
   return (
     <div className={`${className} relative overflow-hidden`}>
+      {/* Label hiển thị số lượng biển báo */}
       {enabled && startCamera && (
         <div className="absolute bottom-2 left-2 bg-black/60 text-white p-2 rounded text-sm z-10">
           {detections.length > 0
@@ -163,6 +236,7 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
         </div>
       )}
 
+      {/* Video */}
       {startCamera ? (
         <video
           ref={videoRef}
@@ -172,12 +246,14 @@ export default function CameraLive({ className, startCamera, enabled }: CameraLi
           className="w-full h-full object-contain rounded-lg"
         />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
-        
+        <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">   
         </div>
       )}
 
+      {/* Canvas ẩn để capture */}
       <canvas ref={canvasRef} style={{ display: "none" }} />
+
+      {/* Canvas overlay để vẽ bounding box */}
       <canvas
         ref={overlayRef}
         className="absolute top-0 left-0 w-full h-full pointer-events-none"

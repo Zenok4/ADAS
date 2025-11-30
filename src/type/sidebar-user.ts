@@ -1,4 +1,5 @@
 import { Car, Home, Settings } from "lucide-react";
+import { BookOpen, Info, FileText, NotebookPen } from "lucide-react";
 
 export const sidebarItems = [
   {
@@ -12,7 +13,29 @@ export const sidebarItems = [
     href: "/drive",
   },
   {
-    title: "Settings",
+    title: "Sổ tay",
+    href: "#",
+    icon: BookOpen,
+    children: [
+      {
+        title: "Giới thiệu",
+        href: "/handbook/introduce",
+        icon: Info,
+      },
+      {
+        title: "Hướng dẫn",
+        href: "/handbook/guide",
+        icon: NotebookPen,
+      },
+      {
+        title: "Chính sách & Quy định",
+        href: "/handbook/policy",
+        icon: FileText,
+      },
+    ],
+  },
+  {
+    title: "Cài đặt",
     icon: Settings,
     href: "/settings",
   },

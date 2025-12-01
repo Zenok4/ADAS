@@ -10,6 +10,7 @@ interface SettingDCProps {
 
   soundEnabled: boolean;
   setSoundEnabled: Dispatch<SetStateAction<boolean>>;
+
   volume: number;
   setVolume: Dispatch<SetStateAction<number>>;
 
@@ -17,8 +18,8 @@ interface SettingDCProps {
   setShowLocation: Dispatch<SetStateAction<boolean>>;
   showWeather: boolean;
   setShowWeather: Dispatch<SetStateAction<boolean>>;
-  showTemp: boolean;
-  setShowTemp: Dispatch<SetStateAction<boolean>>;
+  showTemperature: boolean;
+  setShowTemperature: Dispatch<SetStateAction<boolean>>;
   showTime: boolean;
   setShowTime: Dispatch<SetStateAction<boolean>>;
 }
@@ -36,17 +37,19 @@ const SettingDC = ({
   setShowLocation,
   showWeather,
   setShowWeather,
-  showTemp,
-  setShowTemp,
+  showTemperature,
+  setShowTemperature,
   showTime,
   setShowTime,
 }: SettingDCProps) => {
   if (!open) return null;
 
-  const alwaysOn = ["Hiển thị Vị trí", "Hiển thị Thời tiết", "Hiển thị Nhiệt độ", "Hiển thị Thời gian"];
-
-  const renderToggle = (label: string, value: boolean, setValue: Dispatch<SetStateAction<boolean>>) => (
-    <div className="flex justify-between items-center py-1">
+  const renderToggle = (
+    label: string,
+    value: boolean,
+    setValue: Dispatch<SetStateAction<boolean>>
+  ) => (
+    <div className="flex justify-between items-center py-2">
       <span className="text-gray-700 dark:text-gray-200">{label}</span>
       <label className="relative inline-block w-12 h-6 cursor-pointer">
         <input
@@ -54,7 +57,6 @@ const SettingDC = ({
           checked={value}
           onChange={(e) => setValue(e.target.checked)}
           className="absolute opacity-0 w-0 h-0"
-          disabled={alwaysOn.includes(label)}
         />
         <span
           className={`absolute inset-0 rounded-full transition-colors duration-200 ${
@@ -73,6 +75,7 @@ const SettingDC = ({
 
   return (
     <div className="absolute top-16 right-0 w-72 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 shadow-lg rounded-xl p-4 z-50">
+      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-semibold text-gray-800 dark:text-gray-100">Cài đặt</h3>
         <button
@@ -83,15 +86,23 @@ const SettingDC = ({
         </button>
       </div>
 
+      {/* Toggle hiển thị thông tin lên trên */}
       {renderToggle("Hiển thị Vị trí", showLocation, setShowLocation)}
       {renderToggle("Hiển thị Thời tiết", showWeather, setShowWeather)}
-      {renderToggle("Hiển thị Nhiệt độ", showTemp, setShowTemp)}
+      {renderToggle("Hiển thị Nhiệt độ", showTemperature, setShowTemperature)}
       {renderToggle("Hiển thị Thời gian", showTime, setShowTime)}
-      {renderToggle("Bật âm thanh", soundEnabled, setSoundEnabled)}
-      {renderToggle("Màu tối", darkMode, setDarkMode)}
 
+      <hr className="my-2 border-gray-300 dark:border-gray-600" />
+
+      {/* Toggle âm thanh và dark mode */}
+      {renderToggle("Bật âm thanh", soundEnabled, setSoundEnabled)}
+      {renderToggle("Giao diện ban đêm", darkMode, setDarkMode)}
+
+      {/* Volume */}
       <div className="mt-4">
-        <label className="block text-gray-700 dark:text-gray-200 mb-1">Âm lượng</label>
+        <label className="block text-gray-700 dark:text-gray-200 font-medium mb-1">
+          Âm lượng: {volume}
+        </label>
         <input
           type="range"
           min={0}

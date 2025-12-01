@@ -19,7 +19,7 @@ const FeatureCard = ({
 }: FeatureCardProps) => {
   return (
     <div
-      className={`flex items-center justify-between rounded-xl shadow-md p-4 w-full h-24 transition 
+      className={`flex items-center justify-between rounded-xl shadow-md p-4 w-full h-24 transition dark:bg-gray-800 
       ${toggle ? "bg-blue-50 border border-blue-300" : "bg-white border"}`}
     >
       {/* Icon + text */}
@@ -28,8 +28,8 @@ const FeatureCard = ({
           <Icon className="w-6 h-6 text-blue-500" />
         </div>
         <div>
-          <p className="font-semibold text-gray-700">{title}</p>
-          <p className={`text-sm ${toggle ? "text-green-600" : "text-red-500"}`}>
+          <p className="font-semibold text-gray-700 dark:text-white">{title}</p>
+          <p className={`text-sm transition-colors duration-200 ${toggle ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}>
             {status}
           </p>
         </div>

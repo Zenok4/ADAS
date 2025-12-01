@@ -17,7 +17,7 @@ export const UserHeader = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border h-16 flex items-center justify-between px-6">
       {/* Logo + Title */}
-      <div className="flex items-center gap-2 text-[#004572]">
+      <div className="flex items-center gap-2 text-[#004572] dark:text-white transition-colors duration-200">
         <Logo />
         <div>
           <p className="text-xl font-bold uppercase">ADAS Dashboard</p>
@@ -30,10 +30,13 @@ export const UserHeader = () => {
         {/* Notifications */}
         <Button
           variant="ghost"
-          className="flex gap-2 items-center hover:bg-[#004572]/10 hover:text-[#004572]"
+          className="flex gap-2 items-center
+                    hover:bg-[#004572]/10 dark:hover:bg-white/10
+                    hover:text-[#004572] dark:hover:text-white
+                    transition-colors duration-200"
         >
-          <Bell className="h-4 w-4" />
-          <p className="text-sm">Thông báo</p>
+          <Bell className="h-4 w-4 text-[#004572] dark:text-white transition-colors duration-200" />
+          <p className="text-sm text-[#004572] dark:text-white transition-colors duration-200">Thông báo</p>
         </Button>
 
         {/* User Menu */}

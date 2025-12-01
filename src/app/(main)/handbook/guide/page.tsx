@@ -78,31 +78,31 @@ export default function HandbookGuidePage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      {/* Header */}
-      <div className="bg-white border-b px-6 py-4">
-        <h1 className="text-2xl font-bold">Hướng dẫn sử dụng</h1>
-        <p className="text-gray-600 mt-1">Các bài hướng dẫn chi tiết giúp bạn sử dụng ADAS một cách hiệu quả</p>
-      </div>
+    <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+  {/* Header */}
+  <div className="bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 px-6 py-4">
+    <h1 className="text-2xl font-bold">Hướng dẫn sử dụng</h1>
+    <p className="text-gray-600 dark:text-gray-300 mt-1">Các bài hướng dẫn chi tiết giúp bạn sử dụng ADAS một cách hiệu quả</p>
+  </div>
 
-      {/* Content */}
+  {/* Content */}
       <div className="max-w-4xl mx-auto p-6">
         <div className="grid gap-4">
           {guides.map((guide) => (
-            <Card key={guide.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Card key={guide.id} className="hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-gray-800">
               <CardContent className="p-6">
                 <div
                   className="flex items-center justify-between"
                   onClick={() => setExpandedId(expandedId === guide.id ? null : guide.id)}
                 >
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold mb-2 transition-colors text-gray-800 hover:text-blue-600">
+                    <h3 className="text-lg font-bold mb-2 transition-colors text-gray-800 dark:text-gray-200 hover:text-blue-600">
                       {guide.title}
                     </h3>
-                    <p className="text-gray-600">{guide.description}</p>
+                    <p className="text-gray-600 dark:text-gray-300">{guide.description}</p>
                   </div>
                   <ChevronRight
-                    className={`h-6 w-6 text-gray-400 transition-transform flex-shrink-0 ml-4 ${
+                    className={`h-6 w-6 text-gray-400 dark:text-gray-400 transition-transform flex-shrink-0 ml-4 ${
                       expandedId === guide.id ? "rotate-90 text-blue-600" : ""
                     }`}
                   />

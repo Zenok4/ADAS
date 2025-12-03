@@ -2,11 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  UserCircle2,
-  FileEdit,
-  Loader2, 
-} from "lucide-react";
+import { UserCircle2, FileEdit, Loader2 } from "lucide-react";
 import {
   SettingsToggleItem,
   SettingsSelectItem,
@@ -16,7 +12,7 @@ import {
 
 import { ProfileService, ProfileData } from "@/services/profileService";
 import { useSession } from "@/context/SessionContext";
-import { AuthService } from "@/services/authService"; 
+import { AuthService } from "@/services/authService";
 
 const SettingsSection = ({
   title,
@@ -132,7 +128,7 @@ export const GeneralSettings = () => {
   const handleLogout = async () => {
     if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
       try {
-        if (logout) await logout();         
+        if (logout) await logout();
         router.push("/login");
       } catch (error) {
         console.error("Logout failed", error);
@@ -164,35 +160,6 @@ export const GeneralSettings = () => {
           description="Đăng xuất khỏi tài khoản của bạn trên thiết bị này"
           buttonLabel="Logout"
           onClick={handleLogout}
-        />
-      </SettingsSection>
-
-      {/* Nhóm 2: Hệ thống (Giữ nguyên) */}
-      <SettingsSection
-        title="Hệ thống & Dữ liệu"
-        description="Tùy chỉnh các cài đặt chung của hệ thống"
-      >
-        <SettingsToggleItem
-          title="Sao lưu tự động"
-          description="Tự động sao lưu cài đặt và dữ liệu mỗi ngày"
-          toggled={autoSave}
-          onToggle={setAutoSave}
-        />
-        <SettingsSelectItem
-          title="Đơn vị đo"
-          description="Chọn đơn vị đo tốc độ và khoảng cách"
-          value={units}
-          onChange={setUnits}
-          options={[
-            { value: "kmh", label: "Kilômét (km/h)" },
-            { value: "mph", label: "Dặm (mph)" },
-          ]}
-        />
-        <SettingsToggleItem
-          title="Chế độ bảo trì"
-          description="Tạm dừng tất cả cảnh báo để bảo trì hệ thống"
-          toggled={maintenanceMode}
-          onToggle={setMaintenanceMode}
         />
       </SettingsSection>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { PasswordInput } from "./components/password-input";
 import { useNotifyDialog } from "@/hooks/useNotifyDialog";
@@ -8,6 +8,82 @@ import NotifyDialog from "@/components/NotifyDialog";
 import { NotifyType } from "@/type/notify";
 import { ProfileService } from "@/services/profileService";
 import { useSession } from "@/context/SessionContext";
+
+// Component con hiển thị từng dòng yêu cầu bảo mật
+const RequirementItem = ({
+  isValid,
+  text,
+  isTouched,
+}: {
+  isValid: boolean;
+  text: string;
+  isTouched: boolean;
+}) => {
+  // Logic màu sắc:
+  // - Chưa nhập gì (isTouched = false): Màu xám, icon tròn
+  // - Đã nhập và Đúng (isValid = true): Màu xanh, icon Check
+  // - Đã nhập và Sai (isValid = false): Màu đỏ, icon X
+
+  let icon;
+  let textColor;
+
+  if (!isTouched) {
+    textColor = "text-gray-400";
+    icon = (
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <circle cx="12" cy="12" r="10" strokeWidth="2" />
+      </svg>
+    );
+  } else if (isValid) {
+    textColor = "text-green-600";
+    icon = (
+      <svg
+        className="w-4 h-4 text-green-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M5 13l4 4L19 7"
+        />
+      </svg>
+    );
+  } else {
+    textColor = "text-red-500";
+    icon = (
+      <svg
+        className="w-4 h-4 text-red-500"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M6 18L18 6M6 6l12 12"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <li
+      className={`flex items-center gap-2 text-sm transition-colors duration-200 ${textColor}`}
+    >
+      <span className="flex-shrink-0">{icon}</span>
+      <span>{text}</span>
+    </li>
+  );
+};
 
 export default function ChangePasswordPage() {
   const router = useRouter();
@@ -31,46 +107,56 @@ export default function ChangePasswordPage() {
 
   const { user } = useSession();
 
+  // === LOGIC KIỂM TRA REAL-TIME ===
+  // Kiểm tra độ dài
+  const isLengthValid = newPassword.length >= 8;
+
+  // Kiểm tra độ phức tạp
+  const hasUpperCase = /[A-Z]/.test(newPassword);
+  const hasLowerCase = /[a-z]/.test(newPassword);
+  const hasNumbers = /\d/.test(newPassword);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
+  const isComplexityValid =
+    hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
+
+  // Kiểm tra khác mật khẩu cũ
+  const isDifferentFromOld =
+    currentPassword && newPassword ? newPassword !== currentPassword : true;
+
+  // Kiểm tra xem người dùng đã bắt đầu nhập password mới chưa
+  const isNewPasswordTouched = newPassword.length > 0;
+
   const handleSubmit = async () => {
     setIsLoading(true);
-    
+
     try {
-      // === 1. KIỂM TRA CƠ BẢN ===
+      // === TÁI SỬ DỤNG LOGIC KIỂM TRA ===
       if (!currentPassword || !newPassword || !confirmPassword) {
         throw new Error("Vui lòng điền đầy đủ thông tin.");
       }
 
-      // === 2. KIỂM TRA TRÙNG KHỚP ===
       if (newPassword !== confirmPassword) {
         throw new Error("Mật khẩu mới và mật khẩu xác nhận không khớp.");
       }
 
-      // === 3. KIỂM TRA MỚI KHÁC CŨ ===
-      if (newPassword === currentPassword) {
+      if (!isDifferentFromOld) {
         throw new Error("Mật khẩu mới không được trùng với mật khẩu hiện tại.");
       }
 
-      // === 4. KIỂM TRA ĐỘ DÀI ( >= 8 ký tự) ===
-      if (newPassword.length < 8) {
+      if (!isLengthValid) {
         throw new Error("Mật khẩu mới phải có ít nhất 8 ký tự.");
       }
 
-      // === 5. KIỂM TRA ĐỘ PHỨC TẠP ===
-      // Regex kiểm tra: Chữ hoa, chữ thường, số, ký tự đặc biệt
-      const hasUpperCase = /[A-Z]/.test(newPassword);
-      const hasLowerCase = /[a-z]/.test(newPassword);
-      const hasNumbers = /\d/.test(newPassword);
-      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
-
-      if (!hasUpperCase || !hasLowerCase || !hasNumbers || !hasSpecialChar) {
+      if (!isComplexityValid) {
         throw new Error(
           "Mật khẩu mới phải bao gồm: chữ hoa, chữ thường, số và ký tự đặc biệt."
         );
       }
 
-      // === KIỂM TRA USER SESSION ===
       if (!user || !user.id) {
-        throw new Error("Không thể xác thực người dùng. Vui lòng đăng nhập lại.");
+        throw new Error(
+          "Không thể xác thực người dùng. Vui lòng đăng nhập lại."
+        );
       }
 
       const payload = {
@@ -83,7 +169,8 @@ export default function ChangePasswordPage() {
       showNotify({
         type: NotifyType.Success,
         title: "Thành công",
-        message: "Đổi mật khẩu thành công! Bạn sẽ được chuyển về trang cá nhân.",
+        message:
+          "Đổi mật khẩu thành công! Bạn sẽ được chuyển về trang cá nhân.",
         primaryActionText: "OK",
         onPrimaryAction: () => {
           hideNotify();
@@ -167,13 +254,27 @@ export default function ChangePasswordPage() {
             />
           </div>
 
-          {/* Security Tips */}
-          <div className="p-6 bg-gray-50 border-t border-b border-gray-200">
-            <h4 className="font-semibold text-gray-800">Lưu ý bảo mật</h4>
-            <ul className="list-disc list-inside text-sm text-gray-600 mt-2">
-              <li>Sử dụng ít nhất 8 ký tự.</li>
-              <li>Kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt.</li>
-              <li>Không trùng với mật khẩu hiện tại.</li>
+          {/* Security Tips - Đã sửa đổi */}
+          <div className="p-6 bg-gray-50 border-t border-b border-gray-200 transition-colors">
+            <h4 className="font-semibold text-gray-800 mb-3">
+              Yêu cầu bảo mật mật khẩu
+            </h4>
+            <ul className="space-y-2">
+              <RequirementItem
+                isValid={isLengthValid}
+                text="Sử dụng ít nhất 8 ký tự."
+                isTouched={isNewPasswordTouched}
+              />
+              <RequirementItem
+                isValid={isComplexityValid}
+                text="Kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt."
+                isTouched={isNewPasswordTouched}
+              />
+              <RequirementItem
+                isValid={isDifferentFromOld}
+                text="Không trùng với mật khẩu hiện tại."
+                isTouched={isNewPasswordTouched && currentPassword.length > 0}
+              />
             </ul>
           </div>
 
@@ -191,9 +292,17 @@ export default function ChangePasswordPage() {
 
               <button
                 type="submit"
-                className="px-5 py-2 rounded-lg font-medium text-white bg-blue-500 hover:bg-blue-600 transition-colors disabled:bg-blue-300"
+                className="px-5 py-2 rounded-lg font-medium text-white bg-blue-500 hover:bg-blue-600 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
-                disabled={isLoading}
+                // Disable nút submit nếu các điều kiện chưa thỏa mãn
+                disabled={
+                  isLoading ||
+                  !isLengthValid ||
+                  !isComplexityValid ||
+                  !isDifferentFromOld ||
+                  !newPassword ||
+                  !confirmPassword
+                }
               >
                 {isLoading ? "Đang xử lý..." : "Đổi mật khẩu"}
               </button>

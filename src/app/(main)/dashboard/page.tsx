@@ -19,20 +19,30 @@ import InfoCard from "./components/info-card";
 import { useDrowsy } from "@/hooks/useDrowsy";
 import { useCamera } from "@/hooks/useCamera";
 
-// Component CameraLive (Đã cập nhật ở bước trước)
+// Component CameraLive
 import CameraLive from "../components/CameraLive";
 
 export default function DashboardPage() {
+  // --- STATE CHỨC NĂNG ---
   const [sleepAlert, setSleepAlert] = useState(false);
-  const [objectDetect, setObjectDetect] = useState(false); // State cho nhận diện vật cản
-  const [signDetect, setSignDetect] = useState(false); // State cho nhận diện biển báo
+  const [objectDetect, setObjectDetect] = useState(false);
+  const [signDetect, setSignDetect] = useState(false);
   const [laneMonitor, setLaneMonitor] = useState(false);
-  const [cameraOn, setCameraOn] = useState(false); // Master switch cho camera sau
+  const [cameraOn, setCameraOn] = useState(false);
 
+  // --- STATE DỮ LIỆU ---
   const [location, setLocation] = useState("Đang lấy vị trí...");
   const [weather, setWeather] = useState("Đang tải...");
   const [temperature, setTemperature] = useState("...");
   const [time, setTime] = useState("--:--:--");
+
+  // --- STATE CẤU HÌNH HIỂN THỊ (Mặc định hiện tất cả) ---
+  const [displayConfig, setDisplayConfig] = useState({
+    showLocation: true,
+    showWeather: true,
+    showTemperature: true,
+    showTime: true,
+  });
 
   // 🎥 Camera trước = webcam (Drowsiness)
   const frontRef = useRef<HTMLVideoElement>(null!);
@@ -50,36 +60,63 @@ export default function DashboardPage() {
     intervalMs: 1200,
   });
 
-  // 1. Tự động mở webcam khi bật chức năng Cảnh báo buồn ngủ
+  // =========================================================
+  // 1. LOGIC ĐỌC CÀI ĐẶT TỪ LOCAL STORAGE
+  // =========================================================
+  useEffect(() => {
+    const loadSettings = () => {
+      try {
+        const saved = localStorage.getItem("adas_settings");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.display) {
+            // Merge với mặc định để tránh lỗi nếu thiếu key
+            setDisplayConfig((prev) => ({
+              ...prev,
+              ...parsed.display,
+            }));
+          }
+        }
+      } catch (e) {
+        console.error("Lỗi đọc cấu hình hiển thị:", e);
+      }
+    };
+
+    // Load ngay lần đầu
+    loadSettings();
+
+    // Lắng nghe sự kiện nếu settings thay đổi (từ trang Settings)
+    window.addEventListener("adas_settings_updated", loadSettings);
+    return () =>
+      window.removeEventListener("adas_settings_updated", loadSettings);
+  }, []);
+
+  // =========================================================
+  // 2. LOGIC CAMERA & AI (GIỮ NGUYÊN)
+  // =========================================================
+
+  // Tự động mở webcam khi bật Cảnh báo buồn ngủ
   useEffect(() => {
     if (sleepAlert && !frontReady) {
       openFront("webcam");
     }
   }, [sleepAlert, frontReady, openFront]);
 
-  // 2. Tự bật camera SAU khi bật chức năng nhận diện (Sign HOẶC Object)
+  // Tự bật camera SAU khi bật nhận diện (Sign HOẶC Object)
   useEffect(() => {
-    // Chỉ cần 1 trong 2 tính năng bật là phải bật camera
     const needRearCam = signDetect || objectDetect;
-
     if (needRearCam && !cameraOn) {
       setCameraOn(true);
     } else if (!needRearCam && cameraOn && !sleepAlert && !laneMonitor) {
-      // Nếu tắt hết các tính năng liên quan -> tự tắt camera
       setCameraOn(false);
     }
   }, [signDetect, objectDetect, sleepAlert, laneMonitor, cameraOn]);
 
-  // 3. Reset state khi tắt camera
+  // Reset state khi tắt camera
   useEffect(() => {
     if (!cameraOn) {
       if (signDetect) setSignDetect(false);
       if (objectDetect) setObjectDetect(false);
-
-      // Nếu muốn tắt luôn webcam khi tắt master switch
-      if (frontReady) {
-        // stopFront(); // Bỏ comment nếu muốn nút "Tắt camera" tắt luôn cả webcam trước
-      }
     }
   }, [cameraOn]);
 
@@ -90,30 +127,45 @@ export default function DashboardPage() {
     return () => clearInterval(t);
   }, []);
 
-  // Lấy vị trí + thời tiết (Giữ nguyên logic cũ)
+  // Lấy vị trí + thời tiết
   useEffect(() => {
+    // Chỉ lấy dữ liệu nếu cấu hình cho phép hiển thị (tiết kiệm API)
+    if (
+      !displayConfig.showLocation &&
+      !displayConfig.showWeather &&
+      !displayConfig.showTemperature
+    )
+      return;
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
           setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-          try {
-            const apiKey = "YOUR_API_KEY"; // Nhớ thay API Key thật
-            const res = await fetch(
-              `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&lang=vi&appid=${apiKey}`
-            );
-            const data = await res.json();
-            setWeather(data.weather?.[0]?.description ?? "--");
-            setTemperature(`${data.main?.temp ?? "--"}°C`);
-          } catch {
-            setWeather("Lỗi tải thời tiết");
-            setTemperature("--");
+
+          if (displayConfig.showWeather || displayConfig.showTemperature) {
+            try {
+              const apiKey = "YOUR_API_KEY"; // Thay API Key của bạn
+              const res = await fetch(
+                `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&lang=vi&appid=${apiKey}`
+              );
+              const data = await res.json();
+              setWeather(data.weather?.[0]?.description ?? "--");
+              setTemperature(`${data.main?.temp ?? "--"}°C`);
+            } catch {
+              setWeather("Lỗi tải");
+              setTemperature("--");
+            }
           }
         },
         () => setLocation("Không lấy được vị trí")
       );
     }
-  }, []);
+  }, [
+    displayConfig.showLocation,
+    displayConfig.showWeather,
+    displayConfig.showTemperature,
+  ]);
 
   // Xử lý hiển thị trạng thái Drowsy
   const danger = !!result?.data?.is_drowsy;
@@ -135,13 +187,11 @@ export default function DashboardPage() {
     setCameraOn((prev) => {
       const newState = !prev;
       if (newState) {
-        // Bật camera
         openFront("webcam");
       } else {
-        // Tắt toàn bộ
         setSleepAlert(false);
         setSignDetect(false);
-        setObjectDetect(false); // Reset object detect
+        setObjectDetect(false);
         setLaneMonitor(false);
         stopFront();
       }
@@ -201,7 +251,7 @@ export default function DashboardPage() {
 
           {/* Grid Camera */}
           <div className="grid grid-cols-2 gap-4 mt-4">
-            {/* 1. Camera trước (Webcam Laptop - Drowsy) */}
+            {/* 1. Camera trước */}
             <div
               className={`h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden ${
                 danger ? "border-red-500" : ""
@@ -234,7 +284,6 @@ export default function DashboardPage() {
                     </span>
                   </div>
                 )}
-
                 <div className="absolute top-2 right-2 flex flex-col items-end gap-2">
                   {badge && (
                     <div
@@ -252,7 +301,6 @@ export default function DashboardPage() {
                     </div>
                   )}
                 </div>
-
                 {frontError && (
                   <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-red-400 text-xs p-2">
                     {frontError}
@@ -261,7 +309,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* 2. Camera sau (Mobile/IVCam - Sign & Object Detection) */}
+            {/* 2. Camera sau */}
             <div className="h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden relative">
               <div className="flex items-center gap-2 text-blue-500 font-medium p-2 border-b z-10 relative">
                 <Camera className="w-5 h-5" />
@@ -269,14 +317,12 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex-1 bg-black relative">
-                {/* Component CameraLive xử lý cả Sign và Object */}
                 <CameraLive
-                  enableSign={signDetect} // Truyền state biển báo
-                  enableObject={objectDetect} // Truyền state vật cản
+                  enableSign={signDetect}
+                  enableObject={objectDetect}
                   startCamera={cameraOn}
                   className="w-full h-full object-contain"
                 />
-
                 {!cameraOn && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-gray-400 text-sm">
@@ -289,13 +335,35 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* --- Cột phải: Thông tin --- */}
+        {/* --- Cột phải: Thông tin (CẬP NHẬT THEO CẤU HÌNH) --- */}
         <div className="w-64 space-y-4 m-6 ml-0">
           <h2 className="text-lg font-bold">Thông tin</h2>
-          <InfoCard icon={MapPin} label="Vị trí" value={location} />
-          <InfoCard icon={Sun} label="Thời tiết" value={weather} />
-          <InfoCard icon={Thermometer} label="Nhiệt độ" value={temperature} />
-          <InfoCard icon={Clock} label="Thời gian" value={time} />
+
+          {displayConfig.showLocation && (
+            <InfoCard icon={MapPin} label="Vị trí" value={location} />
+          )}
+
+          {displayConfig.showWeather && (
+            <InfoCard icon={Sun} label="Thời tiết" value={weather} />
+          )}
+
+          {displayConfig.showTemperature && (
+            <InfoCard icon={Thermometer} label="Nhiệt độ" value={temperature} />
+          )}
+
+          {displayConfig.showTime && (
+            <InfoCard icon={Clock} label="Thời gian" value={time} />
+          )}
+
+          {/* Nếu tắt hết thì hiển thị thông báo nhỏ để layout đỡ trống */}
+          {!displayConfig.showLocation &&
+            !displayConfig.showWeather &&
+            !displayConfig.showTemperature &&
+            !displayConfig.showTime && (
+              <div className="text-sm text-gray-400 italic">
+                Các widget đã được ẩn trong Cài đặt.
+              </div>
+            )}
         </div>
       </div>
     </div>

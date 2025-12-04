@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from "react";
 // Import service
 import { signService } from "@/services/signService";
-import { objectService } from "@/services/ai/objectService"; // Đảm bảo đúng đường dẫn
+import { objectService } from "@/services/ai/objectService";
 
 interface Detection {
   box: number[];
@@ -18,8 +18,15 @@ interface CameraLiveProps {
   enableObject: boolean;
 }
 
+// Map tần suất ra mili-giây
+const FREQUENCY_MAP = {
+  high: 330, // ~3 req/s
+  medium: 1000, // 1 req/s
+  low: 2000, // 0.5 req/s
+};
+
 const getBoxColor = (className: string, type: "sign" | "object"): string => {
-  if (type === "object") return "#ff0000"; // Vật cản màu đỏ
+  if (type === "object") return "#ff0000";
   const name = (className || "").toLowerCase();
   if (name.includes("phụ")) return "#a020f0";
   if (name.includes("nguy hiểm") || name.includes("cảnh báo")) return "#ff0000";
@@ -41,6 +48,34 @@ export default function CameraLive({
   const loadingRef = useRef(false);
 
   const [detections, setDetections] = useState<Detection[]>([]);
+
+  // State lưu thời gian interval hiện tại
+  const [intervalMs, setIntervalMs] = useState(1000);
+
+  // 0. Đọc cấu hình từ LocalStorage khi component mount hoặc khi có sự kiện update
+  useEffect(() => {
+    const loadSettings = () => {
+      try {
+        const saved = localStorage.getItem("adas_settings");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const freq = parsed.alert?.frequency as keyof typeof FREQUENCY_MAP;
+          if (freq && FREQUENCY_MAP[freq]) {
+            setIntervalMs(FREQUENCY_MAP[freq]);
+          }
+        }
+      } catch (e) {
+        console.warn("Dùng cấu hình mặc định do lỗi đọc storage");
+      }
+    };
+
+    loadSettings();
+
+    // Lắng nghe sự kiện nếu settings thay đổi ở tab khác
+    window.addEventListener("adas_settings_updated", loadSettings);
+    return () =>
+      window.removeEventListener("adas_settings_updated", loadSettings);
+  }, []);
 
   // 1. Khởi động camera
   useEffect(() => {
@@ -64,15 +99,12 @@ export default function CameraLive({
     };
   }, [startCamera]);
 
-  // 2. Hàm hỗ trợ: Lấy data an toàn từ JSON lồng nhau
+  // 2. Hàm hỗ trợ lấy data
   const safeGetList = (res: any) => {
     if (!res) return [];
-    // Thử các trường hợp lồng nhau phổ biến do backend trả về
     if (Array.isArray(res)) return res;
     if (Array.isArray(res.data)) return res.data;
     if (res.data && Array.isArray(res.data.data)) return res.data.data;
-    if (res.data && res.data.data && Array.isArray(res.data.data.data))
-      return res.data.data.data;
     return [];
   };
 
@@ -82,18 +114,14 @@ export default function CameraLive({
       return;
 
     loadingRef.current = true;
-
-    // Capture Frame
-    if (!videoRef.current || !canvasRef.current) {
-      loadingRef.current = false;
-      return;
-    }
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (video.videoWidth === 0) {
+
+    if (!video || !canvas || video.videoWidth === 0) {
       loadingRef.current = false;
       return;
     }
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext("2d");
@@ -101,6 +129,8 @@ export default function CameraLive({
       loadingRef.current = false;
       return;
     }
+
+    // Resize ảnh nhỏ lại để gửi API nhanh hơn (nếu cần, ở đây giữ nguyên logic cũ)
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const base64 = canvas
       .toDataURL("image/jpeg", 0.5)
@@ -109,14 +139,12 @@ export default function CameraLive({
     try {
       const promises = [];
 
-      // --- REQUEST SIGN ---
       if (enableSign) {
         promises.push(
           signService
             .predictSign(base64)
             .then((res) => {
               const list = safeGetList(res);
-              // LỌC KỸ: Chỉ lấy phần tử có box hợp lệ (mảng 4 số)
               return list
                 .filter(
                   (item: any) =>
@@ -130,14 +158,12 @@ export default function CameraLive({
         promises.push(Promise.resolve([]));
       }
 
-      // --- REQUEST OBJECT ---
       if (enableObject) {
         promises.push(
           objectService
             .predictObject(base64)
             .then((res) => {
               const list = safeGetList(res);
-              // LỌC KỸ: Chỉ lấy phần tử có box hợp lệ (mảng 4 số)
               return list
                 .filter(
                   (item: any) =>
@@ -152,12 +178,7 @@ export default function CameraLive({
       }
 
       const [signResults, objectResults] = await Promise.all(promises);
-      const combined = [...signResults, ...objectResults];
-
-      // Log để debug xem lọc sạch chưa
-      // console.log("Detected:", combined.length, combined);
-
-      setDetections(combined);
+      setDetections([...signResults, ...objectResults]);
     } catch (err) {
       console.error("❌ Lỗi xử lý AI:", err);
     } finally {
@@ -165,20 +186,23 @@ export default function CameraLive({
     }
   };
 
-  // 4. Loop
+  // 4. Loop - Sử dụng intervalMs động
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
+
     if (startCamera && (enableSign || enableObject)) {
-      interval = setInterval(() => processAI(), 500);
+      // console.log("Starting AI Loop with interval:", intervalMs);
+      interval = setInterval(() => processAI(), intervalMs);
     } else {
       setDetections([]);
     }
+
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [startCamera, enableSign, enableObject]);
+  }, [startCamera, enableSign, enableObject, intervalMs]); // Re-run khi intervalMs đổi
 
-  // 5. Vẽ boxes
+  // 5. Vẽ boxes (Giữ nguyên logic cũ)
   useEffect(() => {
     const canvas = overlayRef.current;
     const video = videoRef.current;
@@ -213,7 +237,6 @@ export default function CameraLive({
       ctx.font = "bold 16px Arial";
       const textWidth = ctx.measureText(text).width;
 
-      // Vẽ nền chữ thông minh (không bị trôi ra ngoài)
       const labelY = y1 > 25 ? y1 - 25 : y1;
       ctx.fillRect(x1, labelY, textWidth + 10, 25);
 
@@ -236,7 +259,7 @@ export default function CameraLive({
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-gray-500 bg-gray-900">
-          Nhấn “Mở camera” để bật Camera sau
+          Nhấn “Mở camera” để bật Camera
         </div>
       )}
       <canvas ref={canvasRef} style={{ display: "none" }} />
@@ -245,11 +268,17 @@ export default function CameraLive({
         className="absolute top-0 left-0 w-full h-full pointer-events-none"
       />
 
+      {/* Hiển thị info debug nhỏ */}
       {(enableSign || enableObject) && startCamera && (
-        <div className="absolute bottom-2 left-2 bg-black/70 text-white px-3 py-1 rounded-full text-xs z-20 pointer-events-none">
-          {detections.length > 0
-            ? `Phát hiện: ${detections.length}`
-            : "Đang quét..."}
+        <div className="absolute bottom-2 left-2 flex gap-2 z-20 pointer-events-none">
+          <div className="bg-black/70 text-white px-3 py-1 rounded-full text-xs">
+            Delay: {intervalMs}ms
+          </div>
+          <div className="bg-black/70 text-white px-3 py-1 rounded-full text-xs">
+            {detections.length > 0
+              ? `Phát hiện: ${detections.length}`
+              : "Đang quét..."}
+          </div>
         </div>
       )}
     </div>

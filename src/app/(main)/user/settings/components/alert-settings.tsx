@@ -1,11 +1,6 @@
 "use client";
-
-import { useState } from "react";
-import {
-  SettingsToggleItem,
-  SettingsSelectItem,
-  SettingsSliderItem,
-} from "./settings-item";
+import { SettingsSelectItem, SettingsSliderItem } from "./settings-item";
+import { AppSettings } from "../page";
 
 const Section = ({
   title,
@@ -14,115 +9,45 @@ const Section = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="border-b border-gray-200 last:border-b-0">
-    <h3 className="p-6 pb-0 text-lg font-semibold text-gray-900">{title}</h3>
+  <div className="border-b border-gray-100 last:border-b-0 dark:border-slate-800">
+    <h3 className="px-4 pt-4 pb-2 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+      {title}
+    </h3>
     {children}
   </div>
 );
 
-export const AlertSettings = () => {
-  // State ví dụ
-  const [volume, setVolume] = useState(80);
-  const [alertSound, setAlertSound] = useState("default");
-  const [sleepDetect, setSleepDetect] = useState(true);
-  const [sleepSensitivity, setSleepSensitivity] = useState("medium");
-  const [collisionWarning, setCollisionWarning] = useState(true);
-  const [collisionDistance, setCollisionDistance] = useState("medium");
-  const [laneWarning, setLaneWarning] = useState(true);
-  const [signWarning, setSignWarning] = useState(true);
-  const [speedLimit, setSpeedLimit] = useState(5);
-
+export const AlertSettings = ({
+  values,
+  onUpdate,
+}: {
+  values: AppSettings["alert"];
+  onUpdate: (key: keyof AppSettings["alert"], value: any) => void;
+}) => {
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <Section title="Âm thanh chung">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+      <Section title="Hiệu năng AI">
+        <SettingsSelectItem
+          title="Tần suất xử lý (FPS)"
+          description="Tốc độ gửi ảnh lên server. Cao hơn sẽ mượt hơn."
+          value={values.frequency}
+          onChange={(val: any) => onUpdate("frequency", val)}
+          options={[
+            { value: "high", label: "Cao (Tối đa)" },
+            { value: "medium", label: "Trung bình (Khuyên dùng)" },
+            { value: "low", label: "Thấp (Tiết kiệm Pin)" },
+          ]}
+        />
+      </Section>
+      <Section title="Âm thanh hệ thống">
         <SettingsSliderItem
           title="Âm lượng cảnh báo"
-          description="Điều chỉnh âm lượng chung của hệ thống"
+          description="Độ lớn âm thanh loa khi phát hiện vật cản"
           min={0}
           max={100}
-          step={5}
-          value={volume}
-          onChange={setVolume}
-        />
-        <SettingsSelectItem
-          title="Kiểu chuông"
-          description="Chọn âm thanh cảnh báo"
-          value={alertSound}
-          onChange={setAlertSound}
-          options={[
-            { value: "default", label: "Mặc định" },
-            { value: "voice", label: "Giọng nói" },
-            { value: "beep", label: "Tiếng Beep" },
-          ]}
-        />
-      </Section>
-
-      <Section title="Cảnh báo buồn ngủ">
-        <SettingsToggleItem
-          title="Phát hiện buồn ngủ"
-          description="Bật/Tắt cảnh báo khi tài xế có dấu hiệu mệt mỏi"
-          toggled={sleepDetect}
-          onToggle={setSleepDetect}
-        />
-        <SettingsSelectItem
-          title="Độ nhạy"
-          description="Độ nhạy của hệ thống phát hiện"
-          value={sleepSensitivity}
-          onChange={setSleepSensitivity}
-          options={[
-            { value: "low", label: "Thấp" },
-            { value: "medium", label: "Trung bình" },
-            { value: "high", label: "Cao" },
-          ]}
-        />
-      </Section>
-
-      <Section title="Cảnh báo va chạm">
-        <SettingsToggleItem
-          title="Phát hiện vật cản"
-          description="Bật/Tắt cảnh báo va chạm phía trước"
-          toggled={collisionWarning}
-          onToggle={setCollisionWarning}
-        />
-        <SettingsSelectItem
-          title="Khoảng cách cảnh báo"
-          description="Cảnh báo khi vật cản ở khoảng cách"
-          value={collisionDistance}
-          onChange={setCollisionDistance}
-          options={[
-            { value: "near", label: "Gần" },
-            { value: "medium", label: "Trung bình" },
-            { value: "far", label: "Xa" },
-          ]}
-        />
-      </Section>
-
-      <Section title="Giám sát làn đường">
-        <SettingsToggleItem
-          title="Cảnh báo lệch làn"
-          description="Bật/Tắt cảnh báo khi xe rời khỏi làn đường"
-          toggled={laneWarning}
-          onToggle={setLaneWarning}
-        />
-      </Section>
-
-      <Section title="Nhận diện biển báo">
-        <SettingsToggleItem
-          title="Cảnh báo vượt tốc độ"
-          description="Cảnh báo khi tốc độ xe vượt quá biển báo"
-          toggled={signWarning}
-          onToggle={setSignWarning}
-        />
-        <SettingsSelectItem
-          title="Mức vượt cho phép"
-          description="Cảnh báo khi vượt quá tốc độ"
-          value={String(speedLimit)}
-          onChange={(val) => setSpeedLimit(Number(val))}
-          options={[
-            { value: "0", label: "0 km/h" },
-            { value: "5", label: "+5 km/h" },
-            { value: "10", label: "+10 km/h" },
-          ]}
+          step={10}
+          value={values.volume}
+          onChange={(val: any) => onUpdate("volume", val)}
         />
       </Section>
     </div>

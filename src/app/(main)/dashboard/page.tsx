@@ -18,21 +18,23 @@ import InfoCard from "./components/info-card";
 // Hooks AI + Camera
 import { useDrowsy } from "@/hooks/useDrowsy";
 import { useCamera } from "@/hooks/useCamera";
+
+// Component CameraLive (Đã cập nhật ở bước trước)
 import CameraLive from "../components/CameraLive";
 
 export default function DashboardPage() {
   const [sleepAlert, setSleepAlert] = useState(false);
-  const [objectDetect, setObjectDetect] = useState(false);
-  const [signDetect, setSignDetect] = useState(false); // điều khiển CameraLive
+  const [objectDetect, setObjectDetect] = useState(false); // State cho nhận diện vật cản
+  const [signDetect, setSignDetect] = useState(false); // State cho nhận diện biển báo
   const [laneMonitor, setLaneMonitor] = useState(false);
-  const [cameraOn, setCameraOn] = useState(false); // điều khiển bật camera vật lý
+  const [cameraOn, setCameraOn] = useState(false); // Master switch cho camera sau
 
   const [location, setLocation] = useState("Đang lấy vị trí...");
   const [weather, setWeather] = useState("Đang tải...");
   const [temperature, setTemperature] = useState("...");
   const [time, setTime] = useState("--:--:--");
 
-  // 🎥 Camera trước = webcam
+  // 🎥 Camera trước = webcam (Drowsiness)
   const frontRef = useRef<HTMLVideoElement>(null!);
   const {
     camReady: frontReady,
@@ -48,40 +50,36 @@ export default function DashboardPage() {
     intervalMs: 1200,
   });
 
-  // Tự động mở webcam khi bật chức năng Cảnh báo buồn ngủ
+  // 1. Tự động mở webcam khi bật chức năng Cảnh báo buồn ngủ
   useEffect(() => {
     if (sleepAlert && !frontReady) {
       openFront("webcam");
     }
-    // Nếu muốn tắt webcam khi tắt hết các chức năng dùng webcam, có thể:
-    // else if (!sleepAlert) { stopFront(); }
   }, [sleepAlert, frontReady, openFront]);
 
-  // Tự bật camera khi bật chức năng nhận diện
+  // 2. Tự bật camera SAU khi bật chức năng nhận diện (Sign HOẶC Object)
   useEffect(() => {
-    // Chỉ tự bật camera nếu người dùng đang bật tính năng, KHÔNG trong quá trình tắt
-    if (signDetect && !cameraOn) {
+    // Chỉ cần 1 trong 2 tính năng bật là phải bật camera
+    const needRearCam = signDetect || objectDetect;
+
+    if (needRearCam && !cameraOn) {
       setCameraOn(true);
-    } else if (
-      !signDetect &&
-      cameraOn &&
-      !sleepAlert &&
-      !objectDetect &&
-      !laneMonitor
-    ) {
-      // Nếu tắt hết các tính năng → tự tắt camera
+    } else if (!needRearCam && cameraOn && !sleepAlert && !laneMonitor) {
+      // Nếu tắt hết các tính năng liên quan -> tự tắt camera
       setCameraOn(false);
     }
-  }, [signDetect, sleepAlert, objectDetect, laneMonitor]);
+  }, [signDetect, objectDetect, sleepAlert, laneMonitor, cameraOn]);
 
+  // 3. Reset state khi tắt camera
   useEffect(() => {
-    if (!cameraOn && signDetect) {
-      setSignDetect(false);
-    }
-    if (!cameraOn && frontReady) {
-      // Tắt camera vật lý thì tắt luôn webcam
-      stopFront();
-      setSignDetect(false);
+    if (!cameraOn) {
+      if (signDetect) setSignDetect(false);
+      if (objectDetect) setObjectDetect(false);
+
+      // Nếu muốn tắt luôn webcam khi tắt master switch
+      if (frontReady) {
+        // stopFront(); // Bỏ comment nếu muốn nút "Tắt camera" tắt luôn cả webcam trước
+      }
     }
   }, [cameraOn]);
 
@@ -92,7 +90,7 @@ export default function DashboardPage() {
     return () => clearInterval(t);
   }, []);
 
-  // Lấy vị trí + thời tiết
+  // Lấy vị trí + thời tiết (Giữ nguyên logic cũ)
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -100,7 +98,7 @@ export default function DashboardPage() {
           const { latitude, longitude } = pos.coords;
           setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
           try {
-            const apiKey = "YOUR_API_KEY";
+            const apiKey = "YOUR_API_KEY"; // Nhớ thay API Key thật
             const res = await fetch(
               `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&lang=vi&appid=${apiKey}`
             );
@@ -117,6 +115,7 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Xử lý hiển thị trạng thái Drowsy
   const danger = !!result?.data?.is_drowsy;
   const statusText = sleepAlert
     ? result
@@ -135,20 +134,17 @@ export default function DashboardPage() {
   const handleCameraToggle = async () => {
     setCameraOn((prev) => {
       const newState = !prev;
-
       if (newState) {
-        // 🟢 Bật camera
+        // Bật camera
         openFront("webcam");
       } else {
-        // 🔴 Tắt toàn bộ chức năng trước khi tắt camera
+        // Tắt toàn bộ
         setSleepAlert(false);
         setSignDetect(false);
-        setObjectDetect(false);
+        setObjectDetect(false); // Reset object detect
         setLaneMonitor(false);
-
         stopFront();
       }
-
       return newState;
     });
   };
@@ -197,13 +193,15 @@ export default function DashboardPage() {
               className="px-6 py-2 rounded-lg bg-slate-600 text-white font-semibold shadow hover:bg-slate-700 transition"
               onClick={handleCameraToggle}
             >
-              {frontReady || signDetect ? "Tắt camera" : "Mở camera"}
+              {frontReady || signDetect || objectDetect
+                ? "Tắt camera"
+                : "Mở camera"}
             </button>
           </div>
 
-          {/* Camera */}
+          {/* Grid Camera */}
           <div className="grid grid-cols-2 gap-4 mt-4">
-            {/* Camera trước (webcam) */}
+            {/* 1. Camera trước (Webcam Laptop - Drowsy) */}
             <div
               className={`h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden ${
                 danger ? "border-red-500" : ""
@@ -251,9 +249,6 @@ export default function DashboardPage() {
                       {typeof result.data?.eye_aspect_ratio === "number"
                         ? result.data?.eye_aspect_ratio.toFixed(2)
                         : "-"}
-                      {typeof result.data?.latency_ms === "number"
-                        ? ` • ${result.data?.latency_ms}ms`
-                        : ""}
                     </div>
                   )}
                 </div>
@@ -266,7 +261,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Camera sau — chỉ hiển thị CameraLive, KHÔNG render video chồng lên */}
+            {/* 2. Camera sau (Mobile/IVCam - Sign & Object Detection) */}
             <div className="h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden relative">
               <div className="flex items-center gap-2 text-blue-500 font-medium p-2 border-b z-10 relative">
                 <Camera className="w-5 h-5" />
@@ -274,16 +269,15 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex-1 bg-black relative">
-                {/* Chỉ CameraLive — không có <video> phía sau để tránh đè */}
-                <div className="absolute inset-0 w-full object-cover">
-                  <CameraLive
-                    enabled={signDetect}
-                    startCamera={cameraOn}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
+                {/* Component CameraLive xử lý cả Sign và Object */}
+                <CameraLive
+                  enableSign={signDetect} // Truyền state biển báo
+                  enableObject={objectDetect} // Truyền state vật cản
+                  startCamera={cameraOn}
+                  className="w-full h-full object-contain"
+                />
 
-                {!signDetect && (
+                {!cameraOn && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-gray-400 text-sm">
                       Nhấn “Mở camera” để bật iVCam
@@ -296,7 +290,7 @@ export default function DashboardPage() {
         </div>
 
         {/* --- Cột phải: Thông tin --- */}
-        <div className="w-64 space-y-4">
+        <div className="w-64 space-y-4 m-6 ml-0">
           <h2 className="text-lg font-bold">Thông tin</h2>
           <InfoCard icon={MapPin} label="Vị trí" value={location} />
           <InfoCard icon={Sun} label="Thời tiết" value={weather} />

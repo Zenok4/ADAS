@@ -163,8 +163,14 @@ export default function SettingsPage() {
         {/* Tabs style Shadcn (nhỏ gọn) */}
         <div className="flex p-1 bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 shadow-sm">
           <SettingsTab
+            icon={Settings}
+            label="Chung"
+            isActive={activeTab === "chung"}
+            onClick={() => setActiveTab("chung")}
+          />
+          <SettingsTab
             icon={Bell}
-            label="Xử lý AI"
+            label="Cảnh báo"
             isActive={activeTab === "canhbao"}
             onClick={() => setActiveTab("canhbao")}
           />
@@ -173,12 +179,6 @@ export default function SettingsPage() {
             label="Giao diện"
             isActive={activeTab === "hienthi"}
             onClick={() => setActiveTab("hienthi")}
-          />
-          <SettingsTab
-            icon={Settings}
-            label="Chung"
-            isActive={activeTab === "chung"}
-            onClick={() => setActiveTab("chung")}
           />
         </div>
 

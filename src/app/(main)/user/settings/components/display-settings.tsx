@@ -1,9 +1,10 @@
 "use client";
 
+import { useTheme } from "next-themes";
 import { SettingsToggleItem, SettingsSelectItem } from "./settings-item";
 import { AppSettings } from "../page";
 
-// Section Header tái sử dụng
+// Component Section: Style nhỏ gọn, hỗ trợ Dark Mode
 const Section = ({
   title,
   children,
@@ -25,16 +26,20 @@ interface DisplaySettingsProps {
 }
 
 export const DisplaySettings = ({ values, onUpdate }: DisplaySettingsProps) => {
+  // Hook xử lý theme tự động của Shadcn/Next-themes
+  const { theme, setTheme } = useTheme();
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
       <Section title="Giao diện chung">
         <SettingsSelectItem
           title="Chủ đề (Theme)"
           description="Chọn giao diện hiển thị"
-          value={values.theme}
-          onChange={(val: any) => onUpdate("theme", val)}
+          // Liên kết trực tiếp với hook useTheme
+          value={theme || "system"}
+          onChange={(val: string) => setTheme(val)}
           options={[
-            { value: "auto", label: "Tự động (Theo máy)" },
+            { value: "system", label: "Tự động (Theo máy)" },
             { value: "light", label: "Sáng (Light)" },
             { value: "dark", label: "Tối (Dark)" },
           ]}
@@ -43,7 +48,7 @@ export const DisplaySettings = ({ values, onUpdate }: DisplaySettingsProps) => {
           title="Lớp phủ AI (Overlay)"
           description="Vẽ khung nhận diện lên màn hình Camera"
           toggled={values.showOverlay}
-          onToggle={(val: any) => onUpdate("showOverlay", val)}
+          onToggle={(val: boolean) => onUpdate("showOverlay", val)}
         />
       </Section>
 
@@ -52,25 +57,25 @@ export const DisplaySettings = ({ values, onUpdate }: DisplaySettingsProps) => {
           title="Thời gian"
           description="Hiển thị đồng hồ số"
           toggled={values.showTime}
-          onToggle={(val: any) => onUpdate("showTime", val)}
+          onToggle={(val: boolean) => onUpdate("showTime", val)}
         />
         <SettingsToggleItem
           title="Thời tiết"
           description="Hiển thị widget thời tiết"
           toggled={values.showWeather}
-          onToggle={(val: any) => onUpdate("showWeather", val)}
+          onToggle={(val: boolean) => onUpdate("showWeather", val)}
         />
         <SettingsToggleItem
           title="Vị trí GPS"
           description="Hiển thị tên đường/quận huyện"
           toggled={values.showLocation}
-          onToggle={(val: any) => onUpdate("showLocation", val)}
+          onToggle={(val: boolean) => onUpdate("showLocation", val)}
         />
         <SettingsToggleItem
           title="Nhiệt độ"
           description="Hiển thị nhiệt độ ngoài trời"
           toggled={values.showTemperature}
-          onToggle={(val: any) => onUpdate("showTemperature", val)}
+          onToggle={(val: boolean) => onUpdate("showTemperature", val)}
         />
       </Section>
     </div>

@@ -60,28 +60,28 @@ export default function DashboardPage() {
   // Tự bật camera khi bật chức năng nhận diện
   useEffect(() => {
     // Chỉ tự bật camera nếu người dùng đang bật tính năng, KHÔNG trong quá trình tắt
-    if (signDetect && !cameraOn) {
+    if ((signDetect || laneMonitor) && !cameraOn) {
       setCameraOn(true);
     } else if (
       !signDetect &&
+      !laneMonitor &&
       cameraOn &&
       !sleepAlert &&
-      !objectDetect &&
-      !laneMonitor
+      !objectDetect 
     ) {
       // Nếu tắt hết các tính năng → tự tắt camera
       setCameraOn(false);
     }
-  }, [signDetect, sleepAlert, objectDetect, laneMonitor]);
+  }, [signDetect, laneMonitor, sleepAlert, objectDetect, cameraOn ]);
 
   useEffect(() => {
-    if (!cameraOn && signDetect) {
-      setSignDetect(false);
+    if (!cameraOn) {
+      if (signDetect) setSignDetect(false);
+      if (laneMonitor) setLaneMonitor(false);
     }
     if (!cameraOn && frontReady) {
       // Tắt camera vật lý thì tắt luôn webcam
       stopFront();
-      setSignDetect(false);
     }
   }, [cameraOn]);
 
@@ -197,7 +197,7 @@ export default function DashboardPage() {
               className="px-6 py-2 rounded-lg bg-slate-600 text-white font-semibold shadow hover:bg-slate-700 transition"
               onClick={handleCameraToggle}
             >
-              {frontReady || signDetect ? "Tắt camera" : "Mở camera"}
+              {frontReady || signDetect || laneMonitor ? "Tắt camera" : "Mở camera"}
             </button>
           </div>
 
@@ -277,8 +277,10 @@ export default function DashboardPage() {
                 {/* Chỉ CameraLive — không có <video> phía sau để tránh đè */}
                 <div className="absolute inset-0 w-full object-cover">
                   <CameraLive
-                    enabled={signDetect}
                     startCamera={cameraOn}
+                    enableSign={signDetect}
+                    enableLane={laneMonitor}
+                    
                     className="w-full h-full object-contain"
                   />
                 </div>

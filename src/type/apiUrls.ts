@@ -1,5 +1,7 @@
 // services/type/apiUrls.ts
 
+import { sign } from "crypto";
+
 export const ApiUrls = {
   authen: {
     loginUsername: "/authen/login/username",
@@ -72,5 +74,7 @@ export const ApiUrls = {
   },
   core_functions: {
     drowsy: "/drowsy/detect",
+    sign: "/sign/predict",
+    lane: "/lane/predict", 
   },
 } as const;

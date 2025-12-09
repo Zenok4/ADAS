@@ -18,6 +18,7 @@ import InfoCard from "./components/info-card";
 import { useDrowsy } from "@/hooks/useDrowsy";
 import { useCamera } from "@/hooks/useCamera";
 import CameraLive from "../components/CameraLive";
+import { useLocationWeather } from "@/hooks/useLocationWeather";
 
 export default function DashboardPage() {
   const [sleepAlert, setSleepAlert] = useState(false);
@@ -30,12 +31,9 @@ export default function DashboardPage() {
 
   // 🔹 State giọng
   const [voiceList, setVoiceList] = useState<SpeechSynthesisVoice[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
-  
-  const [location, setLocation] = useState("Đang lấy vị trí...");
-  const [weather, setWeather] = useState("Đang tải...");
-  const [temperature, setTemperature] = useState("...");
-  const [time, setTime] = useState("--:--:--");
+  const [selectedVoice, setSelectedVoice] =
+    useState<SpeechSynthesisVoice | null>(null);
+  const { location, weather, temperature, time } = useLocationWeather();
 
   const frontRef = useRef<HTMLVideoElement>(null!);
   const {
@@ -77,38 +75,6 @@ export default function DashboardPage() {
       setSignDetect(false);
     }
   }, [cameraOn]);
-
-  // Đồng hồ realtime
-  useEffect(() => {
-    setTime(new Date().toLocaleTimeString());
-    const t = setInterval(() => setTime(new Date().toLocaleTimeString()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  // Lấy vị trí + thời tiết
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const { latitude, longitude } = pos.coords;
-          setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-          try {
-            const apiKey = "YOUR_API_KEY";
-            const res = await fetch(
-              `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&lang=vi&appid=${apiKey}`
-            );
-            const data = await res.json();
-            setWeather(data.weather?.[0]?.description ?? "--");
-            setTemperature(`${data.main?.temp ?? "--"}°C`);
-          } catch {
-            setWeather("Lỗi tải thời tiết");
-            setTemperature("--");
-          }
-        },
-        () => setLocation("Không lấy được vị trí")
-      );
-    }
-  }, []);
 
   const danger = !!result?.data?.is_drowsy;
   const statusText = sleepAlert
@@ -196,7 +162,6 @@ export default function DashboardPage() {
               {soundEnabled ? "Bật âm thanh" : "Tắt âm thanh"}
             </button>
           </div>
-
 
           {/* Camera */}
           <div className="grid grid-cols-2 gap-4 mt-4">

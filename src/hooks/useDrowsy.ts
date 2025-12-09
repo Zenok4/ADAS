@@ -1,5 +1,6 @@
 import { CoreFunctionService } from "@/services/coreFunctionService";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useAudioAlert } from "./useAudioAlert";
 
 type DrowsyResult = {
   code: number;
@@ -25,50 +26,11 @@ export function useDrowsy({
   videoRef,
   enabled = false,
   intervalMs = 1000,
-  soundEnabled = true,
 }: UseDrowsyOptions) {
   const [result, setResult] = useState<DrowsyResult | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // 🔹 Quản lý giọng nói
-  const [voiceList, setVoiceList] = useState<SpeechSynthesisVoice[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
-  const lastSpoken = useRef<string | null>(null);
-
-  // Load voices
-  useEffect(() => {
-    const loadVoices = () => {
-      const voices = window.speechSynthesis.getVoices();
-      setVoiceList(voices);
-
-      if (!selectedVoice) {
-        const viVoice = voices.find(v => v.lang.startsWith("vi"));
-        setSelectedVoice(viVoice || voices[0] || null);
-      }
-    };
-
-    loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-  }, [selectedVoice]);
-
-  // 🔹 Hàm đọc âm thanh
-  const speak = useCallback(
-    (text: string) => {
-      if (!soundEnabled || !window.speechSynthesis) return;
-
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = "vi-VN";
-
-      if (selectedVoice) utter.voice = selectedVoice;
-      utter.rate = 1;
-      utter.pitch = 1;
-
-      console.log("Utterance created:", text); // ===================== Âm thanh cảnh báo =====================
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utter);
-    },
-    [soundEnabled, selectedVoice]
-  );
+  const { alertDrowsiness } = useAudioAlert(true); // true = bật âm thanh
 
   // 🔹 Hàm chụp ảnh và gửi lên server
   const captureAndSend = useCallback(async () => {
@@ -88,20 +50,15 @@ export function useDrowsy({
     try {
       const { data } = await CoreFunctionService.drowsy(dataUrl);
       setResult(data);
-
-      // 🔹 Nếu phát hiện buồn ngủ, đọc cảnh báo
-      if (data.data.is_drowsy && lastSpoken.current !== data.data.message) {
-        speak(data.data.message);
-        lastSpoken.current = data.data.message;
-      } else if (!data.data.is_drowsy) {
-        lastSpoken.current = null; // reset khi tài xế bình thường
+      if (data.data.is_drowsy) {
+        alertDrowsiness(`Cảnh báo buồn ngủ!`);
       }
     } catch (err) {
       console.error("Lỗi gửi ảnh lên AI:", err);
     } finally {
       setBusy(false);
     }
-  }, [videoRef, speak]);
+  }, [videoRef]);
 
   // 🔹 Reset kết quả
   const resetDrowsy = useCallback(() => setResult(null), []);
@@ -115,5 +72,5 @@ export function useDrowsy({
     return () => clearInterval(timer);
   }, [enabled, intervalMs, captureAndSend]);
 
-  return { result, busy, resetDrowsy, forceCapture, speak };
+  return { result, busy, resetDrowsy, forceCapture };
 }

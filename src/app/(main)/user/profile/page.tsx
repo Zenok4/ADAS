@@ -6,6 +6,7 @@ import {
   UserCircle2,
   CheckCircle,
   FileEdit,
+  Lock, // <-- THÊM MỚI
   Mail,
   Phone,
   MapPin,
@@ -148,14 +149,28 @@ export default function ProfilePage() {
               </div>
               {/* (Giữ nguyên điểm an toàn) */}
             </div>
-            <button
-              // (Thêm) Giả sử nhấn nút sẽ đi đến trang chỉnh sửa
-              onClick={() => router.push("/user/profile/edit")}
-              className="flex-shrink-0 ml-auto px-4 py-2 rounded-lg bg-blue-50 text-blue-600 font-semibold flex items-center gap-2 hover:bg-blue-100 transition-colors"
-            >
-              <FileEdit size={16} />
-              <span>Chỉnh sửa</span>
-            </button>
+
+            {/* === KHỐI NÚT ĐÃ THAY ĐỔI === */}
+            <div className="flex-shrink-0 ml-auto flex flex-col gap-3 w-full md:w-auto">
+              {/* Nút Chỉnh sửa */}
+              <button
+                onClick={() => router.push("/user/profile/edit")}
+                className="w-full px-4 py-2 rounded-lg bg-blue-50 text-blue-600 font-semibold flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors"
+              >
+                <FileEdit size={16} />
+                <span>Chỉnh sửa</span>
+              </button>
+
+              {/* Nút Đổi mật khẩu (MỚI) */}
+              <button
+                onClick={() => router.push("/user/change-password")}
+                className="w-full px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors"
+              >
+                <Lock size={16} />
+                <span>Đổi mật khẩu</span>
+              </button>
+            </div>
+            {/* === KẾT THÚC KHỐI NÚT === */}
           </div>
 
           {/* Lưới chứa 2 card (Đã cập nhật) */}
@@ -176,7 +191,7 @@ export default function ProfilePage() {
                 icon={MapPin}
                 label="Địa chỉ"
                 value={profileData.address}
-              />
+                            />
               {/* (Trường này không có trong ProfileData, giữ nguyên) */}
               <InfoItem
                 icon={Calendar}

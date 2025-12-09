@@ -14,6 +14,6 @@ export const sidebarItems = [
   {
     title: "Settings",
     icon: Settings,
-    href: "/settings",
+    href: "/user/settings",
   },
 ];

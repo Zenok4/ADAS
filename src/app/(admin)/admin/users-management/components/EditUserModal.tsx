@@ -39,6 +39,7 @@ interface EditUserModalProps {
   errors: FormErrors;
   setErrors: React.Dispatch<React.SetStateAction<FormErrors>>;
   validators: Validators;
+  currentUserLevel: number; // Thêm prop này
 }
 
 export function EditUserModal({
@@ -53,6 +54,7 @@ export function EditUserModal({
   errors,
   setErrors,
   validators,
+  currentUserLevel,
 }: EditUserModalProps) {
   if (!editingUser) return null;
 
@@ -83,6 +85,7 @@ export function EditUserModal({
         {/* =============== LEFT COLUMN =============== */}
         <div className="grid grid-cols-2 gap-6 py-4">
           <div className="space-y-4">
+            {/* Tên đăng nhập */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Tên đăng nhập
@@ -110,6 +113,23 @@ export function EditUserModal({
               )}
             </div>
 
+            {/* Tên hiển thị */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Tên hiển thị
+              </label>
+              <Input
+                value={editingUser.display_name || ""}
+                onChange={(e) =>
+                  setEditingUser((prev) =>
+                    prev ? { ...prev, display_name: e.target.value } : null
+                  )
+                }
+                placeholder="Tên hiển thị"
+              />
+            </div>
+
+            {/* Email */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Email</label>
               <Input
@@ -128,6 +148,7 @@ export function EditUserModal({
               )}
             </div>
 
+            {/* Số điện thoại */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Số điện thoại
@@ -141,13 +162,14 @@ export function EditUserModal({
                 onBlur={(e) =>
                   handleBlur("phone", e.target.value, validators.validatePhone)
                 }
-                placeholder="10 chữ số, ví dụ: 0912345678"
+                placeholder="10 chữ số"
               />
               {errors.phone && (
                 <p className="text-xs text-red-600">{errors.phone}</p>
               )}
             </div>
 
+            {/* Trạng thái */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Trạng thái
@@ -171,35 +193,45 @@ export function EditUserModal({
             </div>
           </div>
 
-          {/* =============== RIGHT COLUMN =============== */}
+          {/* =============== RIGHT COLUMN: ROLES =============== */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">
               Vai trò (chọn nhiều)
             </label>
-            <div className="space-y-3 p-3 border rounded-md bg-white-50 h-fit">
-              {availableRoles.map((role) => (
-                <div key={role.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`edit-${role.id}`}
-                    checked={editingUser.selectedRoleIds.includes(role.id)}
-                    onCheckedChange={(checked: boolean) =>
-                      onRoleChange(role.id, checked)
-                    }
-                    disabled={role.id === userRoleId}
-                  />
-                  <label
-                    htmlFor={`edit-${role.id}`}
-                    className={`text-sm font-medium leading-none ${
-                      role.id === userRoleId
-                        ? "text-gray-500 cursor-not-allowed"
-                        : "peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    }`}
-                  >
-                    {role.name}
-                    {role.id === userRoleId && " (Mặc định)"}
-                  </label>
-                </div>
-              ))}
+            <div className="space-y-3 p-3 border rounded-md bg-white-50 h-fit max-h-[400px] overflow-y-auto">
+              {availableRoles.map((role) => {
+                // User không được tick vào các role cấp cao hơn mình
+                const isRoleTooHigh = (role.level || 0) >= currentUserLevel;
+                const isDefaultRole = role.id === userRoleId;
+                
+                // Disabled nếu là role mặc định HOẶC role quá cao
+                const isDisabled = isDefaultRole || isRoleTooHigh;
+
+                return (
+                  <div key={role.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`edit-${role.id}`}
+                      checked={editingUser.selectedRoleIds.includes(role.id)}
+                      onCheckedChange={(checked: boolean) =>
+                        onRoleChange(role.id, checked)
+                      }
+                      disabled={isDisabled}
+                    />
+                    <label
+                      htmlFor={`edit-${role.id}`}
+                      className={`text-sm font-medium leading-none ${
+                        isDisabled
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      }`}
+                    >
+                      {role.name} <span className="text-xs text-gray-400">(Lv.{role.level || 0})</span>
+                      {isDefaultRole && " (Mặc định)"}
+                      {isRoleTooHigh && " (Không đủ quyền)"}
+                    </label>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

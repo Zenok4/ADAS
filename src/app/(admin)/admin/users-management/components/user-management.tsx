@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { UserService, AuthorService } from "@/services/userService";
+import { useSession } from "@/context/SessionContext";
 import {
   UserData,
   RoleData,
@@ -15,9 +16,6 @@ import { EditUserModal } from "./EditUserModal";
 import { useNotifyDialog } from "@/hooks/useNotifyDialog";
 import NotifyDialog from "@/components/NotifyDialog";
 import { NotifyType } from "@/type/notify";
-import { PaginationComponent } from "./PaginationComponent";
-
-// Import thêm cho UI Lọc
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,7 +32,6 @@ const PAGE_LIMIT = 10;
 type FormErrors = { username: string; email: string; phone: string };
 const initialErrors: FormErrors = { username: "", email: "", phone: "" };
 
-// (Hàm getErrorNotify giữ nguyên - không thay đổi)
 const getErrorNotify = (error: any, defaultMessage: string) => {
   const responseData = error.response?.data;
   let finalErrorMessage: string = defaultMessage;
@@ -111,7 +108,6 @@ const getErrorNotify = (error: any, defaultMessage: string) => {
   };
 };
 
-
 export function UserManagement() {
   const {
     open,
@@ -124,10 +120,30 @@ export function UserManagement() {
     handlePrimaryAction,
   } = useNotifyDialog();
 
+  // === 1. Lấy User từ Session Context ===
+  const { user } = useSession();
+
   const [userList, setUserList] = useState<UserData[]>([]);
   const [availableRoles, setAvailableRoles] = useState<RoleData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userRoleId, setUserRoleId] = useState<number | null>(null);
+  
+  // === 2. Tính toán Level hiện tại (ĐÃ SỬA THEO page.tsx) ===
+  const currentUserLevel = useMemo(() => {
+    const userRoles = (user as any)?.roles;
+
+    // Debug log nếu cần, giống page.tsx
+    // console.log("User Roles in UserManagement:", userRoles);
+
+    if (!user || !userRoles || userRoles.length === 0) {
+      return 0; // Level 0 cho khách hoặc user không có role
+    }
+    
+    // Tìm level cao nhất từ mảng roles 
+    const highest_Level = Math.max(...userRoles.map((role: any) => role.level));
+    return highest_Level;
+  }, [user]);
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<EditingUserForm | null>(null);
@@ -139,26 +155,20 @@ export function UserManagement() {
     is_active: true,
     selectedRoleIds: [],
   });
-
-  // === THAY ĐỔI VỀ STATE PHÂN TRANG VÀ LỌC ===
-  const [page, setPage] = useState(1); // Đổi tên từ currentPage
+  const [page, setPage] = useState(1); 
   const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState({
     search: "",
     status: "all",
     role: "all",
   });
-  // State cho các trường input UI (trước khi bấm "Lọc")
   const [uiSearchTerm, setUiSearchTerm] = useState("");
   const [uiFilterStatus, setUiFilterStatus] = useState("all");
   const [uiFilterRole, setUiFilterRole] = useState("all");
-  // =============================================
 
   const [addFormErrors, setAddFormErrors] = useState<FormErrors>(initialErrors);
-  const [editFormErrors, setEditFormErrors] =
-    useState<FormErrors>(initialErrors);
+  const [editFormErrors, setEditFormErrors] = useState<FormErrors>(initialErrors);
 
-  // (Hàm Validators giữ nguyên - không thay đổi)
   const validateEmail = (email: string): string => {
     if (!email) return "Email là bắt buộc.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Email không hợp lệ.";
@@ -166,7 +176,7 @@ export function UserManagement() {
   };
   const validatePhone = (phone: string): string => {
     if (!phone) return "Số điện thoại là bắt buộc.";
-    if (!/^(0[3|5|7|8|9])(\d{8})$/.test(phone)) return "Số điện thoại không hợp lệ (phải 10 số, bắt đầu bằng 0).";
+    if (!/^(03|05|07|08|09)\d{7,8}$/.test(phone)) return "Số điện thoại không hợp lệ.";
     return "";
   };
   const validateUsername = (username: string): string => {
@@ -177,7 +187,6 @@ export function UserManagement() {
   };
   const validators = { validateEmail, validatePhone, validateUsername };
 
-  // (Hàm fetchRoles giữ nguyên - chỉ bỏ fetchUsers)
   const fetchRoles = async () => {
     try {
       const response = await AuthorService.getAllRoles();
@@ -192,13 +201,12 @@ export function UserManagement() {
           roles = response.data.data.roles;
         } else if (Array.isArray(response.data.roles)) {
           roles = response.data.roles;
-        } else {
-          console.error("Invalid roles response structure:", response.data);
         }
-      } else {
-        console.error("No data returned from getAllRoles");
       }
+      
+      roles.sort((a, b) => (b.level || 0) - (a.level || 0));
       setAvailableRoles(roles);
+      
       const userRole = roles.find((r) => r.name.toLowerCase() === "user");
       setUserRoleId(userRole ? userRole.id : null);
       if (userRole) {
@@ -214,11 +222,9 @@ export function UserManagement() {
     }
   };
 
-  // === CẬP NHẬT fetchUsers ĐỂ DÙNG STATE ===
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      // GỌI VỚI 5 THAM SỐ
       const response = await UserService.getAllUsers(
         page, 
         PAGE_LIMIT,
@@ -230,10 +236,6 @@ export function UserManagement() {
         setUserList(response.data.data.users);
         setTotalPages(Math.ceil(response.data.data.total / PAGE_LIMIT));
       } else {
-        console.error(
-          "Failed to fetch users: Invalid response structure",
-          response.data
-        );
         setUserList([]);
       }
     } catch (error) {
@@ -248,19 +250,14 @@ export function UserManagement() {
     }
   };
 
-  // === CẬP NHẬT useEffect ===
-  // Chỉ fetch roles 1 lần
   useEffect(() => {
     fetchRoles();
   }, []);
 
-  // Fetch users khi 'page' hoặc 'filters' thay đổi
   useEffect(() => {
     fetchUsers();
   }, [page, filters]);
-  // ==========================
 
-  // (handleOpenAddModal giữ nguyên)
   const handleOpenAddModal = () => {
     setNewUser({
       username: "",
@@ -274,7 +271,6 @@ export function UserManagement() {
     setIsAddModalOpen(true);
   };
 
-  // (handleNewUserRoleChange giữ nguyên)
   const handleNewUserRoleChange = (roleId: number, checked: boolean) => {
     if (roleId === userRoleId && !checked) {
       return;
@@ -287,7 +283,6 @@ export function UserManagement() {
     });
   };
 
-  // === CẬP NHẬT handleAddUser (gọi fetchUsers) ===
   const handleAddUser = async () => {
     const errors: FormErrors = {
       username: validateUsername(newUser.username),
@@ -315,10 +310,6 @@ export function UserManagement() {
       const response = await UserService.createUser(payload);
 
       if (!response.data || !response.data.data) {
-        console.error(
-          "Create user failed: Invalid response structure",
-          response.data
-        );
         showNotify({
           type: NotifyType.Error,
           title: "Lỗi",
@@ -328,6 +319,7 @@ export function UserManagement() {
       }
 
       const createdUser = response.data.data;
+      // Nếu tạo thành công, tiếp tục cập nhật status và role
       if (!newUser.is_active) {
         await UserService.toggleUserStatus(createdUser.id, {
           is_active: false,
@@ -345,26 +337,30 @@ export function UserManagement() {
         message: "Đã thêm người dùng mới.",
       });
       setIsAddModalOpen(false);
-      
-      // Tải lại trang hiện tại (hoặc trang 1 nếu muốn)
-      // Nếu bộ lọc đang được áp dụng, người dùng mới có thể không xuất hiện
-      // Tốt nhất là về trang 1 và xóa bộ lọc
-      handleClearFilters(); // Về trang 1 và xóa bộ lọc
+      fetchUsers();
     } catch (error: any) {
-      console.error("LỖI GỐC TỪ BACKEND:", error.response?.data);
       showNotify(getErrorNotify(error, "Tạo người dùng thất bại."));
     }
   };
 
-  // (handleEditUser giữ nguyên)
   const handleEditUser = async (user: UserData) => {
+    // --- CHECK QUYỀN: BẮT CHƯỚC page.tsx (>=) ---
+    const targetMaxLevel = user.roles?.reduce((max, r) => Math.max(max, r.level || 0), 0) || 0;
+    
+    // Nếu target level LỚN HƠN HOẶC BẰNG level hiện tại -> Chặn
+    if (targetMaxLevel >= currentUserLevel) {
+      showNotify({
+        type: NotifyType.Error,
+        title: "Không đủ quyền",
+        message: `Bạn không thể chỉnh sửa người dùng có cấp độ (${targetMaxLevel}) cao hơn hoặc bằng bạn (${currentUserLevel}).`
+      });
+      return;
+    }
+    // -------------------
+
     try {
       const response = await UserService.getUserDetail(user.id, true);
       if (!response.data || !response.data.data) {
-        console.error(
-          "Get user detail failed: Invalid response structure",
-          response.data
-        );
         showNotify({
           type: NotifyType.Error,
           title: "Lỗi",
@@ -375,7 +371,7 @@ export function UserManagement() {
       const userData = response.data.data;
       setEditingUser({
         ...userData,
-        selectedRoleIds: userData.roles?.map((role) => role.id) || [],
+        selectedRoleIds: userData.roles?.map((role: any) => role.id) || [],
       });
       setEditFormErrors(initialErrors);
       setIsEditModalOpen(true);
@@ -389,7 +385,6 @@ export function UserManagement() {
     }
   };
   
-  // (handleEditRoleChange giữ nguyên)
   const handleEditRoleChange = (roleId: number, checked: boolean) => {
     if (roleId === userRoleId && !checked) {
       return;
@@ -404,7 +399,6 @@ export function UserManagement() {
     });
   };
 
-  // === CẬP NHẬT handleSaveUser (gọi fetchUsers) ===
   const handleSaveUser = async () => {
     if (!editingUser) return;
     const errors: FormErrors = {
@@ -444,15 +438,27 @@ export function UserManagement() {
       });
       setIsEditModalOpen(false);
       setEditingUser(null);
-      await fetchUsers(); // Tải lại dữ liệu trang hiện tại
+      await fetchUsers();
     } catch (error: any) {
-      console.error("LỖI GỐC TỪ BACKEND:", error.response?.data);
       showNotify(getErrorNotify(error, "Cập nhật thất bại."));
     }
   };
 
-  // (handleDeleteUser giữ nguyên)
   const handleDeleteUser = (user: UserData) => {
+    // --- CHECK QUYỀN: BẮT CHƯỚC page.tsx (>=) ---
+    const targetMaxLevel = user.roles?.reduce((max, r) => Math.max(max, r.level || 0), 0) || 0;
+    
+    // Nếu target level LỚN HƠN HOẶC BẰNG level hiện tại -> Chặn
+    if (targetMaxLevel >= currentUserLevel) {
+      showNotify({
+        type: NotifyType.Error,
+        title: "Không đủ quyền",
+        message: `Bạn không thể xóa người dùng có cấp độ (${targetMaxLevel}) cao hơn hoặc bằng bạn (${currentUserLevel}).`
+      });
+      return;
+    }
+    // -------------------
+
     showNotify({
       type: NotifyType.Warning,
       title: "Xác nhận xóa người dùng",
@@ -462,7 +468,6 @@ export function UserManagement() {
     });
   };
 
-  // === CẬP NHẬT confirmDeleteUser (gọi fetchUsers/setPage) ===
   const confirmDeleteUser = async (userId: number | string) => {
     try {
       await UserService.deleteUser(userId);
@@ -472,20 +477,18 @@ export function UserManagement() {
         message: "Đã xóa người dùng.",
       });
       if (userList.length === 1 && page > 1) {
-        setPage(page - 1); // Trở về trang trước
+        setPage(page - 1);
       } else {
-        fetchUsers(); // Tải lại trang hiện tại
+        fetchUsers();
       }
     } catch (error: any) {
-      console.error("LỖI GỐC TỪ BACKEND:", error.response?.data);
       showNotify(getErrorNotify(error, "Xóa người dùng thất bại."));
     }
   };
 
-  // === THÊM HÀM HANDLER CHO BỘ LỌC ===
   const handleApplyFilters = () => {
-    setPage(1); // Quay về trang 1
-    setFilters({ // Áp dụng bộ lọc
+    setPage(1);
+    setFilters({ 
       search: uiSearchTerm,
       status: uiFilterStatus,
       role: uiFilterRole,
@@ -493,33 +496,25 @@ export function UserManagement() {
   };
 
   const handleClearFilters = () => {
-    setPage(1); // Quay về trang 1
-    // Xóa state UI
+    setPage(1); 
     setUiSearchTerm("");
     setUiFilterStatus("all");
     setUiFilterRole("all");
-    // Xóa bộ lọc đã áp dụng
     setFilters({
       search: "",
       status: "all",
       role: "all",
     });
   };
-  // ===================================
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <UserManagementHeader onOpenAddModal={handleOpenAddModal} />
 
-      {/* =============== THÊM THANH LỌC =============== */}
       <Card className="mb-6">
         <CardContent className="p-4 flex flex-col md:flex-row flex-wrap gap-4">
-          {/* Search Input */}
           <div className="flex-grow min-w-[200px]">
-            <label
-              htmlFor="search"
-              className="text-sm font-medium text-gray-700 block mb-1"
-            >
+            <label htmlFor="search" className="text-sm font-medium text-gray-700 block mb-1">
               Tìm kiếm
             </label>
             <Input
@@ -531,12 +526,8 @@ export function UserManagement() {
             />
           </div>
 
-          {/* Status Filter */}
           <div className="w-full md:w-48">
-            <label
-              htmlFor="status"
-              className="text-sm font-medium text-gray-700 block mb-1"
-            >
+            <label htmlFor="status" className="text-sm font-medium text-gray-700 block mb-1">
               Trạng thái
             </label>
             <Select value={uiFilterStatus} onValueChange={setUiFilterStatus}>
@@ -551,12 +542,8 @@ export function UserManagement() {
             </Select>
           </div>
 
-          {/* Role Filter */}
           <div className="w-full md:w-48">
-            <label
-              htmlFor="role"
-              className="text-sm font-medium text-gray-700 block mb-1"
-            >
+            <label htmlFor="role" className="text-sm font-medium text-gray-700 block mb-1">
               Vai trò
             </label>
             <Select value={uiFilterRole} onValueChange={setUiFilterRole}>
@@ -574,7 +561,6 @@ export function UserManagement() {
             </Select>
           </div>
 
-          {/* Buttons */}
           <div className="flex gap-2 self-end pt-5">
             <Button onClick={handleApplyFilters} className="flex items-center gap-2">
               <Search className="h-4 w-4" />
@@ -586,16 +572,16 @@ export function UserManagement() {
           </div>
         </CardContent>
       </Card>
-      {/* =================================================== */}
 
       <UserListTable
         userList={userList}
         isLoading={isLoading}
         onEditUser={handleEditUser}
         onDeleteUser={handleDeleteUser}
-        currentPage={page} // Cập nhật prop
+        currentPage={page} 
         totalPages={totalPages}
-        onPageChange={(newPage) => setPage(newPage)} // Cập nhật prop
+        onPageChange={(newPage) => setPage(newPage)}
+        currentUserLevel={currentUserLevel} 
       />
 
       <EditUserModal
@@ -610,6 +596,7 @@ export function UserManagement() {
         errors={editFormErrors}
         setErrors={setEditFormErrors}
         validators={validators}
+        currentUserLevel={currentUserLevel}
       />
 
       <AddUserModal
@@ -624,6 +611,7 @@ export function UserManagement() {
         errors={addFormErrors}
         setErrors={setAddFormErrors}
         validators={validators}
+        currentUserLevel={currentUserLevel}
       />
 
       <NotifyDialog

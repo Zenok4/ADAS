@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   Eye,
   AlertTriangle,
@@ -10,213 +11,185 @@ import {
   Thermometer,
   Clock,
   Camera,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 import FeatureCard from "./components/feature-card";
 import InfoCard from "./components/info-card";
-
-// Hooks AI + Camera
-import { useDrowsy } from "@/hooks/useDrowsy";
-import { useCamera } from "@/hooks/useCamera";
 import CameraLive from "../components/CameraLive";
 
+// Hooks
+import { useDrowsy } from "@/hooks/useDrowsy";
+import { useCamera } from "@/hooks/useCamera";
+import { useLocationWeather } from "@/hooks/useLocationWeather";
+
 export default function DashboardPage() {
-  const [sleepAlert, setSleepAlert] = useState(false);
-  const [objectDetect, setObjectDetect] = useState(false);
-  const [signDetect, setSignDetect] = useState(false); // điều khiển CameraLive
-  const [laneMonitor, setLaneMonitor] = useState(false);
-  const [cameraOn, setCameraOn] = useState(false); // điều khiển bật camera vật lý
+  // 1. Quản lý State
+  const [features, setFeatures] = useState({
+    sleepAlert: false,
+    objectDetect: false,
+    signDetect: false,
+    laneMonitor: false,
+  });
 
-  const [location, setLocation] = useState("Đang lấy vị trí...");
-  const [weather, setWeather] = useState("Đang tải...");
-  const [temperature, setTemperature] = useState("...");
-  const [time, setTime] = useState("--:--:--");
+  const [rearCameraOn, setRearCameraOn] = useState(false);
+  const [isSoundOn, setIsSoundOn] = useState(true);
 
-  // 🎥 Camera trước = webcam
-  const frontRef = useRef<HTMLVideoElement>(null!);
+  const { location, weather, temperature, time } = useLocationWeather();
+
+  // 2. Setup Refs & Hooks
+  const frontRef = useRef<HTMLVideoElement>(null);
+
+  // Hook Camera Trước
   const {
     camReady: frontReady,
     camError: frontError,
     openCamera: openFront,
     stopCamera: stopFront,
-  } = useCamera(frontRef);
+  } = useCamera(frontRef as React.RefObject<HTMLVideoElement>);
 
-  // AI buồn ngủ chạy trên camera trước
-  const { result, busy } = useDrowsy({
-    videoRef: frontRef,
-    enabled: sleepAlert,
+  // Hook AI Buồn ngủ
+  const { result: drowsyResult, busy: drowsyBusy } = useDrowsy({
+    videoRef: frontRef as React.RefObject<HTMLVideoElement>,
+    enabled: features.sleepAlert,
     intervalMs: 1200,
+    soundEnabled: isSoundOn,
   });
 
-  // Tự động mở webcam khi bật chức năng Cảnh báo buồn ngủ
+  // 3. Logic Tự động bật Camera khi chọn tính năng
   useEffect(() => {
-    if (sleepAlert && !frontReady) {
-      openFront("webcam");
+    if (features.sleepAlert && !frontReady) {
+      openFront("webcam" as any);
     }
-    // Nếu muốn tắt webcam khi tắt hết các chức năng dùng webcam, có thể:
-    // else if (!sleepAlert) { stopFront(); }
-  }, [sleepAlert, frontReady, openFront]);
-
-  // Tự bật camera khi bật chức năng nhận diện
-  useEffect(() => {
-    // Chỉ tự bật camera nếu người dùng đang bật tính năng, KHÔNG trong quá trình tắt
-    if ((signDetect || laneMonitor) && !cameraOn) {
-      setCameraOn(true);
-    } else if (
-      !signDetect &&
-      !laneMonitor &&
-      cameraOn &&
-      !sleepAlert &&
-      !objectDetect 
-    ) {
-      // Nếu tắt hết các tính năng → tự tắt camera
-      setCameraOn(false);
-    }
-  }, [signDetect, laneMonitor, sleepAlert, objectDetect, cameraOn ]);
+  }, [features.sleepAlert, frontReady, openFront]);
 
   useEffect(() => {
-    if (!cameraOn) {
-      if (signDetect) setSignDetect(false);
-      if (laneMonitor) setLaneMonitor(false);
+    if ((features.signDetect || features.laneMonitor) && !rearCameraOn) {
+      setRearCameraOn(true);
     }
-    if (!cameraOn && frontReady) {
-      // Tắt camera vật lý thì tắt luôn webcam
+  }, [features.signDetect, features.laneMonitor, rearCameraOn]);
+
+  // 4. Handlers
+  const toggleFeature = useCallback((key: keyof typeof features) => {
+    setFeatures((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
+  // --- SỬA LOGIC: MỞ/TẮT ĐỒNG THỜI CẢ 2 CAMERA ---
+  const handleMainButton = () => {
+    const isAnyOn = frontReady || rearCameraOn;
+
+    if (isAnyOn) {
+      // TẮT HẾT
       stopFront();
+      setRearCameraOn(false);
+      
+      // Reset các tính năng về tắt
+      setFeatures({
+        sleepAlert: false,
+        objectDetect: false,
+        signDetect: false,
+        laneMonitor: false,
+      });
+    } else {
+      // BẬT CẢ HAI
+      openFront("webcam" as any); // Bật cam trước
+      setRearCameraOn(true);     // Bật cam sau
     }
-  }, [cameraOn]);
+  };
+  // ------------------------------------------------
 
-  // Đồng hồ realtime
-  useEffect(() => {
-    setTime(new Date().toLocaleTimeString());
-    const t = setInterval(() => setTime(new Date().toLocaleTimeString()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  // Lấy vị trí + thời tiết
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const { latitude, longitude } = pos.coords;
-          setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-          try {
-            const apiKey = "YOUR_API_KEY";
-            const res = await fetch(
-              `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&lang=vi&appid=${apiKey}`
-            );
-            const data = await res.json();
-            setWeather(data.weather?.[0]?.description ?? "--");
-            setTemperature(`${data.main?.temp ?? "--"}°C`);
-          } catch {
-            setWeather("Lỗi tải thời tiết");
-            setTemperature("--");
-          }
-        },
-        () => setLocation("Không lấy được vị trí")
-      );
-    }
-  }, []);
-
-  const danger = !!result?.data?.is_drowsy;
-  const statusText = sleepAlert
-    ? result
-      ? `${result.message} (EAR: ${result?.data?.eye_aspect_ratio ?? "-"})`
-      : "Đang bật..."
-    : "Đang tắt";
-
-  const badge = result
-    ? result?.data?.is_drowsy
-      ? { text: "Cảnh báo tài xế đang ngủ gật!", cls: "bg-red-600" }
-      : { text: "Tài xế bình thường", cls: "bg-green-600" }
-    : busy
+  const drowsyDanger = !!drowsyResult?.data?.is_drowsy;
+  const drowsyBadge = drowsyResult
+    ? drowsyResult.data.is_drowsy
+      ? { text: "CẢNH BÁO: TÀI XẾ NGỦ GẬT!", cls: "bg-red-600 animate-pulse" }
+      : { text: "Tài xế tỉnh táo", cls: "bg-green-600" }
+    : drowsyBusy
     ? { text: "Đang xử lý...", cls: "bg-blue-600" }
     : null;
 
-  const handleCameraToggle = async () => {
-    setCameraOn((prev) => {
-      const newState = !prev;
-
-      if (newState) {
-        // 🟢 Bật camera
-        openFront("webcam");
-      } else {
-        // 🔴 Tắt toàn bộ chức năng trước khi tắt camera
-        setSleepAlert(false);
-        setSignDetect(false);
-        setObjectDetect(false);
-        setLaneMonitor(false);
-
-        stopFront();
-      }
-
-      return newState;
-    });
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <div className="flex flex-1">
-        {/* --- Cột trái: Chức năng --- */}
-        <div className="flex-1 space-y-6 m-6">
-          <h2 className="text-lg font-bold">Chức năng</h2>
+      <div className="flex flex-1 flex-col lg:flex-row">
+        {/* --- CỘT TRÁI --- */}
+        <div className="flex-1 space-y-6 m-4 lg:m-6">
+          <h2 className="text-lg font-bold text-gray-800">Bảng điều khiển ADAS</h2>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FeatureCard
               icon={Eye}
               title="Cảnh báo buồn ngủ"
-              status={statusText}
-              toggle={sleepAlert}
-              onToggle={() => setSleepAlert((v) => !v)}
+              status={features.sleepAlert ? "Đang giám sát" : "Đang tắt"}
+              toggle={features.sleepAlert}
+              onToggle={() => toggleFeature('sleepAlert')}
             />
             <FeatureCard
               icon={AlertTriangle}
               title="Phát hiện vật cản"
-              status={objectDetect ? "Đang bật" : "Đang tắt"}
-              toggle={objectDetect}
-              onToggle={() => setObjectDetect((v) => !v)}
+              status={features.objectDetect ? "Đang bật" : "Đang tắt"}
+              toggle={features.objectDetect}
+              onToggle={() => toggleFeature('objectDetect')}
             />
             <FeatureCard
               icon={TrafficCone}
               title="Nhận diện biển báo"
-              status={signDetect ? "Đang bật" : "Đang tắt"}
-              toggle={signDetect}
-              onToggle={() => setSignDetect((v) => !v)}
+              status={features.signDetect ? "Đang bật" : "Đang tắt"}
+              toggle={features.signDetect}
+              onToggle={() => toggleFeature('signDetect')}
             />
             <FeatureCard
               icon={Route}
               title="Giám sát làn đường"
-              status={laneMonitor ? "Đang bật" : "Đang tắt"}
-              toggle={laneMonitor}
-              onToggle={() => setLaneMonitor((v) => !v)}
+              status={features.laneMonitor ? "Đang bật" : "Đang tắt"}
+              toggle={features.laneMonitor}
+              onToggle={() => toggleFeature('laneMonitor')}
             />
           </div>
 
-          {/* Nút điều khiển */}
-          <div className="flex gap-3 justify-center mt-4">
+          {/* Cụm nút điều khiển */}
+          <div className="flex justify-center items-center gap-3 mt-6">
+            {/* Nút Master Camera */}
             <button
-              className="px-6 py-2 rounded-lg bg-slate-600 text-white font-semibold shadow hover:bg-slate-700 transition"
-              onClick={handleCameraToggle}
+              className={`px-6 py-3 rounded-lg font-bold shadow-md transition-all flex items-center gap-2 text-white ${
+                frontReady || rearCameraOn
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-slate-700 hover:bg-slate-800"
+              }`}
+              onClick={handleMainButton}
             >
-              {frontReady || signDetect || laneMonitor ? "Tắt camera" : "Mở camera"}
+              <Camera className="w-5 h-5" />
+              {frontReady || rearCameraOn ? "Tắt camera" : "Mở camera"}
+            </button>
+
+            {/* Nút Âm thanh (Giữ nguyên UI cũ) */}
+            <button
+              className={`p-3 rounded-lg border shadow-sm transition-all flex items-center justify-center ${
+                isSoundOn
+                  ? "bg-white text-blue-600 border-blue-200 hover:bg-blue-50"
+                  : "bg-gray-200 text-gray-500 border-gray-300 hover:bg-gray-300"
+              }`}
+              onClick={() => setIsSoundOn(!isSoundOn)}
+              title={isSoundOn ? "Tắt âm thanh cảnh báo" : "Bật âm thanh cảnh báo"}
+            >
+              {isSoundOn ? <Volume2 className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
             </button>
           </div>
 
-          {/* Camera */}
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            {/* Camera trước (webcam) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {/* Camera Trước */}
             <div
-              className={`h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden ${
-                danger ? "border-red-500" : ""
+              className={`h-[360px] md:h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden bg-white ${
+                drowsyDanger ? "border-red-500 ring-2 ring-red-500" : ""
               }`}
             >
-              <div className="flex items-center justify-between text-blue-500 font-medium p-2 border-b">
-                <div className="flex items-center gap-2">
-                  <Camera className="w-5 h-5" />
-                  <span>Camera trước</span>
+              <div className="flex items-center justify-between bg-gray-50 p-3 border-b">
+                <div className="flex items-center gap-2 text-blue-700 font-semibold">
+                  <Eye className="w-5 h-5" />
+                  <span>Camera tài xế</span>
                 </div>
-                {result && (
-                  <span className="text-xs text-gray-400">
-                    {result.data?.latency_ms}ms
+                {drowsyResult && (
+                  <span className="text-xs text-gray-500">
+                    {drowsyResult.data?.latency_ms}ms
                   </span>
                 )}
               </div>
@@ -224,72 +197,54 @@ export default function DashboardPage() {
               <div className="flex-1 bg-black flex items-center justify-center relative">
                 <video
                   ref={frontRef}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover transform scale-x-[-1]"
                   muted
                   autoPlay
                   playsInline
                 />
-                {!frontReady && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-gray-400 text-sm">
-                      Nhấn “Mở camera” để bật webcam laptop
-                    </span>
-                  </div>
-                )}
 
-                <div className="absolute top-2 right-2 flex flex-col items-end gap-2">
-                  {badge && (
+                <div className="absolute top-3 right-3">
+                  {drowsyBadge && (
                     <div
-                      className={`text-xs text-white px-2 py-1 rounded shadow ${badge.cls}`}
+                      className={`text-xs text-white px-3 py-1.5 rounded-full shadow font-medium ${drowsyBadge.cls}`}
                     >
-                      {badge.text}
-                    </div>
-                  )}
-                  {result && (
-                    <div className="text-[10px] text-white/80 bg-black/40 px-2 py-0.5 rounded">
-                      EAR:{" "}
-                      {typeof result.data?.eye_aspect_ratio === "number"
-                        ? result.data?.eye_aspect_ratio.toFixed(2)
-                        : "-"}
-                      {typeof result.data?.latency_ms === "number"
-                        ? ` • ${result.data?.latency_ms}ms`
-                        : ""}
+                      {drowsyBadge.text}
                     </div>
                   )}
                 </div>
 
+                {!frontReady && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                    <span className="text-sm">Nhấn "Mở camera" để bắt đầu</span>
+                  </div>
+                )}
                 {frontError && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-red-400 text-xs p-2">
+                  <div className="absolute bottom-0 w-full bg-red-600 text-white text-xs p-1 text-center">
                     {frontError}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Camera sau — chỉ hiển thị CameraLive, KHÔNG render video chồng lên */}
-            <div className="h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden relative">
-              <div className="flex items-center gap-2 text-blue-500 font-medium p-2 border-b z-10 relative">
-                <Camera className="w-5 h-5" />
-                <span>Camera sau</span>
+            {/* Camera Sau */}
+            <div className="h-[360px] md:h-[480px] flex flex-col rounded-xl shadow-md border overflow-hidden bg-white">
+              <div className="flex items-center gap-2 text-blue-700 font-semibold p-3 border-b bg-gray-50">
+                <Route className="w-5 h-5" />
+                <span>Camera hành trình</span>
               </div>
 
               <div className="flex-1 bg-black relative">
-                {/* Chỉ CameraLive — không có <video> phía sau để tránh đè */}
-                <div className="absolute inset-0 w-full object-cover">
-                  <CameraLive
-                    startCamera={cameraOn}
-                    enableSign={signDetect}
-                    enableLane={laneMonitor}
-                    
-                    className="w-full h-full object-contain"
-                  />
-                </div>
+                <CameraLive
+                  startCamera={rearCameraOn}
+                  enableSign={features.signDetect}
+                  enableLane={features.laneMonitor}
+                  soundEnabled={isSoundOn}
+                  className="w-full h-full"
+                />
 
-                {!signDetect && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-gray-400 text-sm">
-                      Nhấn “Mở camera” để bật iVCam
-                    </span>
+                {!rearCameraOn && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 bg-gray-100/10">
+                    <span className="text-sm">Camera chưa bật</span>
                   </div>
                 )}
               </div>
@@ -297,9 +252,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* --- Cột phải: Thông tin --- */}
-        <div className="w-64 space-y-4">
-          <h2 className="text-lg font-bold">Thông tin</h2>
+        {/* --- CỘT PHẢI --- */}
+        <div className="w-full lg:w-72 bg-white border-l p-6 space-y-4">
+          <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider">
+            Thông tin hành trình
+          </h3>
           <InfoCard icon={MapPin} label="Vị trí" value={location} />
           <InfoCard icon={Sun} label="Thời tiết" value={weather} />
           <InfoCard icon={Thermometer} label="Nhiệt độ" value={temperature} />

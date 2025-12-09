@@ -105,7 +105,7 @@ export default function ProfilePage() {
   // === 4. THÊM TRẠNG THÁI LỖI ===
   if (error || !profileData) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="min-h-screen flex flex-col bg-gray-50  dark:bg-gray-900">
         <div className="flex flex-1 p-6 transition-all duration-300 items-center justify-center">
           <AlertCircle size={32} className="text-red-500" />
           <p className="ml-2 text-red-600">
@@ -118,13 +118,15 @@ export default function ProfilePage() {
 
   // === 5. HIỂN THỊ DỮ LIỆU ĐỘNG ===
   return (
-    <div className="flex flex-col bg-gray-50">
+    <div className="flex flex-col bg-gray-50  dark:bg-gray-900">
       <div className="flex">
         <main className={`flex-1 p-6 transition-all duration-300`}>
           <h1 className="text-2xl font-bold text-gray-900">
             Thông tin cá nhân
           </h1>
           <p className="text-gray-500 mb-6">Thông tin người dùng</p>
+
+          {}
 
           {/* Card 1: Card Header (Đã cập nhật) */}
           <div className="bg-white rounded-xl shadow-md max-w-4xl mx-auto p-6 flex flex-col md:flex-row items-center gap-4">
@@ -191,7 +193,7 @@ export default function ProfilePage() {
                 icon={MapPin}
                 label="Địa chỉ"
                 value={profileData.address}
-                            />
+              />
               {/* (Trường này không có trong ProfileData, giữ nguyên) */}
               <InfoItem
                 icon={Calendar}
@@ -201,7 +203,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Card 3: Thông tin xe & ADAS (Đã cập nhật) */}
-            <div className="bg-white rounded-xl shadow-md p-6 space-y-5">
+            <div className="rounded-xl shadow-md p-6 space-y-5">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Thông tin xe & ADAS
               </h3>

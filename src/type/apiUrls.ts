@@ -75,6 +75,7 @@ export const ApiUrls = {
   core_functions: {
     drowsy: "/drowsy/detect",
     sign: "/sign/predict",
-    lane: "/lane/predict", 
+    lane: "/lane/predict",
+    object: "/object/predict",
   },
 } as const;

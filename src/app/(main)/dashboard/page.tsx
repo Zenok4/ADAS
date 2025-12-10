@@ -65,10 +65,18 @@ export default function DashboardPage() {
   }, [features.sleepAlert, frontReady, openFront]);
 
   useEffect(() => {
-    if ((features.signDetect || features.laneMonitor) && !rearCameraOn) {
+    if (
+      (features.signDetect || features.laneMonitor || features.objectDetect) &&
+      !rearCameraOn
+    ) {
       setRearCameraOn(true);
     }
-  }, [features.signDetect, features.laneMonitor, rearCameraOn]);
+  }, [
+    features.signDetect,
+    features.laneMonitor,
+    features.objectDetect,
+    rearCameraOn,
+  ]);
 
   // 4. Handlers
   const toggleFeature = useCallback((key: keyof typeof features) => {
@@ -83,7 +91,7 @@ export default function DashboardPage() {
       // TẮT HẾT
       stopFront();
       setRearCameraOn(false);
-      
+
       // Reset các tính năng về tắt
       setFeatures({
         sleepAlert: false,
@@ -94,7 +102,7 @@ export default function DashboardPage() {
     } else {
       // BẬT CẢ HAI
       openFront("webcam" as any); // Bật cam trước
-      setRearCameraOn(true);     // Bật cam sau
+      setRearCameraOn(true); // Bật cam sau
     }
   };
   // ------------------------------------------------
@@ -113,7 +121,9 @@ export default function DashboardPage() {
       <div className="flex flex-1 flex-col lg:flex-row">
         {/* --- CỘT TRÁI --- */}
         <div className="flex-1 space-y-6 m-4 lg:m-6">
-          <h2 className="text-lg font-bold text-gray-800">Bảng điều khiển ADAS</h2>
+          <h2 className="text-lg font-bold text-gray-800">
+            Bảng điều khiển ADAS
+          </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FeatureCard
@@ -121,28 +131,28 @@ export default function DashboardPage() {
               title="Cảnh báo buồn ngủ"
               status={features.sleepAlert ? "Đang giám sát" : "Đang tắt"}
               toggle={features.sleepAlert}
-              onToggle={() => toggleFeature('sleepAlert')}
+              onToggle={() => toggleFeature("sleepAlert")}
             />
             <FeatureCard
               icon={AlertTriangle}
               title="Phát hiện vật cản"
               status={features.objectDetect ? "Đang bật" : "Đang tắt"}
               toggle={features.objectDetect}
-              onToggle={() => toggleFeature('objectDetect')}
+              onToggle={() => toggleFeature("objectDetect")}
             />
             <FeatureCard
               icon={TrafficCone}
               title="Nhận diện biển báo"
               status={features.signDetect ? "Đang bật" : "Đang tắt"}
               toggle={features.signDetect}
-              onToggle={() => toggleFeature('signDetect')}
+              onToggle={() => toggleFeature("signDetect")}
             />
             <FeatureCard
               icon={Route}
               title="Giám sát làn đường"
               status={features.laneMonitor ? "Đang bật" : "Đang tắt"}
               toggle={features.laneMonitor}
-              onToggle={() => toggleFeature('laneMonitor')}
+              onToggle={() => toggleFeature("laneMonitor")}
             />
           </div>
 
@@ -169,9 +179,15 @@ export default function DashboardPage() {
                   : "bg-gray-200 text-gray-500 border-gray-300 hover:bg-gray-300"
               }`}
               onClick={() => setIsSoundOn(!isSoundOn)}
-              title={isSoundOn ? "Tắt âm thanh cảnh báo" : "Bật âm thanh cảnh báo"}
+              title={
+                isSoundOn ? "Tắt âm thanh cảnh báo" : "Bật âm thanh cảnh báo"
+              }
             >
-              {isSoundOn ? <Volume2 className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
+              {isSoundOn ? (
+                <Volume2 className="w-6 h-6" />
+              ) : (
+                <VolumeX className="w-6 h-6" />
+              )}
             </button>
           </div>
 
@@ -234,13 +250,16 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex-1 bg-black relative">
+                {/* --- SỬA ĐOẠN NÀY --- */}
                 <CameraLive
                   startCamera={rearCameraOn}
                   enableSign={features.signDetect}
                   enableLane={features.laneMonitor}
+                  enableObject={features.objectDetect} // <--- Thêm dòng này
                   soundEnabled={isSoundOn}
                   className="w-full h-full"
                 />
+                {/* --------------------- */}
 
                 {!rearCameraOn && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 bg-gray-100/10">

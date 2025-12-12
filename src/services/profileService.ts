@@ -4,7 +4,7 @@ import api from "@/lib/api";
 import { ApiUrls } from "@/type/apiUrls";
 
 // ===================================
-// == ĐỊNH NGHĨA TYPE (HIỆN CÓ) ==
+// == ĐỊNH NGHĨA TYPE ==
 // ===================================
 
 export interface ProfileData {
@@ -12,6 +12,7 @@ export interface ProfileData {
   username: string;
   email: string;
   phone: string;
+  display_name: string | null; // <--- ĐÃ THÊM: Có thể là string hoặc null
   address: string;
   vehicle_name: string;
   license_plate: string;
@@ -26,20 +27,18 @@ export interface ProfileResponse {
 export type ProfileUpdatePayload = {
   email?: string;
   phone?: string;
+  display_name?: string; // <--- ĐÃ THÊM: Cho phép cập nhật tên hiển thị
   address?: string;
   vehicle_name?: string;
   license_plate?: string;
 };
 
 // ===================================
-// == CÁC TYPE MỚI (Thêm vào) ==
+// == CÁC TYPE KHÁC ==
 // ===================================
 
 /**
  * Payload cho API đổi mật khẩu.
- * Phải khớp với backend:
- * data.get("old_password")
- * data.get("new_password")
  */
 export type ChangePasswordPayload = {
   old_password: string;
@@ -55,7 +54,7 @@ export interface SuccessResponse {
 }
 
 // ===================================
-// == PROFILE SERVICE (Gộp) ==
+// == PROFILE SERVICE ==
 // ===================================
 
 export const ProfileService = {
@@ -75,10 +74,6 @@ export const ProfileService = {
     return api.put<ProfileResponse>(ApiUrls.profile.update, payload);
   },
 
-  // ===================================
-  // == HÀM MỚI (Thêm vào) ==
-  // ===================================
-
   /**
    * API: Đổi mật khẩu của người dùng (tự đổi)
    * Tương ứng với: UserService.change_password()
@@ -86,10 +81,7 @@ export const ProfileService = {
    * @param userId ID của người dùng (lấy từ session/context)
    * @param payload Dữ liệu (mật khẩu cũ, mật khẩu mới)
    */
-  changePassword: (
-    userId: number | string,
-    payload: ChangePasswordPayload
-  ) => {
+  changePassword: (userId: number | string, payload: ChangePasswordPayload) => {
     // Backend API là PATCH /users/change-password/<int:user_id>
     return api.patch<SuccessResponse>(
       ApiUrls.users.changePassword(userId),

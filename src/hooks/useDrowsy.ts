@@ -50,7 +50,7 @@ export function useDrowsy({
     try {
       const { data } = await CoreFunctionService.drowsy(dataUrl);
       setResult(data);
-      if (data.data.is_drowsy) {
+      if (data?.data?.is_drowsy) {
         alertDrowsiness(`Cảnh báo buồn ngủ!`);
       }
     } catch (err) {

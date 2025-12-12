@@ -109,7 +109,7 @@ export default function DashboardPage() {
 
   const drowsyDanger = !!drowsyResult?.data?.is_drowsy;
   const drowsyBadge = drowsyResult
-    ? drowsyResult.data.is_drowsy
+    ? drowsyResult?.data?.is_drowsy
       ? { text: "CẢNH BÁO: TÀI XẾ NGỦ GẬT!", cls: "bg-red-600 animate-pulse" }
       : { text: "Tài xế tỉnh táo", cls: "bg-green-600" }
     : drowsyBusy

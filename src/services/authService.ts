@@ -32,7 +32,7 @@ export const AuthService = {
   }),
 
 
-  refresh: () => api.post<{ access_token: string }>(ApiUrls.authen.refresh, {}),
+  refresh: (session_id: string) => api.post(ApiUrls.authen.refresh, {session_id}),
 
   permission: () => api.get(ApiUrls.author.permissions.list),
 

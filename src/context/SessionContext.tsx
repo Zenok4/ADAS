@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { loadToken, clearToken, saveToken } from "@/lib/tokenStorage";
+import { loadToken, clearToken, saveToken, loadSessionId, saveSessionId, clearSessionId } from "@/lib/tokenStorage";
 import { AuthService } from "@/services/authService";
 
 type User = {
@@ -56,11 +56,12 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
       const res = await AuthService.loginWithUsername(username, password);
       console.log("res", res);
       // Hàm này có vẻ đúng vì bạn lấy user từ res.data.data.user
-      const { access_token, user } = res.data.data; 
+      const { access_token, session_id, user } = res.data.data; 
 
       console.log("user", user);
 
       saveToken(access_token);
+      saveSessionId(session_id);
       setUser(user);
       return true;
     } catch {
@@ -73,9 +74,10 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
     try {
       const res = await AuthService.loginWithEmail(username, password, otp_code);
       // Cần đảm bảo cấu trúc response này là đúng
-      const { access_token, user } = res.data; 
+      const { access_token, user, session_id } = res.data; 
 
       saveToken(access_token);
+      saveSessionId(session_id);
       setUser(user);
       return true;
     } catch {
@@ -91,25 +93,34 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
       // ignore lỗi
     }
     clearToken();
+    clearSessionId();
     setUser(null);
   };
 
   // ================== Refresh session ==================
   const refreshSession = async () => {
+    setLoading(true);
     try {
-      const token = loadToken();
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      const res = await AuthService.me(token);
-      // === SỬA TẠI ĐÂY ===
-      setUser(res.data.data); // Lấy đối tượng user từ trường data
+      const session_id = loadSessionId();
+      if (!session_id) throw new Error("No session");
+
+      const res = await AuthService.refresh(session_id);
+
+      const { access_token } = res.data.data;
+      saveToken(access_token);
+
+      // Sau khi có access_token mới → gọi /me
+      const me = await AuthService.me(access_token);
+      setUser(me.data.data);
+
     } catch {
       clearToken();
+      clearSessionId();
       setUser(null);
     }
+    setLoading(false);
   };
+
 
   return (
     <SessionContext.Provider

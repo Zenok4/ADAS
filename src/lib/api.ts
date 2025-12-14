@@ -4,7 +4,7 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
-import { loadToken, saveToken, clearToken } from "./tokenStorage";
+import { loadToken, saveToken, clearToken, clearSessionId, loadSessionId } from "./tokenStorage";
 import { ApiUrls } from "@/type/apiUrls";
 import { HttpCode } from "@/type/http-codes";
 let accessToken: string | null = loadToken();
@@ -33,11 +33,6 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (res: AxiosResponse) => res,
   async (err: AxiosError) => {
-    console.log("Response Error:", {
-      status: err.response?.status,
-      data: err.response?.data,
-      config: err.config,
-    });
     const originalRequest = err.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
@@ -47,26 +42,43 @@ api.interceptors.response.use(
       !originalRequest._retry
     ) {
       originalRequest._retry = true;
+
       try {
-        const res = await api.post<{ access_token: string }>(
+        const session_id = loadSessionId();
+        console.log("Refreshing with session_id:", session_id);
+        if (!session_id) {
+          throw new Error("No session id");
+        }
+
+        // Gọi refresh đúng backend
+        const res = await api.post(
           ApiUrls.authen.refresh,
-          {},
-          { withCredentials: true }
+          { session_id }
         );
 
-        accessToken = res.data.access_token;
+        const access_token:string = res.data?.data?.access_token;
+        if (!access_token) {
+          throw new Error("Invalid refresh response");
+        }
+
+        accessToken = access_token;
         saveToken(accessToken);
 
         originalRequest.headers = originalRequest.headers ?? {};
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 
         return api(originalRequest);
+
       } catch (e) {
+        // Refresh fail → clear toàn bộ auth state
         clearToken();
+        clearSessionId();
         accessToken = null;
+
         return Promise.reject(e);
       }
     }
+
     return Promise.reject(err);
   }
 );

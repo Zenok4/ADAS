@@ -4,10 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
+import { AuthService } from "@/services/authService";
+import NotifyDialog from "@/components/NotifyDialog";
+import { useNotifyDialog } from "@/hooks/useNotifyDialog";
+import { NotifyType } from "@/type/notify";
+import FullScreenLoader from "@/helper/loader";
 
-// Component chính
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const { showNotify, hideNotify, ...notifyProps } = useNotifyDialog();
 
   // === State ===
   const [emailOrPhone, setEmailOrPhone] = useState("");
@@ -18,37 +23,117 @@ export default function ForgotPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // === Handler: gửi OTP ===
-  const handleSendOtp = () => {
-    // TODO: Gọi API gửi OTP ở đây
-    alert("OTP đã gửi!");
+  // Trạng thái xử lý
+  const [loading, setLoading] = useState(false);
+  const [isOtpSent, setIsOtpSent] = useState(false);
+
+  // === Helper: Xác định loại input (Email hay Phone) ===
+  const getInputType = (input: string): "email" | "phone" => {
+    return input.includes("@") ? "email" : "phone";
   };
 
-  // === Handler: submit form ===
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (password !== confirmPassword) {
-      alert("Mật khẩu xác nhận không khớp.");
+  // === Handler: Gửi OTP ===
+  const handleSendOtp = async () => {
+    if (!emailOrPhone.trim()) {
+      showNotify({
+        type: NotifyType.Warning,
+        title: "Thiếu thông tin",
+        message: "Vui lòng nhập Email hoặc Số điện thoại trước khi lấy mã.",
+      });
       return;
     }
 
-    // TODO: Gọi API reset password ở đây
-    console.log({
-      emailOrPhone,
-      otp,
-      password,
-      confirmPassword,
-    });
+    setLoading(true);
+    const type = getInputType(emailOrPhone);
 
-    router.push("/login");
+    try {
+      if (type === "email") {
+        await AuthService.forgotPasswordEmailSendOtp(emailOrPhone);
+      } else {
+        await AuthService.forgotPasswordPhoneSendOtp(emailOrPhone);
+      }
+
+      setIsOtpSent(true);
+      showNotify({
+        type: NotifyType.Success,
+        title: "Đã gửi mã",
+        message: `Mã OTP đã được gửi tới ${
+          type === "email" ? "email" : "số điện thoại"
+        } của bạn.`,
+      });
+    } catch (error: any) {
+      showNotify({
+        type: NotifyType.Error,
+        title: "Gửi thất bại",
+        message:
+          error?.response?.data?.error ||
+          "Không tìm thấy tài khoản này trong hệ thống.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // === Handler: Submit Reset Password ===
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // 1. Validate Client
+    if (!emailOrPhone || !otp || !password) {
+      showNotify({
+        type: NotifyType.Warning,
+        title: "Thiếu thông tin",
+        message: "Vui lòng nhập đầy đủ thông tin.",
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showNotify({
+        type: NotifyType.Warning,
+        title: "Lỗi mật khẩu",
+        message: "Mật khẩu xác nhận không khớp.",
+      });
+      return;
+    }
+
+    setLoading(true);
+    const type = getInputType(emailOrPhone);
+
+    try {
+      // 2. Gọi API Reset Password tương ứng
+      if (type === "email") {
+        await AuthService.forgotPasswordEmailReset(emailOrPhone, otp, password);
+      } else {
+        await AuthService.forgotPasswordPhoneReset(emailOrPhone, otp, password);
+      }
+
+      // 3. Thành công -> Thông báo & Chuyển trang
+      showNotify({
+        type: NotifyType.Success,
+        title: "Thành công",
+        message:
+          "Mật khẩu đã được đặt lại. Vui lòng đăng nhập với mật khẩu mới.",
+        primaryActionText: "Về đăng nhập",
+        onPrimaryAction: () => router.push("/login"),
+      });
+    } catch (error: any) {
+      showNotify({
+        type: NotifyType.Error,
+        title: "Đặt lại thất bại",
+        message:
+          error?.response?.data?.error || "Mã OTP không đúng hoặc đã hết hạn.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F6F9FD]">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden">
         <div className="flex flex-col md:flex-row">
-          {/* Left */}
+          {/* Left Panel */}
           <div className="hidden md:flex md:w-1/2 flex-col items-center justify-center bg-[#F6F9FD] p-8">
             <div className="flex flex-col items-center">
               <img
@@ -63,28 +148,33 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
 
-          {/* Right (Form) */}
+          {/* Right Panel (Form) */}
           <div className="w-full md:w-1/2 p-10 flex items-center justify-center">
             <form onSubmit={handleSubmit} className="w-full space-y-4">
               <h3 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
                 <strong>Quên mật khẩu</strong>
               </h3>
 
-              {/* Email / Phone */}
+              {/* Email / Phone Input */}
               <div>
                 <label className="block text-sm text-gray-600 mb-1">
-                  Email hoặc số điện thoại đã đăng ký
+                  Email hoặc số điện thoại
                 </label>
                 <input
                   type="text"
                   placeholder="Nhập email hoặc số điện thoại"
                   value={emailOrPhone}
+                  readOnly={isOtpSent}
                   onChange={(e) => setEmailOrPhone(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    isOtpSent
+                      ? "bg-gray-100 border-gray-200 text-gray-500"
+                      : "border-gray-300"
+                  }`}
                 />
               </div>
 
-              {/* OTP */}
+              {/* OTP Input & Send Button */}
               <div>
                 <label className="block text-sm text-gray-600 mb-1">
                   Nhập mã OTP
@@ -101,9 +191,10 @@ export default function ForgotPasswordPage() {
                     type="button"
                     variant={"ghost"}
                     onClick={handleSendOtp}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-600 hover:bg-blue-100 hover:text-blue-700 px-3 py-1"
+                    disabled={loading || !emailOrPhone}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-600 hover:bg-blue-50 hover:text-blue-700 px-3 py-1 text-xs font-semibold"
                   >
-                    Gửi OTP
+                    {loading ? "..." : isOtpSent ? "Gửi lại" : "Lấy mã"}
                   </Button>
                 </div>
               </div>
@@ -158,17 +249,22 @@ export default function ForgotPasswordPage() {
                 </div>
               </div>
 
-              {/* Submit */}
+              {/* Submit Button */}
               <Button
                 type="submit"
+                disabled={loading}
                 className="w-full py-5 font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
               >
-                Tiếp tục
+                {loading ? "Đang xử lý..." : "Tiếp tục"}
               </Button>
             </form>
           </div>
         </div>
       </div>
+
+      {/* SỬA LỖI Ở ĐÂY: Xóa 'open={notifyProps.open}' */}
+      <NotifyDialog onClose={hideNotify} {...notifyProps} />
+      <FullScreenLoader show={loading} message="Đang xử lý..." />
     </div>
   );
 }

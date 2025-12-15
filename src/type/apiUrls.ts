@@ -9,21 +9,34 @@ export const ApiUrls = {
     requestEmailOtp: "/authen/login/email/otp",
     refresh: "/authen/refresh",
     logout: "/authen/logout",
-    me: "/authen/me", // Dùng để lấy thông tin profile
+    me: "/authen/me",
 
-    // register
+    // === REGISTER ===
+    registerEmailOtp: "/authen/register/email/otp", // Gửi OTP đăng ký
     registerWithUsername: "/authen/register/username",
+
+    // [THÊM MỚI] Bổ sung các endpoint còn thiếu
     registerWithEmail: "/authen/register/email",
-    registerWithPhone: "/authen/register/phone",
+    registerWithPhone: "/authen/register/phone", // (Dự phòng nếu sau này dùng lại)
+
+    // === QUÊN MẬT KHẨU ===
+    forgotPassword: {
+      email: {
+        sendOtp: "/authen/forgot-password/email/send-otp",
+        reset: "/authen/forgot-password/email/reset",
+      },
+      phone: {
+        sendOtp: "/authen/forgot-password/phone/send-otp",
+        reset: "/authen/forgot-password/phone/reset",
+      },
+    },
   },
 
   profile: {
-    // Backend cho endpoint này là file 'services/user/update-profile.py'
     update: "/profile/update",
   },
 
   author: {
-    // ... (Giữ nguyên phần author của bạn)
     roles: {
       list: "/author/roles/list",
       create: "/author/roles/create",
@@ -53,8 +66,8 @@ export const ApiUrls = {
       `/author/users/${userId}/roles/assign`,
     listRoles: "/author/roles/list",
   },
+
   users: {
-    // ... (Giữ nguyên phần users của bạn)
     list: "/users/list",
     create: "/users/create",
     detail: (id: number | string) => `/users/id/${id}`,
@@ -62,14 +75,12 @@ export const ApiUrls = {
     toggleStatus: (id: number | string) => `/users/status/${id}`,
     update: (id: number | string) => `/users/update/${id}`,
 
-    // === THÊM MỚI TẠI ĐÂY ===
-    /**
-     * API: Đổi mật khẩu của người dùng (tự đổi)
-     * Backend: usermanage_endpoints.py -> change_password()
-     */
+    // === API Đổi mật khẩu ===
     changePassword: (id: number | string) => `/users/change-password/${id}`,
-    // === KẾT THÚC THÊM MỚI ===
+    // API Gửi OTP để đổi mật khẩu
+    sendOtpChangePassword: "/users/change-password/send-otp",
   },
+
   core_functions: {
     drowsy: "/drowsy/detect",
   },

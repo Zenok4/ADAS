@@ -18,7 +18,6 @@ import {
 import FeatureCard from "./components/feature-card";
 import InfoCard from "./components/info-card";
 import CameraLive from "../components/CameraLive";
-
 // Hooks
 import { useDrowsy } from "@/hooks/useDrowsy";
 import { useCamera } from "@/hooks/useCamera";

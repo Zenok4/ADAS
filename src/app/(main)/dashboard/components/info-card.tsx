@@ -10,11 +10,11 @@ type InfoCardProps = {
 
 const InfoCard = ({ icon: Icon, label, value }: InfoCardProps) => {
   return (
-    <div className="bg-white p-4 rounded-xl shadow-md flex items-center gap-2">
-      <Icon className="text-gray-600 w-5 h-5" />
+    <div className="bg-white p-4 rounded-xl shadow-md flex items-center gap-2 dark:bg-gray-800 ">
+      <Icon className="w-5 h-5 text-blue-500 dark:text-white transition-colors duration-200 hover:text-white" />
       <div>
-        <p className="text-sm text-gray-500">{label}</p>
-        <p className="font-semibold">{value}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-300 transition-colors duration-200">{label}</p>
+        <p className="font-semibold text-gray-800 dark:text-white transition-colors duration-200">{value}</p> 
       </div>
     </div>
   );

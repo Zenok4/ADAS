@@ -5,6 +5,13 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { UserSidebar } from "./components/user-sidebar"
 import { UserHeader } from "./components/user-header"
+import { Waypoints } from 'lucide-react';
+
+const App = () => {
+  return (
+    <Waypoints />
+  );
+};
 
 interface MainLayoutProps {
   children: React.ReactNode

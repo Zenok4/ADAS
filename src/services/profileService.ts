@@ -4,7 +4,7 @@ import api from "@/lib/api";
 import { ApiUrls } from "@/type/apiUrls";
 
 // ===================================
-// == ĐỊNH NGHĨA TYPE (HIỆN CÓ) ==
+// == ĐỊNH NGHĨA TYPE ==
 // ===================================
 
 export interface ProfileData {
@@ -31,22 +31,17 @@ export type ProfileUpdatePayload = {
   license_plate?: string;
 };
 
-// ===================================
-// == CÁC TYPE MỚI (Thêm vào) ==
-// ===================================
-
 /**
  * Payload cho API đổi mật khẩu.
- * Phải khớp với backend:
- * data.get("old_password")
- * data.get("new_password")
+ * Phải khớp với backend (yêu cầu thêm OTP):
  */
 export type ChangePasswordPayload = {
   old_password: string;
   new_password: string;
+  otp_code: string; // <-- [MỚI] Bắt buộc phải có OTP
 };
 
-// Kiểu trả về chung khi thành công (không có data)
+// Kiểu trả về chung khi thành công
 export interface SuccessResponse {
   success: boolean;
   message: string;
@@ -55,13 +50,12 @@ export interface SuccessResponse {
 }
 
 // ===================================
-// == PROFILE SERVICE (Gộp) ==
+// == PROFILE SERVICE ==
 // ===================================
 
 export const ProfileService = {
   /**
    * API: Lấy thông tin profile của user đang đăng nhập
-   * Sử dụng: ApiUrls.authen.me
    */
   getProfile: () => {
     return api.get<ProfileResponse>(ApiUrls.authen.me);
@@ -69,28 +63,32 @@ export const ProfileService = {
 
   /**
    * API: Cập nhật thông tin profile của user đang đăng nhập
-   * Sử dụng: ApiUrls.profile.update
    */
   updateProfile: (payload: ProfileUpdatePayload) => {
     return api.put<ProfileResponse>(ApiUrls.profile.update, payload);
   },
 
   // ===================================
-  // == HÀM MỚI (Thêm vào) ==
+  // == CÁC HÀM ĐỔI MẬT KHẨU (CÓ OTP) ==
   // ===================================
 
   /**
-   * API: Đổi mật khẩu của người dùng (tự đổi)
-   * Tương ứng với: UserService.change_password()
-   *
-   * @param userId ID của người dùng (lấy từ session/context)
-   * @param payload Dữ liệu (mật khẩu cũ, mật khẩu mới)
+   * [BƯỚC 1] Gửi yêu cầu lấy OTP để đổi mật khẩu.
+   * OTP sẽ được gửi về Email hoặc SĐT của user đang đăng nhập.
    */
-  changePassword: (
-    userId: number | string,
-    payload: ChangePasswordPayload
-  ) => {
-    // Backend API là PATCH /users/change-password/<int:user_id>
+  requestChangePasswordOtp: (channel: "email" | "phone") => {
+    return api.post<SuccessResponse>(ApiUrls.users.sendOtpChangePassword, {
+      channel,
+    });
+  },
+
+  /**
+   * [BƯỚC 2] Gửi request đổi mật khẩu kèm OTP.
+   *
+   * @param userId ID của người dùng
+   * @param payload { old_password, new_password, otp_code }
+   */
+  changePassword: (userId: number | string, payload: ChangePasswordPayload) => {
     return api.patch<SuccessResponse>(
       ApiUrls.users.changePassword(userId),
       payload

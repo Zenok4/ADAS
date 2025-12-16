@@ -20,7 +20,8 @@ export default function HandbookPolicyPage() {
           </div>
           <div>
             <strong>2. Phạm vi sử dụng thông tin</strong>
-            <p>Thông tin được dùng để xử lý dữ liệu, gửi cảnh báo, và tối ưu hệ thống.</p>
+            <p>Thông tin và hình ảnh được dùng để xử lý dữ liệu, gửi cảnh báo.</p>
+            <p>Hình ảnh sẽ không được lưu trữ trong hệ thống sau phiên xử lý.</p>
           </div>
           <div>
             <strong>3. Lưu trữ và bảo mật dữ liệu</strong>
@@ -33,9 +34,6 @@ export default function HandbookPolicyPage() {
           <div>
             <strong>5. Liên hệ</strong>
             <p>Email hỗ trợ: supportadas@app.vn</p>
-          </div>
-          <div className="mt-4 border-t pt-4">
-            <Button variant="outline">Gửi yêu cầu</Button>
           </div>
         </div>
       ),

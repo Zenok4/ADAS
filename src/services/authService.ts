@@ -9,7 +9,7 @@ export interface ListRolesParams {
   discription?: string;
   is_active?: boolean | null;
   list_permissions?: boolean;
-}
+} 
 export interface RolePayload {
   name: string;
   description?: string;

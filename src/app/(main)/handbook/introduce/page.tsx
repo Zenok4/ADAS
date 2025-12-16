@@ -47,7 +47,11 @@ export default function HandbookIntroducePage() {
               icon: Route, title: "Hỗ trợ giữ làn", color: "text-green-600",
               desc: "Cảnh báo khi xe sắp vượt qua vạch kẻ đường, hỗ trợ tài xế giữ đúng làn đường."
             }].map((f, i) => (
+<<<<<<< HEAD
               <Card key={i} className="hover:shadow-lg bg-white dark:bg-gray-800 hover:scale-105 transition-all duration-300">
+=======
+              <Card key={i} className="hover:shadow-lg transition-shadow bg-white dark:bg-gray-800">
+>>>>>>> f7b0f23 (Merge branch 'nlinh' of https://github.com/Zenok4/ADAS)
                 <CardHeader className="pb-2 border-b border-gray-300 dark:border-gray-700">
                   <div className="flex items-center gap-2 mb-1">
                     <f.icon className={`h-6 w-6 ${f.color}`} />

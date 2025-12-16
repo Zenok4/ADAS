@@ -43,7 +43,7 @@ const DEFAULT_SETTINGS: AppSettings = {
 };
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("canhbao");
+  const [activeTab, setActiveTab] = useState("chung");
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
 
   // Hook thông báo

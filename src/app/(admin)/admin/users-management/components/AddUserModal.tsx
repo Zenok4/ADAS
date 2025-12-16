@@ -39,6 +39,7 @@ interface AddUserModalProps {
   errors: FormErrors;
   setErrors: React.Dispatch<React.SetStateAction<FormErrors>>;
   validators: Validators;
+  currentUserLevel: number; // Thêm prop này
 }
 
 export function AddUserModal({
@@ -53,6 +54,7 @@ export function AddUserModal({
   errors,
   setErrors,
   validators,
+  currentUserLevel,
 }: AddUserModalProps) {
   const handleChange = (
     field: keyof NewUserForm,
@@ -71,7 +73,6 @@ export function AddUserModal({
     setErrors((prev) => ({ ...prev, [field]: validator(value) }));
   };
 
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
@@ -81,6 +82,7 @@ export function AddUserModal({
 
         <div className="grid grid-cols-2 gap-6 py-4">
           <div className="space-y-4">
+            {/* Tên đăng nhập */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Tên đăng nhập *
@@ -100,6 +102,21 @@ export function AddUserModal({
               )}
             </div>
 
+            {/* === TÊN HIỂN THỊ === */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Tên hiển thị
+              </label>
+              <Input
+                value={newUser.display_name || ""}
+                onChange={(e) =>
+                  setNewUser((prev) => ({ ...prev, display_name: e.target.value }))
+                }
+                placeholder="Tên hiển thị (Tùy chọn)"
+              />
+            </div>
+
+            {/* Email */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Email *
@@ -120,6 +137,7 @@ export function AddUserModal({
               )}
             </div>
 
+            {/* Số điện thoại */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Số điện thoại *
@@ -133,12 +151,14 @@ export function AddUserModal({
                 onBlur={(e) =>
                   handleBlur("phone", e.target.value, validators.validatePhone)
                 }
-                placeholder="10 chữ số, ví dụ: 0912345678"
+                placeholder="10 chữ số"
               />
               {errors.phone && (
                 <p className="text-xs text-red-600">{errors.phone}</p>
               )}
             </div>
+            
+            {/* Mật khẩu */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Mật khẩu *
@@ -180,34 +200,44 @@ export function AddUserModal({
             </div>
           </div>
 
+          {/* Cột phải: Vai trò */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">
               Vai trò (chọn nhiều)
             </label>
-            <div className="space-y-3 p-3 border rounded-md bg-white-50 h-fit">
-              {availableRoles.map((role) => (
-                <div key={role.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`add-${role.id}`}
-                    checked={newUser.selectedRoleIds.includes(role.id)}
-                    onCheckedChange={(checked: boolean) =>
-                      onRoleChange(role.id, checked)
-                    }
-                    disabled={role.id === userRoleId}
-                  />
-                  <label
-                    htmlFor={`add-${role.id}`}
-                    className={`text-sm font-medium leading-none ${
-                      role.id === userRoleId
-                        ? "text-gray-500 cursor-not-allowed"
-                        : "peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    }`}
-                  >
-                    {role.name}
-                    {role.id === userRoleId && " (Mặc định)"}
-                  </label>
-                </div>
-              ))}
+            <div className="space-y-3 p-3 border rounded-md bg-white-50 h-fit max-h-[400px] overflow-y-auto">
+              {availableRoles.map((role) => {
+                // Logic: User không thể cấp role có level >= mình
+                const isRoleTooHigh = (role.level || 0) >= currentUserLevel;
+                const isDefaultRole = role.id === userRoleId;
+                
+                const isDisabled = isDefaultRole || isRoleTooHigh;
+
+                return (
+                  <div key={role.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`add-${role.id}`}
+                      checked={newUser.selectedRoleIds.includes(role.id)}
+                      onCheckedChange={(checked: boolean) =>
+                        onRoleChange(role.id, checked)
+                      }
+                      disabled={isDisabled}
+                    />
+                    <label
+                      htmlFor={`add-${role.id}`}
+                      className={`text-sm font-medium leading-none ${
+                        isDisabled
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      }`}
+                    >
+                      {role.name} <span className="text-xs text-gray-400">(Lv.{role.level || 0})</span>
+                      {isDefaultRole && " (Mặc định)"}
+                      {isRoleTooHigh && " (Không đủ quyền)"}
+                    </label>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

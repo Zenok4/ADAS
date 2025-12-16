@@ -43,7 +43,7 @@ export const UserSidebar = ({
             variant="ghost"
             size="icon"
             onClick={onToggle}
-            className="h-8 w-8 transition-all duration-200 hover:bg-blue-700 hover:text-white dark:hover:bg-blue-600"
+            className={cn("h-8 w-8 transition-all duration-200 hover:bg-blue-700 hover:text-white dark:hover:bg-blue-600")}
           >
             {collapsed ? (
               <ChevronRight className="h-4 w-4" />
@@ -74,7 +74,7 @@ export const UserSidebar = ({
                     variant="ghost"
                     className={cn(
                       "flex w-full items-center justify-between gap-3 h-10 px-2 group transition-colors",
-                      isActive ? "bg-blue-600 text-white" : "hover:bg-blue-700 hover:text-white dark:hover:bg-blue-600",
+                      isActive ? "bg-blue-600 dark:hover:bg-blue-800 hover:text-white hover:bg-blue-800" : "hover:bg-blue-700 hover:text-white dark:hover:bg-gray-700",
                     )}
                     onClick={() => {
                       if (item.children) {
@@ -109,7 +109,7 @@ export const UserSidebar = ({
                           className={cn(
                             "flex items-center gap-3 w-full text-sm px-3 py-2 rounded-md group transition-colors hover:bg-blue-100 dark:hover:bg-gray-700",
                             pathName === child.href
-                              ? "bg-blue-600 text-white"
+                              ? "bg-blue-600 text-white hover:bg-blue-700"
                               : "bg-blue-50 text-gray-800 hover:bg-blue-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                           )}
                         >

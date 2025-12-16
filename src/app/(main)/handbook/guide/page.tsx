@@ -12,9 +12,9 @@ export default function HandbookGuidePage() {
       title: "Hướng dẫn sử dụng cơ bản",
       description: "Tìm hiểu cách khởi động và sử dụng hệ thống ADAS lần đầu tiên",
       content: (
-        <div className="space-y-2 text-gray-700">
+        <div className="space-y-2 text-gray-700 dark:text-gray-300">
           <p><strong>1. Khởi động hệ thống ADAS</strong><br />
-            Truy cập vào trang <strong>Bảng điều khiển</strong>, hệ thống sẽ kiểm tra camera, cảm biến và GPS.</p>
+            Truy cập trang <strong>Bảng điều khiển</strong> hệ thống sẽ kiểm tra camera, cảm biến và GPS.</p>
           <p><strong>2. Giao diện hiển thị</strong><br />
             Thanh trạng thái hiển thị kết nối camera, GPS, cảm biến. Biểu tượng các chức năng cảnh báo: mắt, buồn ngủ, làn đường, vật cản.</p>
           <p><strong>3. Điều chỉnh âm lượng cảnh báo</strong><br />
@@ -29,7 +29,7 @@ export default function HandbookGuidePage() {
       title: "Cảnh báo buồn ngủ",
       description: "Hệ thống cảnh báo khi tài xế có dấu hiệu mệt mỏi",
       content: (
-        <div className="space-y-2 text-gray-700">
+        <div className="space-y-2 text-gray-700 dark:text-gray-300">
           <p><strong>1. Cách hoạt động</strong><br />
             Camera hướng về mặt tài xế, theo dõi nhãn cầu và cử động mắt. Hệ thống tính toán Eye Aspect Ratio (EAR).</p>
           <p><strong>2. Hiển thị cảnh báo</strong><br />
@@ -46,7 +46,7 @@ export default function HandbookGuidePage() {
       title: "Nhận diện biển báo giao thông",
       description: "Hệ thống phát hiện và cảnh báo biển báo trên đường",
       content: (
-        <div className="space-y-2 text-gray-700">
+        <div className="space-y-2 text-gray-700 dark:text-gray-300">
           <p><strong>1. Các loại biển báo hỗ trợ</strong><br />
             Tốc độ giới hạn, cấm vượt, nguy hiểm, dừng xe, làn đường, hướng đi.</p>
           <p><strong>2. Cách hoạt động</strong><br />
@@ -63,7 +63,7 @@ export default function HandbookGuidePage() {
       title: "Phát hiện làn đường & vật cản",
       description: "Giúp xe giữ làn và cảnh báo va chạm phía trước",
       content: (
-        <div className="space-y-2 text-gray-700">
+        <div className="space-y-2 text-gray-700 dark:text-gray-300">
           <p><strong>1. Phát hiện làn đường</strong><br />
             Camera quét vạch kẻ đường, cảnh báo lệch làn bằng biểu tượng nhấp nháy và âm thanh ngắn. Có thể rung vô-lăng nếu tích hợp.</p>
           <p><strong>2. Phát hiện vật cản / va chạm</strong><br />

@@ -1,19 +1,43 @@
-import { Car, Home, Settings } from "lucide-react";
+import { Home, Settings, Waypoints } from "lucide-react";
+import { BookOpen, Info, FileText, NotebookPen } from "lucide-react";
 
 export const sidebarItems = [
   {
-    title: "Dashboard",
+    title: "Bảng điều khiển",
     icon: Home,
     href: "/dashboard",
   },
   {
     title: "Hành trình",
-    icon: Car,
-    href: "/drive",
+    icon: Waypoints,
+    href: "/journey",
   },
   {
-    title: "Settings",
+    title: "Sổ tay",
+    href: "#",
+    icon: BookOpen,
+    children: [
+      {
+        title: "Giới thiệu",
+        href: "/handbook/introduce",
+        icon: Info,
+      },
+      {
+        title: "Hướng dẫn",
+        href: "/handbook/guide",
+        icon: NotebookPen,
+      },
+      {
+        title: "Chính sách & Quy định",
+        href: "/handbook/policy",
+        icon: FileText,
+      },
+    ],
+  },
+  
+  {
+    title: "Cài đặt",
     icon: Settings,
-    href: "/settings",
+    href: "/user/settings",
   },
 ];

@@ -1,208 +1,202 @@
 "use client";
-import React, { useRef, useState, useEffect } from "react";
-// Import service
+import React, { useState, useEffect, useRef } from "react";
 import { signService } from "@/services/signService";
-import { objectService } from "@/services/ai/objectService";
+import { laneService } from "@/services/laneService";
+import { objectService } from "@/services/objectService"; // Import mới
+import { useCamera } from "@/hooks/useCamera";
+import { useAudioAlert } from "@/hooks/useAudioAlert";
 
-interface Detection {
-  box: number[];
-  class_name: string;
-  confidence: number;
-  type: "sign" | "object";
-}
+import {
+  drawLanes,
+  drawSigns,
+  drawObjects, // Import mới
+  captureVideoFrame,
+  Detection,
+} from "@/lib/drawUtils";
 
 interface CameraLiveProps {
   className?: string;
   startCamera: boolean;
   enableSign: boolean;
-  enableObject: boolean;
+  enableLane: boolean;
+  enableObject: boolean; // Prop mới
+  soundEnabled: boolean;
 }
-
-// Map tần suất ra mili-giây
-const FREQUENCY_MAP = {
-  high: 330, // ~3 req/s
-  medium: 1000, // 1 req/s
-  low: 2000, // 0.5 req/s
-};
-
-const getBoxColor = (className: string, type: "sign" | "object"): string => {
-  if (type === "object") return "#ff0000";
-  const name = (className || "").toLowerCase();
-  if (name.includes("phụ")) return "#a020f0";
-  if (name.includes("nguy hiểm") || name.includes("cảnh báo")) return "#ff0000";
-  if (name.includes("hiệu lệnh")) return "#007bff";
-  if (name.includes("chỉ dẫn")) return "#00cc66";
-  if (name.includes("cấm")) return "#ff8000";
-  return "#ffff00";
-};
 
 export default function CameraLive({
   className,
   startCamera,
   enableSign,
+  enableLane,
   enableObject,
+  soundEnabled,
 }: CameraLiveProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
-  const loadingRef = useRef(false);
+
+  const { openCamera, stopCamera } = useCamera(
+    videoRef as React.RefObject<HTMLVideoElement>
+  );
+  const { alertDrowsiness: playAlert, warnObstacle } =
+    useAudioAlert(soundEnabled);
 
   const [detections, setDetections] = useState<Detection[]>([]);
+  const [laneData, setLaneData] = useState<Detection[]>([]);
+  const [objectData, setObjectData] = useState<Detection[]>([]); // State mới
 
-  // State lưu thời gian interval hiện tại
-  const [intervalMs, setIntervalMs] = useState(1000);
+  const loadingRef = useRef(false);
 
-  // 0. Đọc cấu hình từ LocalStorage khi component mount hoặc khi có sự kiện update
   useEffect(() => {
-    const loadSettings = () => {
-      try {
-        const saved = localStorage.getItem("adas_settings");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          const freq = parsed.alert?.frequency as keyof typeof FREQUENCY_MAP;
-          if (freq && FREQUENCY_MAP[freq]) {
-            setIntervalMs(FREQUENCY_MAP[freq]);
-          }
-        }
-      } catch (e) {
-        console.warn("Dùng cấu hình mặc định do lỗi đọc storage");
-      }
-    };
+    if (startCamera) {
+      openCamera("ivcam");
+    } else {
+      stopCamera();
+      setDetections([]);
+      setLaneData([]);
+      setObjectData([]);
+    }
+    return () => stopCamera();
+  }, [startCamera, openCamera, stopCamera]);
 
-    loadSettings();
-
-    // Lắng nghe sự kiện nếu settings thay đổi ở tab khác
-    window.addEventListener("adas_settings_updated", loadSettings);
-    return () =>
-      window.removeEventListener("adas_settings_updated", loadSettings);
-  }, []);
-
-  // 1. Khởi động camera
-  useEffect(() => {
-    if (!startCamera) return;
-    let stream: MediaStream | null = null;
-    const startCam = async () => {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-          audio: false,
-        });
-        if (videoRef.current) videoRef.current.srcObject = stream;
-      } catch (err) {
-        console.error("❌ Không thể truy cập camera:", err);
-      }
-    };
-    startCam();
-    return () => {
-      if (stream) stream.getTracks().forEach((track) => track.stop());
-      if (videoRef.current) videoRef.current.srcObject = null;
-    };
-  }, [startCamera]);
-
-  // 2. Hàm hỗ trợ lấy data
-  const safeGetList = (res: any) => {
-    if (!res) return [];
-    if (Array.isArray(res)) return res;
-    if (Array.isArray(res.data)) return res.data;
-    if (res.data && Array.isArray(res.data.data)) return res.data.data;
-    return [];
-  };
-
-  // 3. Gửi frame đến AI
-  const processAI = async () => {
-    if ((!enableSign && !enableObject) || !startCamera || loadingRef.current)
+  const sendFrameToAI = async () => {
+    if (
+      (!enableSign && !enableLane && !enableObject) ||
+      !startCamera ||
+      loadingRef.current
+    )
       return;
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const base64 = captureVideoFrame(videoRef.current, canvasRef.current);
+    if (!base64) return;
 
     loadingRef.current = true;
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-
-    if (!video || !canvas || video.videoWidth === 0) {
-      loadingRef.current = false;
-      return;
-    }
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      loadingRef.current = false;
-      return;
-    }
-
-    // Resize ảnh nhỏ lại để gửi API nhanh hơn (nếu cần, ở đây giữ nguyên logic cũ)
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const base64 = canvas
-      .toDataURL("image/jpeg", 0.5)
-      .replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+    const onlyBase64 = base64.replace(
+      /^data:image\/(png|jpeg|jpg);base64,/,
+      ""
+    );
 
     try {
-      const promises = [];
+      const [signRes, laneRes, objectRes] = await Promise.all([
+        enableSign
+          ? signService.predictSign(onlyBase64)
+          : Promise.resolve(null),
+        enableLane
+          ? laneService.predictLane(onlyBase64)
+          : Promise.resolve(null),
+        enableObject
+          ? objectService.predictObject(onlyBase64)
+          : Promise.resolve(null),
+      ]);
 
-      if (enableSign) {
-        promises.push(
-          signService
-            .predictSign(base64)
-            .then((res) => {
-              const list = safeGetList(res);
-              return list
-                .filter(
-                  (item: any) =>
-                    Array.isArray(item.box) && item.box.length === 4
-                )
-                .map((item: any) => ({ ...item, type: "sign" }));
-            })
-            .catch(() => [])
-        );
+      // 1. Biển báo
+      if (
+        enableSign &&
+        signRes?.data?.data?.data &&
+        Array.isArray(signRes.data.data.data)
+      ) {
+        const dets = signRes.data.data.data;
+        setDetections(dets);
+        if (dets.length > 0) {
+          const urgentSign = dets.find(
+            (d: any) =>
+              d.class_name.toLowerCase().includes("cam") ||
+              d.class_name.toLowerCase().includes("nguy hiem") ||
+              d.class_name.toLowerCase().includes("dung")
+          );
+          if (urgentSign) {
+            playAlert(`Cảnh báo: ${urgentSign.class_name}`);
+          } else {
+            const bestSign = dets.reduce((prev: any, current: any) =>
+              prev.confidence > current.confidence ? prev : current
+            );
+            if (bestSign) playAlert(bestSign.class_name);
+          }
+        }
       } else {
-        promises.push(Promise.resolve([]));
+        setDetections([]);
       }
 
-      if (enableObject) {
-        promises.push(
-          objectService
-            .predictObject(base64)
-            .then((res) => {
-              const list = safeGetList(res);
-              return list
-                .filter(
-                  (item: any) =>
-                    Array.isArray(item.box) && item.box.length === 4
-                )
-                .map((item: any) => ({ ...item, type: "object" }));
-            })
-            .catch(() => [])
-        );
+      // 2. Làn đường
+      if (
+        enableLane &&
+        laneRes?.data?.data &&
+        Array.isArray(laneRes.data.data)
+      ) {
+        setLaneData(laneRes.data.data);
       } else {
-        promises.push(Promise.resolve([]));
+        setLaneData([]);
       }
 
-      const [signResults, objectResults] = await Promise.all(promises);
-      setDetections([...signResults, ...objectResults]);
+      // 3. Xử lý Vật cản (FIXED: Xử lý JSON 3 lớp)
+      if (enableObject && objectRes) {
+        // --- LOGIC TỰ TÌM MẢNG DỮ LIỆU (Safe Unwrap) ---
+        let objs: any[] = [];
+
+        // Kiểm tra trường hợp 3 lớp (Trường hợp hiện tại của bạn)
+        if (
+          objectRes.data?.data?.data &&
+          Array.isArray(objectRes.data.data.data)
+        ) {
+          objs = objectRes.data.data.data;
+        }
+        // Kiểm tra trường hợp 2 lớp (Nếu backend sửa lại gọn hơn)
+        else if (objectRes.data?.data && Array.isArray(objectRes.data.data)) {
+          objs = objectRes.data.data;
+        }
+        // Kiểm tra trường hợp 1 lớp (Nếu gọn nhất)
+        else if (objectRes.data && Array.isArray(objectRes.data)) {
+          objs = objectRes.data;
+        }
+
+        console.log("Số lượng vật thể tìm thấy:", objs.length); // Debug xem có bao nhiêu xe
+
+        if (objs.length > 0) {
+          setObjectData(objs);
+
+          // Logic cảnh báo
+          const dangerObj = objs.find(
+            (o: any) => o.confidence > 0.4 // JSON của bạn là 0.73, nên 0.4 chắc chắn bắt được
+          );
+
+          if (dangerObj) {
+            const nameMap: Record<string, string> = {
+              person: "Người đi bộ",
+              car: "Ô tô",
+              truck: "Xe tải",
+            };
+            const vnName =
+              nameMap[dangerObj.class_name] || dangerObj.class_name;
+
+            // Log ra console để chắc chắn logic chạy
+            console.log(`>>> PHÁT HIỆN: ${vnName} (${dangerObj.confidence})`);
+
+            warnObstacle(`Chú ý, có ${vnName}`);
+          }
+        } else {
+          setObjectData([]);
+        }
+      } else {
+        setObjectData([]);
+      }
     } catch (err) {
-      console.error("❌ Lỗi xử lý AI:", err);
+      console.error(err);
     } finally {
       loadingRef.current = false;
     }
   };
 
-  // 4. Loop - Sử dụng intervalMs động
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-
-    if (startCamera && (enableSign || enableObject)) {
-      // console.log("Starting AI Loop with interval:", intervalMs);
-      interval = setInterval(() => processAI(), intervalMs);
-    } else {
-      setDetections([]);
+    if (startCamera && (enableSign || enableLane || enableObject)) {
+      interval = setInterval(sendFrameToAI, 500);
     }
-
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [startCamera, enableSign, enableObject, intervalMs]); // Re-run khi intervalMs đổi
+  }, [startCamera, enableSign, enableLane, enableObject]);
 
-  // 5. Vẽ boxes (Giữ nguyên logic cũ)
   useEffect(() => {
     const canvas = overlayRef.current;
     const video = videoRef.current;
@@ -220,67 +214,40 @@ export default function CameraLive({
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (detections.length === 0) return;
-
-    detections.forEach((det) => {
-      const [x1, y1, x2, y2] = det.box;
-      const w = x2 - x1;
-      const h = y2 - y1;
-      const color = getBoxColor(det.class_name, det.type);
-
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 4;
-      ctx.strokeRect(x1, y1, w, h);
-
-      ctx.fillStyle = color;
-      const text = `${det.class_name} ${(det.confidence * 100).toFixed(0)}%`;
-      ctx.font = "bold 16px Arial";
-      const textWidth = ctx.measureText(text).width;
-
-      const labelY = y1 > 25 ? y1 - 25 : y1;
-      ctx.fillRect(x1, labelY, textWidth + 10, 25);
-
-      ctx.fillStyle = "#ffffff";
-      ctx.fillText(text, x1 + 5, labelY + 18);
-    });
-  }, [detections]);
+    if (enableLane) drawLanes(ctx, laneData);
+    if (enableObject) drawObjects(ctx, objectData); // Vẽ Object
+    if (enableSign) drawSigns(ctx, detections);
+  }, [detections, laneData, objectData, enableSign, enableLane, enableObject]);
 
   return (
     <div
       className={`${className} relative overflow-hidden bg-black rounded-lg`}
     >
-      {startCamera ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-full h-full object-contain"
-        />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-gray-500 bg-gray-900">
-          Nhấn “Mở camera” để bật Camera
-        </div>
-      )}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className="w-full h-full object-cover"
+      />
       <canvas ref={canvasRef} style={{ display: "none" }} />
       <canvas
         ref={overlayRef}
-        className="absolute top-0 left-0 w-full h-full pointer-events-none"
+        className="absolute inset-0 w-full h-full pointer-events-none"
       />
 
-      {/* Hiển thị info debug nhỏ */}
-      {(enableSign || enableObject) && startCamera && (
-        <div className="absolute bottom-2 left-2 flex gap-2 z-20 pointer-events-none">
-          <div className="bg-black/70 text-white px-3 py-1 rounded-full text-xs">
-            Delay: {intervalMs}ms
+      <div className="absolute bottom-2 left-2 flex flex-col gap-1 pointer-events-none">
+        {startCamera && enableSign && detections.length > 0 && (
+          <div className="bg-yellow-500/90 text-black font-bold p-1 px-2 rounded text-xs animate-pulse">
+            {detections.length} Biển báo
           </div>
-          <div className="bg-black/70 text-white px-3 py-1 rounded-full text-xs">
-            {detections.length > 0
-              ? `Phát hiện: ${detections.length}`
-              : "Đang quét..."}
+        )}
+        {startCamera && enableObject && objectData.length > 0 && (
+          <div className="bg-blue-600/90 text-white font-bold p-1 px-2 rounded text-xs">
+            {objectData.length} Vật cản
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

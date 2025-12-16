@@ -1,5 +1,5 @@
 "use client";
-
+import { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 import {
   UserCircle2,
@@ -12,6 +12,7 @@ import {
   X,
   Loader2,
   Lock,
+  User, // Import thêm icon User cho display_name
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -23,6 +24,11 @@ import {
 import { useNotifyDialog } from "@/hooks/useNotifyDialog";
 import NotifyDialog from "@/components/NotifyDialog";
 import { NotifyType } from "@/type/notify";
+
+// Interface mở rộng để bao gồm display_name nếu file service chưa có
+interface ExtendedProfilePayload extends ProfileUpdatePayload {
+  display_name?: string;
+}
 
 const FormInputItem = ({
   icon: Icon,
@@ -76,9 +82,11 @@ export default function ProfileEditPage() {
     handlePrimaryAction,
   } = useNotifyDialog();
 
-  const [formData, setFormData] = useState<ProfileUpdatePayload>({
+  // Thêm display_name vào state
+  const [formData, setFormData] = useState<ExtendedProfilePayload>({
     email: "",
     phone: "",
+    display_name: "",
     address: "",
     vehicle_name: "",
     license_plate: "",
@@ -90,7 +98,7 @@ export default function ProfileEditPage() {
     registrationDate: "Đang tải...",
   });
 
-  // 1. Tải dữ liệu profile (Giữ nguyên)
+  // 1. Tải dữ liệu profile
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -101,6 +109,7 @@ export default function ProfileEditPage() {
         setFormData({
           email: profileData.email || "",
           phone: profileData.phone || "",
+          display_name: profileData.display_name || "", // Map display_name
           address: profileData.address || "",
           vehicle_name: profileData.vehicle_name || "",
           license_plate: profileData.license_plate || "",
@@ -128,22 +137,22 @@ export default function ProfileEditPage() {
     fetchProfile();
   }, []);
 
-  // 2. Xử lý khi input thay đổi 
+  // 2. Xử lý khi input thay đổi
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev: ProfileUpdatePayload) => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  // 3. Xử lý khi submit form 
+  // 3. Xử lý khi submit form
+  // 3. Xử lý khi submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const payload = Object.fromEntries(
-      Object.entries(formData).filter(([_, v]) => v)
-    ) as ProfileUpdatePayload;
+
+    const payload = { ...formData };
 
     try {
       await ProfileService.updateProfile(payload);
@@ -156,12 +165,35 @@ export default function ProfileEditPage() {
           router.push("/user/profile");
         },
       });
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error("DEBUG ERROR:", error);
+
+      let errorMessage = "Đã có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.";
+
+      // Kiểm tra phản hồi từ Backend
+      if (error.response && error.response.data) {
+        const data = error.response.data;
+
+        // ƯU TIÊN 1: Cấu trúc lỗi lồng nhau (như JSON bạn vừa gửi)
+        // { error: { message: "..." } }
+        if (data.error && data.error.message) {
+          errorMessage = data.error.message;
+        }
+        // ƯU TIÊN 2: Cấu trúc lỗi phẳng
+        // { message: "..." }
+        else if (data.message) {
+          errorMessage = data.message;
+        }
+        // ƯU TIÊN 3: Backend trả về string
+        else if (typeof data === "string") {
+          errorMessage = data;
+        }
+      }
+
       showNotify({
         type: NotifyType.Error,
         title: "Cập nhật thất bại",
-        message: "Đã có lỗi xảy ra. Vui lòng thử lại.",
+        message: errorMessage,
         primaryActionText: "Đã hiểu",
       });
     } finally {
@@ -169,7 +201,7 @@ export default function ProfileEditPage() {
     }
   };
 
-  // === 4. THAY ĐỔI: THÊM TRẠNG THÁI LOADING ===
+  // === 4. TRẠNG THÁI LOADING ===
   if (isFetching) {
     return (
       <div className="flex p-6 items-center justify-center h-full">
@@ -179,11 +211,11 @@ export default function ProfileEditPage() {
     );
   }
 
-  // === 5. RENDER NỘI DUNG CHÍNH ===
+  // === 5. RENDER ===
   return (
     <main className="p-6">
       <form onSubmit={handleSubmit}>
-        {/* Header của trang */}
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
@@ -194,7 +226,7 @@ export default function ProfileEditPage() {
             </p>
           </div>
 
-          {/* Khối nút (Giữ nguyên) */}
+          {/* Action Buttons */}
           <div className="flex gap-3">
             <button
               type="button"
@@ -229,8 +261,7 @@ export default function ProfileEditPage() {
           </div>
         </div>
 
-        {/* (ĐÃ XÓA logic loading ? : ... ở đây) */}
-        {/* Card 1: Header (Giữ nguyên) */}
+        {/* Static Info Card */}
         <div className="bg-white rounded-xl shadow-md max-w-4xl mx-auto p-6 flex flex-col md:flex-row items-center gap-4">
           <div className="bg-gray-100 rounded-full p-4">
             <UserCircle2 size={48} className="text-gray-500" />
@@ -241,17 +272,29 @@ export default function ProfileEditPage() {
           </div>
         </div>
 
-        {/* Lưới chứa 2 card thông tin (Giữ nguyên) */}
+        {/* Input Fields Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-6">
           {/* Card 2: Thông tin cá nhân */}
           <div className="bg-white rounded-xl shadow-md p-6 space-y-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Thông tin cá nhân
             </h3>
+
+            {/* Thêm trường Tên hiển thị */}
+            <FormInputItem
+              icon={User}
+              label="Tên hiển thị"
+              name="display_name"
+              value={formData.display_name || ""}
+              onChange={handleInputChange}
+              placeholder="Nhập tên hiển thị"
+            />
+
             <FormInputItem
               icon={Mail}
               label="Email"
               name="email"
+              type="email" // Chuẩn hóa type
               value={formData.email!}
               onChange={handleInputChange}
               placeholder="vidu@gmail.com"
@@ -260,6 +303,7 @@ export default function ProfileEditPage() {
               icon={Phone}
               label="Số điện thoại"
               name="phone"
+              type="tel" // Chuẩn hóa type
               value={formData.phone!}
               onChange={handleInputChange}
               placeholder="+84 123 456 789"
@@ -299,7 +343,7 @@ export default function ProfileEditPage() {
         </div>
       </form>
 
-      {/* Render Notify Dialog (Giữ nguyên) */}
+      {/* Notify Dialog */}
       <NotifyDialog
         open={open}
         type={type}

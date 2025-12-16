@@ -1,14 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, CheckCircle, XCircle } from "lucide-react"; // Import thêm icon
 import { AuthService } from "@/services/authService";
 import NotifyDialog from "@/components/NotifyDialog";
 import { useNotifyDialog } from "@/hooks/useNotifyDialog";
 import { NotifyType } from "@/type/notify";
 import FullScreenLoader from "@/helper/loader";
+
+// === Component hiển thị điều kiện mật khẩu ===
+const RequirementItem = ({
+  isValid,
+  text,
+  isTouched,
+}: {
+  isValid: boolean;
+  text: string;
+  isTouched: boolean;
+}) => {
+  // Nếu chưa chạm vào input thì hiển thị màu xám (neutral)
+  if (!isTouched) {
+    return (
+      <li className="flex items-center space-x-2 text-gray-500 text-sm">
+        <div className="w-4 h-4 rounded-full border border-gray-400" />
+        <span>{text}</span>
+      </li>
+    );
+  }
+
+  return (
+    <li
+      className={`flex items-center space-x-2 text-sm ${
+        isValid ? "text-green-600" : "text-red-500"
+      }`}
+    >
+      {isValid ? <CheckCircle size={16} /> : <XCircle size={16} />}
+      <span>{text}</span>
+    </li>
+  );
+};
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -27,6 +59,21 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
 
+  // === State Validation Password ===
+  const [isNewPasswordTouched, setIsNewPasswordTouched] = useState(false);
+
+  // Logic kiểm tra độ mạnh mật khẩu
+  // 1. Độ dài >= 8
+  const isLengthValid = password.length >= 8;
+  // 2. Độ phức tạp: Chữ hoa, chữ thường, số, ký tự đặc biệt
+  const isComplexityValid =
+    /[A-Z]/.test(password) && // Có chữ hoa
+    /[a-z]/.test(password) && // Có chữ thường
+    /[0-9]/.test(password) && // Có số
+    /[^A-Za-z0-9]/.test(password); // Có ký tự đặc biệt
+
+  const isPasswordValid = isLengthValid && isComplexityValid;
+
   // === Helper: Xác định loại input (Email hay Phone) ===
   const getInputType = (input: string): "email" | "phone" => {
     return input.includes("@") ? "email" : "phone";
@@ -34,7 +81,8 @@ export default function ForgotPasswordPage() {
 
   // === Handler: Gửi OTP ===
   const handleSendOtp = async () => {
-    if (!emailOrPhone.trim()) {
+    const cleanInput = emailOrPhone.trim(); // Trim input
+    if (!cleanInput) {
       showNotify({
         type: NotifyType.Warning,
         title: "Thiếu thông tin",
@@ -44,13 +92,13 @@ export default function ForgotPasswordPage() {
     }
 
     setLoading(true);
-    const type = getInputType(emailOrPhone);
+    const type = getInputType(cleanInput);
 
     try {
       if (type === "email") {
-        await AuthService.forgotPasswordEmailSendOtp(emailOrPhone);
+        await AuthService.forgotPasswordEmailSendOtp(cleanInput);
       } else {
-        await AuthService.forgotPasswordPhoneSendOtp(emailOrPhone);
+        await AuthService.forgotPasswordPhoneSendOtp(cleanInput);
       }
 
       setIsOtpSent(true);
@@ -66,6 +114,7 @@ export default function ForgotPasswordPage() {
         type: NotifyType.Error,
         title: "Gửi thất bại",
         message:
+          error?.response?.data?.message || // Ưu tiên message từ backend
           error?.response?.data?.error ||
           "Không tìm thấy tài khoản này trong hệ thống.",
       });
@@ -77,6 +126,7 @@ export default function ForgotPasswordPage() {
   // === Handler: Submit Reset Password ===
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsNewPasswordTouched(true); // Đánh dấu là đã thao tác để hiện lỗi nếu có
 
     // 1. Validate Client
     if (!emailOrPhone || !otp || !password) {
@@ -84,6 +134,16 @@ export default function ForgotPasswordPage() {
         type: NotifyType.Warning,
         title: "Thiếu thông tin",
         message: "Vui lòng nhập đầy đủ thông tin.",
+      });
+      return;
+    }
+
+    // Check mật khẩu mạnh
+    if (!isPasswordValid) {
+      showNotify({
+        type: NotifyType.Warning,
+        title: "Mật khẩu yếu",
+        message: "Vui lòng đặt mật khẩu đáp ứng đủ các yêu cầu bảo mật.",
       });
       return;
     }
@@ -99,13 +159,14 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     const type = getInputType(emailOrPhone);
+    const cleanInput = emailOrPhone.trim();
 
     try {
       // 2. Gọi API Reset Password tương ứng
       if (type === "email") {
-        await AuthService.forgotPasswordEmailReset(emailOrPhone, otp, password);
+        await AuthService.forgotPasswordEmailReset(cleanInput, otp, password);
       } else {
-        await AuthService.forgotPasswordPhoneReset(emailOrPhone, otp, password);
+        await AuthService.forgotPasswordPhoneReset(cleanInput, otp, password);
       }
 
       // 3. Thành công -> Thông báo & Chuyển trang
@@ -209,6 +270,7 @@ export default function ForgotPasswordPage() {
                     type={showPassword ? "text" : "password"}
                     placeholder="Nhập mật khẩu"
                     value={password}
+                    onFocus={() => setIsNewPasswordTouched(true)} // Đánh dấu đã touch
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -221,6 +283,26 @@ export default function ForgotPasswordPage() {
                   </button>
                 </div>
               </div>
+
+              {/* === PHẦN YÊU CẦU BẢO MẬT (Đã thêm) === */}
+              <div className="p-4 bg-gray-50 border border-gray-100 rounded-lg">
+                <h4 className="font-semibold text-xs text-gray-500 uppercase mb-2">
+                  Yêu cầu bảo mật
+                </h4>
+                <ul className="space-y-1">
+                  <RequirementItem
+                    isValid={isLengthValid}
+                    text="Sử dụng ít nhất 8 ký tự."
+                    isTouched={isNewPasswordTouched}
+                  />
+                  <RequirementItem
+                    isValid={isComplexityValid}
+                    text="Kết hợp chữ hoa, thường, số và ký tự đặc biệt."
+                    isTouched={isNewPasswordTouched}
+                  />
+                </ul>
+              </div>
+              {/* ======================================= */}
 
               {/* Confirm Password */}
               <div>
@@ -262,7 +344,6 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
 
-      {/* SỬA LỖI Ở ĐÂY: Xóa 'open={notifyProps.open}' */}
       <NotifyDialog onClose={hideNotify} {...notifyProps} />
       <FullScreenLoader show={loading} message="Đang xử lý..." />
     </div>

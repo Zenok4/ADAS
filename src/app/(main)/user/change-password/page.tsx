@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
-import { AuthService } from "@/services/authService";
-import NotifyDialog from "@/components/NotifyDialog";
+import { PasswordInput } from "./components/password-input"; // Đảm bảo đường dẫn đúng
 import { useNotifyDialog } from "@/hooks/useNotifyDialog";
+import NotifyDialog from "@/components/NotifyDialog";
 import { NotifyType } from "@/type/notify";
-import FullScreenLoader from "@/helper/loader";
+import { ProfileService } from "@/services/profileService";
+import { useSession } from "@/context/SessionContext";
+import { UserData } from "@/services/type/user.type";
 
-// === COMPONENT: Hiển thị từng dòng yêu cầu bảo mật ===
+// === COMPONENTS CON ===
 const RequirementItem = ({
   isValid,
   text,
@@ -81,311 +81,309 @@ const RequirementItem = ({
   );
 };
 
-// === HELPER: XỬ LÝ LỖI API TRÁNH CRASH REACT ===
+// === HELPER: XỬ LÝ LỖI API ===
 const getErrorMessage = (
   error: any,
   defaultMsg: string = "Đã có lỗi xảy ra"
 ): string => {
   if (error?.response?.data) {
     const apiError = error.response.data;
-
-    // Ưu tiên lấy message từ backend
     if (apiError.error?.message) return apiError.error.message;
     if (apiError.message && typeof apiError.message === "string")
       return apiError.message;
     if (apiError.error && typeof apiError.error === "string")
       return apiError.error;
-
-    // Nếu backend trả về "User not found" -> Dịch sang tiếng Việt
-    const rawError = JSON.stringify(apiError.error || apiError);
-    if (rawError.includes("User not found"))
-      return "Email này chưa được đăng ký trong hệ thống.";
-
-    return rawError;
+    return JSON.stringify(apiError.error || apiError);
   }
-  return error.message || (typeof error === "string" ? error : defaultMsg);
+  return error.message || defaultMsg;
 };
 
-export default function ForgotPasswordPage() {
+// === MAIN COMPONENT ===
+export default function ChangePasswordPage() {
   const router = useRouter();
-  const { showNotify, hideNotify, ...notifyProps } = useNotifyDialog();
+  const { user: sessionUser } = useSession();
 
-  // === State (CHỈ CÒN EMAIL) ===
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [password, setPassword] = useState("");
+  const user = sessionUser as unknown as UserData;
+
+  // === State Form ===
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [otpCode, setOtpCode] = useState("");
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // Đã bỏ state otpChannel vì mặc định là email
 
-  // Trạng thái xử lý
-  const [loading, setLoading] = useState(false);
-  const [isOtpSent, setIsOtpSent] = useState(false);
+  // === State UI ===
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
 
-  // === Logic Validate Password (New UI) ===
-  const isLengthValid = password.length >= 8;
-  const hasUpperCase = /[A-Z]/.test(password);
-  const hasLowerCase = /[a-z]/.test(password);
-  const hasNumbers = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  // === Notify Dialog ===
+  const {
+    open,
+    type,
+    title,
+    message,
+    primaryActionText,
+    showNotify,
+    hideNotify,
+    handlePrimaryAction,
+  } = useNotifyDialog();
+
+  // === LOGIC VALIDATION ===
+  const isLengthValid = newPassword.length >= 8;
+  const hasUpperCase = /[A-Z]/.test(newPassword);
+  const hasLowerCase = /[a-z]/.test(newPassword);
+  const hasNumbers = /\d/.test(newPassword);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
   const isComplexityValid =
     hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
-  // const isDifferentFromOld = ... (Không check được vì chưa login)
-  const isNewPasswordTouched = password.length > 0;
+  const isDifferentFromOld =
+    currentPassword && newPassword ? newPassword !== currentPassword : true;
+  const isNewPasswordTouched = newPassword.length > 0;
 
-  // === Handler: Gửi OTP (Chỉ Email) ===
+  // === HANDLER: GỬI OTP (CHỈ EMAIL) ===
   const handleSendOtp = async () => {
-    if (!email.trim()) {
+    if (!user?.email) {
       showNotify({
         type: NotifyType.Warning,
         title: "Thiếu thông tin",
-        message: "Vui lòng nhập Email trước khi lấy mã.",
+        message:
+          "Tài khoản của bạn chưa cập nhật Email. Vui lòng cập nhật hồ sơ trước.",
       });
       return;
     }
 
-    setLoading(true);
+    setIsSendingOtp(true);
     try {
-      // Gọi API gửi OTP Email
-      await AuthService.forgotPasswordEmailSendOtp(email);
-
-      setIsOtpSent(true);
+      // Mặc định gửi 'email'
+      await ProfileService.requestChangePasswordOtp("email");
+      setOtpSent(true);
       showNotify({
         type: NotifyType.Success,
         title: "Đã gửi mã",
-        message: `Mã OTP đã được gửi tới email ${email} của bạn.`,
+        message: `Mã OTP đã được gửi đến Email: ${user.email}`,
       });
     } catch (error: any) {
-      const msg = getErrorMessage(
-        error,
-        "Không tìm thấy tài khoản này trong hệ thống."
-      );
-      showNotify({
-        type: NotifyType.Error,
-        title: "Gửi thất bại",
-        message: msg,
-      });
+      const msg = getErrorMessage(error, "Không thể gửi OTP lúc này.");
+      showNotify({ type: NotifyType.Error, title: "Lỗi gửi mã", message: msg });
     } finally {
-      setLoading(false);
+      setIsSendingOtp(false);
     }
   };
 
-  // === Handler: Submit Reset Password ===
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // 1. Validate Client
-    if (!email || !otp || !password) {
-      showNotify({
-        type: NotifyType.Warning,
-        title: "Thiếu thông tin",
-        message: "Vui lòng nhập đầy đủ thông tin.",
-      });
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      showNotify({
-        type: NotifyType.Warning,
-        title: "Lỗi mật khẩu",
-        message: "Mật khẩu xác nhận không khớp.",
-      });
-      return;
-    }
-
-    // Validate độ mạnh mật khẩu
-    if (!isLengthValid || !isComplexityValid) {
-      showNotify({
-        type: NotifyType.Warning,
-        title: "Mật khẩu yếu",
-        message: "Mật khẩu chưa đáp ứng đủ yêu cầu bảo mật.",
-      });
-      return;
-    }
-
-    setLoading(true);
-
+  // === HANDLER: SUBMIT ===
+  const handleSubmit = async () => {
+    setIsLoading(true);
     try {
-      // 2. Gọi API Reset Password (Email)
-      await AuthService.forgotPasswordEmailReset(email, otp, password);
+      if (!currentPassword || !newPassword || !confirmPassword)
+        throw new Error("Vui lòng điền đầy đủ thông tin.");
+      if (newPassword !== confirmPassword)
+        throw new Error("Mật khẩu mới và xác nhận không khớp.");
+      if (!isDifferentFromOld)
+        throw new Error("Mật khẩu mới không được trùng với mật khẩu cũ.");
+      if (!isLengthValid)
+        throw new Error("Mật khẩu mới phải có ít nhất 8 ký tự.");
+      if (!isComplexityValid) throw new Error("Mật khẩu mới chưa đủ mạnh.");
+      if (!otpCode || otpCode.length < 6)
+        throw new Error("Vui lòng nhập mã OTP hợp lệ.");
+      if (!user || !user.id) throw new Error("Vui lòng đăng nhập lại.");
 
-      // 3. Thành công -> Thông báo & Chuyển trang
+      const payload = {
+        old_password: currentPassword,
+        new_password: newPassword,
+        otp_code: otpCode,
+      };
+
+      await ProfileService.changePassword(user.id, payload);
+
       showNotify({
         type: NotifyType.Success,
         title: "Thành công",
         message:
-          "Mật khẩu đã được đặt lại. Vui lòng đăng nhập với mật khẩu mới.",
-        primaryActionText: "Về đăng nhập",
-        onPrimaryAction: () => router.push("/login/username"),
+          "Đổi mật khẩu thành công! Bạn sẽ được chuyển về trang cá nhân.",
+        primaryActionText: "OK",
+        onPrimaryAction: () => {
+          hideNotify();
+          router.push("/user/profile");
+        },
       });
-    } catch (error: any) {
-      const msg = getErrorMessage(error, "Mã OTP không đúng hoặc đã hết hạn.");
+
+      // Reset
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setOtpCode("");
+      setOtpSent(false);
+    } catch (err: any) {
+      let msg = getErrorMessage(err);
+      if (msg === "Old password is incorrect")
+        msg = "Mật khẩu hiện tại không chính xác.";
       showNotify({
         type: NotifyType.Error,
-        title: "Đặt lại thất bại",
+        title: "Lỗi",
         message: msg,
+        primaryActionText: "Thử lại",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F6F9FD]">
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden">
-        <div className="flex flex-col md:flex-row">
-          {/* Left Panel */}
-          <div className="hidden md:flex md:w-1/2 flex-col items-center justify-center bg-[#F6F9FD] p-8">
-            <div className="flex flex-col items-center">
-              <img
-                src="https://img.icons8.com/fluency/96/steering-wheel.png"
-                alt="logo"
-                className="w-20 h-20 mb-4"
-              />
-              <h2 className="text-xl font-semibold text-gray-800">ADAS</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Hệ thống hỗ trợ lái xe tiên tiến
+    <main className="p-6">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-2xl font-bold text-gray-900">Đổi mật khẩu</h1>
+        <p className="text-gray-500 mb-6">
+          Cập nhật mật khẩu của bạn để bảo vệ tài khoản
+        </p>
+
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="p-6 space-y-6">
+            <PasswordInput
+              label="Mật khẩu hiện tại"
+              placeholder="Nhập mật khẩu hiện tại"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+            <PasswordInput
+              label="Mật khẩu mới"
+              placeholder="Nhập mật khẩu mới"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <PasswordInput
+              label="Xác nhận mật khẩu mới"
+              placeholder="Nhập lại mật khẩu mới"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+
+            {/* OTP Section (Đã sửa giao diện chỉ hiện Email) */}
+            <div className="pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Mã xác thực sẽ được gửi đến Email:
+                </label>
+                <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
+                  <svg
+                    className="w-5 h-5 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    ></path>
+                  </svg>
+                  <span className="font-medium">
+                    {user?.email || "Đang tải..."}
+                  </span>
+                </div>
+              </div>
+
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nhập mã xác thực (OTP)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-center tracking-widest font-bold text-lg text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="000000"
+                  value={otpCode}
+                  onChange={(e) =>
+                    setOtpCode(e.target.value.replace(/\D/g, ""))
+                  }
+                  maxLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={handleSendOtp}
+                  disabled={isSendingOtp || otpSent}
+                  className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors min-w-[100px] ${
+                    otpSent
+                      ? "bg-green-100 text-green-700 border border-green-200 cursor-default"
+                      : "bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
+                  }`}
+                >
+                  {isSendingOtp
+                    ? "Đang gửi..."
+                    : otpSent
+                    ? "Gửi lại mã"
+                    : "Lấy mã"}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                * Mã OTP có hiệu lực trong 5 phút.
               </p>
             </div>
           </div>
 
-          {/* Right Panel (Form) */}
-          <div className="w-full md:w-1/2 p-10 flex items-center justify-center">
-            <form onSubmit={handleSubmit} className="w-full space-y-4">
-              <h3 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
-                <strong>Quên mật khẩu</strong>
-              </h3>
+          <div className="p-6 bg-gray-50 border-t border-b border-gray-200 transition-colors">
+            <h4 className="font-semibold text-gray-800 mb-3">
+              Yêu cầu bảo mật mật khẩu
+            </h4>
+            <ul className="space-y-2">
+              <RequirementItem
+                isValid={isLengthValid}
+                text="Sử dụng ít nhất 8 ký tự."
+                isTouched={isNewPasswordTouched}
+              />
+              <RequirementItem
+                isValid={isComplexityValid}
+                text="Kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt."
+                isTouched={isNewPasswordTouched}
+              />
+              <RequirementItem
+                isValid={isDifferentFromOld}
+                text="Không trùng với mật khẩu hiện tại."
+                isTouched={isNewPasswordTouched && currentPassword.length > 0}
+              />
+            </ul>
+          </div>
 
-              {/* Email Input */}
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  placeholder="Nhập email của bạn"
-                  value={email}
-                  readOnly={isOtpSent}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    isOtpSent
-                      ? "bg-gray-100 border-gray-200 text-gray-500"
-                      : "border-gray-300"
-                  }`}
-                />
-              </div>
-
-              {/* OTP Input & Send Button */}
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  Nhập mã OTP
-                </label>
-                <div className="relative w-full">
-                  <input
-                    type="text"
-                    placeholder="Nhập mã OTP"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-24 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <Button
-                    type="button"
-                    variant={"ghost"}
-                    onClick={handleSendOtp}
-                    disabled={loading || !email}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-600 hover:bg-blue-50 hover:text-blue-700 px-3 py-1 text-xs font-semibold"
-                  >
-                    {loading ? "..." : isOtpSent ? "Gửi lại" : "Lấy mã"}
-                  </Button>
-                </div>
-              </div>
-
-              {/* New Password */}
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  Mật khẩu mới
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Nhập mật khẩu"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute inset-y-0 right-3 flex items-center text-gray-500"
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* === PHẦN YÊU CẦU BẢO MẬT (Đã thêm) === */}
-              <div className="p-4 bg-gray-50 border border-gray-100 rounded-lg">
-                <h4 className="font-semibold text-xs text-gray-500 uppercase mb-2">
-                  Yêu cầu bảo mật
-                </h4>
-                <ul className="space-y-1">
-                  <RequirementItem
-                    isValid={isLengthValid}
-                    text="Sử dụng ít nhất 8 ký tự."
-                    isTouched={isNewPasswordTouched}
-                  />
-                  <RequirementItem
-                    isValid={isComplexityValid}
-                    text="Kết hợp chữ hoa, thường, số và ký tự đặc biệt."
-                    isTouched={isNewPasswordTouched}
-                  />
-                </ul>
-              </div>
-              {/* ======================================= */}
-
-              {/* Confirm Password */}
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  Xác nhận lại mật khẩu
-                </label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Nhập lại mật khẩu"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                    className="absolute inset-y-0 right-3 flex items-center text-gray-500"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff size={20} />
-                    ) : (
-                      <Eye size={20} />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full py-5 font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+          <div className="p-6 flex items-center justify-end">
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => router.push("/user/profile")}
+                className="px-5 py-2 rounded-lg font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+                disabled={isLoading}
               >
-                {loading ? "Đang xử lý..." : "Tiếp tục"}
-              </Button>
-            </form>
+                Hủy
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-lg font-medium text-white bg-blue-500 hover:bg-blue-600 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed shadow-sm"
+                onClick={handleSubmit}
+                disabled={
+                  isLoading ||
+                  !isLengthValid ||
+                  !isComplexityValid ||
+                  !isDifferentFromOld ||
+                  !newPassword ||
+                  !confirmPassword ||
+                  !otpCode
+                }
+              >
+                {isLoading ? "Đang xử lý..." : "Đổi mật khẩu"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
-
-      <NotifyDialog onClose={hideNotify} {...notifyProps} />
-      <FullScreenLoader show={loading} message="Đang xử lý..." />
-    </div>
+      <NotifyDialog
+        open={open}
+        type={type}
+        title={title}
+        message={message}
+        primaryActionText={primaryActionText}
+        onPrimaryAction={handlePrimaryAction}
+        onClose={hideNotify}
+      />
+    </main>
   );
 }

@@ -11,6 +11,7 @@ import NotifyDialog from "@/components/NotifyDialog";
 import { NotifyType } from "@/type/notify";
 import FullScreenLoader from "@/helper/loader";
 import { HttpCode } from "@/type/http-codes";
+import Logo from "@/components/logo";
 
 const LoginWithUserNamePage = () => {
   const { loginWithUsername } = useSession();
@@ -26,8 +27,8 @@ const LoginWithUserNamePage = () => {
 
   // === Deconstruct dialog ====
   const {
-    open: open,
-    type: type,
+    open,
+    type,
     title,
     message,
     primaryActionText,
@@ -60,10 +61,9 @@ const LoginWithUserNamePage = () => {
 
     try {
       setIsLoading(true);
-      const res:any = await loginWithUsername(userName, password);
+      const res: any = await loginWithUsername(userName, password);
 
-      // Handle unauthorized
-      if(res != null && res?.code === HttpCode.unauthorized){
+      if (res != null && res?.code === HttpCode.unauthorized) {
         await showNotify({
           message: "Tên đăng nhập hoặc mật khẩu không đúng.",
           type: NotifyType.Error,
@@ -73,10 +73,8 @@ const LoginWithUserNamePage = () => {
         return;
       }
 
-      // Handle other errors
-      if (!res) throw new Error;
+      if (!res) throw new Error();
 
-      // On success, redirect to homepage
       router.push("/dashboard");
     } catch (err) {
       await showNotify({
@@ -89,19 +87,17 @@ const LoginWithUserNamePage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F6F9FD]">
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-[#F6F9FD] dark:bg-slate-900 transition-colors">
+      <div className="w-full max-w-4xl bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden border-2 dark:border-gray-200">
         <div className="flex flex-col md:flex-row">
           {/* Left */}
-          <div className="hidden md:flex md:w-1/2 flex-col items-center justify-center bg-[#F6F9FD] p-8">
+          <div className="hidden md:flex md:w-1/2 flex-col items-center justify-center bg-[#F6F9FD] dark:bg-slate-900 p-8">
             <div className="flex flex-col items-center">
-              <img
-                src="https://img.icons8.com/fluency/96/steering-wheel.png"
-                alt="logo"
-                className="w-20 h-20 mb-4"
-              />
-              <h2 className="text-xl font-semibold text-gray-800">ADAS</h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <Logo width={20} height={20} />
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+                ADAS
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Hệ thống hỗ trợ lái xe tiên tiến
               </p>
             </div>
@@ -110,49 +106,51 @@ const LoginWithUserNamePage = () => {
           {/* Right (Form) */}
           <div className="w-full md:w-1/2 p-10 flex items-center justify-center">
             <form onSubmit={handleLogin} className="w-full space-y-4">
-              <h3 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
+              <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6 text-center">
                 <strong>Đăng nhập</strong>
               </h3>
 
-              {/* Email / Phone */}
+              {/* Username */}
               <div>
-                <label
-                  htmlFor="username"
-                  className="block text-sm text-gray-600 mb-1"
-                >
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                   Tên Đăng Nhập
                 </label>
                 <input
-                  id="username"
                   type="text"
                   placeholder="Nhập email hoặc số điện thoại"
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600
+                    bg-white dark:bg-slate-700
+                    text-gray-900 dark:text-gray-100
+                    placeholder-gray-400
+                    px-4 py-3 text-sm
+                    focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               {/* Password */}
               <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm text-gray-600 mb-1"
-                >
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                   Mật khẩu
                 </label>
                 <div className="relative">
                   <input
-                    id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Nhập mật khẩu"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 dark:border-slate-600
+                      bg-white dark:bg-slate-700
+                      text-gray-900 dark:text-gray-100
+                      placeholder-gray-400
+                      px-3 py-3 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 cursor-pointer"
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-300 cursor-pointer"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -161,7 +159,7 @@ const LoginWithUserNamePage = () => {
 
               {/* Remember + Forgot */}
               <div className="flex items-center justify-between mt-2">
-                <label className="flex items-center text-sm text-gray-600">
+                <label className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                   <input
                     type="checkbox"
                     checked={rememberMe}
@@ -187,7 +185,7 @@ const LoginWithUserNamePage = () => {
               </Button>
 
               {/* Register */}
-              <p className="mt-4 text-center text-sm text-gray-600">
+              <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
                 Chưa có tài khoản?{" "}
                 <Link
                   href="/register"

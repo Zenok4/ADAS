@@ -2,7 +2,7 @@ import { Home, KeyRound, Settings, Users } from "lucide-react";
 
 export const sidebarItems = [
   {
-    title: "Dashboard",
+    title: "Bảng điều khiển",
     icon: Home,
     href: "/admin",
   },
@@ -15,10 +15,5 @@ export const sidebarItems = [
     title: "Phân quyền",
     icon: KeyRound,
     href: "/admin/role-management",
-  },
-  {
-    title: "Settings",
-    icon: Settings,
-    href: "/admin/settings",
   },
 ];

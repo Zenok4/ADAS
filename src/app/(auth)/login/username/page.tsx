@@ -77,7 +77,7 @@ const LoginWithUserNamePage = () => {
       if (!res) throw new Error;
 
       // On success, redirect to homepage
-      router.push("/");
+      router.push("/dashboard");
     } catch (err) {
       await showNotify({
         message: "Đã có lỗi xảy ra, vui lòng thử lại sau.",

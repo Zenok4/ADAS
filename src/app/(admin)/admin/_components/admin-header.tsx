@@ -10,13 +10,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Bell, Settings, User, LogOut } from "lucide-react";
 import Logo from "@/components/logo";
+import { useRouter } from "next/navigation";
 
 export const AdminHeader = () => {
+  const router = useRouter();
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border h-16 flex items-center justify-between px-6">
-      <div className="flex items-center gap-2 text-[#004572]">
+      <div className="flex items-center gap-2 text-[#004572]" onClick={() => router.push("/admin")}>
         <Logo />
-        <div>
+        <div className="dark:text-white">
           <p className="text-xl font-bold uppercase">Admin Dashboard</p>
           <p className="text-xs">Hệ thống hỗ trợ lái xe nâng cao</p>
         </div>

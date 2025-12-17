@@ -10,7 +10,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { sidebarItems } from "@/type/sidebar-user";
 
 interface UserSidebarProps {
@@ -28,6 +28,14 @@ export const UserSidebar = ({
   const pathName = usePathname();
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  useEffect(() => {
+    const activeParent = sidebarItems.find((item) =>
+      item.children?.some((ch) => ch.href === pathName)
+    );
+
+    setExpanded(activeParent?.title ?? null);
+  }, [pathName]);
+
   return (
     <div
       className={cn(
@@ -38,12 +46,16 @@ export const UserSidebar = ({
     >
       <div className="flex h-full flex-col">
         {/* Toggle Button */}
-        <div className={cn("flex p-2 justify-end", collapsed && "justify-center")}>
+        <div
+          className={cn("flex p-2 justify-end", collapsed && "justify-center")}
+        >
           <Button
             variant="ghost"
             size="icon"
             onClick={onToggle}
-            className={cn("h-8 w-8 transition-all duration-200 hover:bg-blue-700 hover:text-white dark:hover:bg-blue-600")}
+            className={cn(
+              "h-8 w-8 transition-all duration-200 hover:bg-blue-700 hover:text-white dark:hover:bg-blue-600"
+            )}
           >
             {collapsed ? (
               <ChevronRight className="h-4 w-4" />
@@ -59,7 +71,10 @@ export const UserSidebar = ({
             {sidebarItems.map((item) => {
               const isParentActive =
                 item.children?.some((ch) => ch.href === pathName) ?? false;
-              const isActive = pathName === item.href || isParentActive || expanded === item.title;
+              const isActive =
+                pathName === item.href ||
+                isParentActive ||
+                expanded === item.title;
 
               const iconClass = cn(
                 "h-4 w-4 flex-shrink-0 transition-colors",
@@ -73,12 +88,16 @@ export const UserSidebar = ({
                   <Button
                     variant="ghost"
                     className={cn(
-                      "flex w-full items-center justify-between gap-3 h-10 px-2 group transition-colors",
-                      isActive ? "bg-blue-600 dark:hover:bg-blue-800 hover:text-white hover:bg-blue-800" : "hover:bg-blue-700 hover:text-white dark:hover:bg-gray-700",
+                      "flex w-full items-center justify-between gap-3 h-10 px-2 group transition-all duration-300",
+                      isActive
+                        ? "bg-blue-600 dark:hover:bg-blue-800 text-white hover:text-white hover:bg-blue-800"
+                        : "hover:bg-blue-700 hover:text-white dark:hover:bg-gray-700"
                     )}
                     onClick={() => {
                       if (item.children) {
-                        setExpanded((prev) => (prev === item.title ? null : item.title));
+                        setExpanded((prev) =>
+                          prev === item.title ? null : item.title
+                        );
                       } else {
                         router.push(item.href!);
                       }
@@ -86,7 +105,18 @@ export const UserSidebar = ({
                   >
                     <div className="flex items-center gap-2">
                       <item.icon className={iconClass} />
-                      {!collapsed && <span className="truncate ml-3">{item.title}</span>}
+                      {!collapsed && (
+                        <span
+                          className={cn(
+                            "truncate transition-[opacity,width,margin] duration-500",
+                            collapsed
+                              ? "opacity-0 w-0 ml-0"
+                              : "opacity-100 w-auto ml-3"
+                          )}
+                        >
+                          {item.title}
+                        </span>
+                      )}
                     </div>
                     {!collapsed && item.children && (
                       <div className="flex items-center">
@@ -100,7 +130,7 @@ export const UserSidebar = ({
                   </Button>
 
                   {/* Submenu */}
-                  {!collapsed && item.children && (expanded === item.title || isParentActive) && (
+                  {!collapsed && item.children && expanded === item.title && (
                     <div className="ml-8 mt-2 space-y-2">
                       {item.children.map((child) => (
                         <button

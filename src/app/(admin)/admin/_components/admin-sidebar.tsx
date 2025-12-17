@@ -36,7 +36,7 @@ export const AdminSidebar = ({
             variant="ghost"
             size="icon"
             onClick={onToggle}
-            className="h-8 w-8 transition-all duration-200 hover:bg-[#006DF0] hover:text-white"
+            className="h-8 w-8 transition-all duration-200 hover:bg-[#006DF0] hover:text-white dark:hover:bg-blue-600"
           >
             {collapsed ? (
               <ChevronRight className="h-4 w-4" />
@@ -54,8 +54,8 @@ export const AdminSidebar = ({
                 key={item.href}
                 variant="ghost"
                 className={cn(
-                  "flex w-full gap-3 h-10 justify-start hover:bg-blue-700 hover:text-white",
-                  pathName === item.href && "bg-blue-600 text-white",
+                  "flex w-full gap-3 h-10 justify-start hover:bg-blue-700 hover:text-white dark:hover:bg-blue-600 transition-colors",
+                  pathName === item.href && "bg-blue-600 text-white dark:hover:bg-blue-700",
                 )}
                 onClick={() => router.push(item.href)}
               >

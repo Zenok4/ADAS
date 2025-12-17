@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { signService } from "@/services/signService";
 import { laneService } from "@/services/laneService";
 import { objectService } from "@/services/objectService"; // Import mới
 import { useCamera } from "@/hooks/useCamera";
@@ -13,6 +12,7 @@ import {
   captureVideoFrame,
   Detection,
 } from "@/lib/drawUtils";
+import { CoreFunctionService } from "@/services/coreFunctionService";
 
 interface CameraLiveProps {
   className?: string;
@@ -21,6 +21,9 @@ interface CameraLiveProps {
   enableLane: boolean;
   enableObject: boolean; // Prop mới
   soundEnabled: boolean;
+  userId?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export default function CameraLive({
@@ -30,6 +33,9 @@ export default function CameraLive({
   enableLane,
   enableObject,
   soundEnabled,
+  userId,
+  latitude,
+  longitude,
 }: CameraLiveProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -80,23 +86,40 @@ export default function CameraLive({
     try {
       const [signRes, laneRes, objectRes] = await Promise.all([
         enableSign
-          ? signService.predictSign(onlyBase64)
+          ? CoreFunctionService.sign(
+              onlyBase64,
+              userId || "",
+              latitude,
+              longitude
+            )
           : Promise.resolve(null),
         enableLane
-          ? laneService.predictLane(onlyBase64)
+          ? CoreFunctionService.predictLane(
+              onlyBase64,
+              userId || "",
+              latitude,
+              longitude
+            )
           : Promise.resolve(null),
         enableObject
-          ? objectService.predictObject(onlyBase64)
+          ? CoreFunctionService.object(
+              onlyBase64,
+              userId || "",
+              latitude,
+              longitude
+            )
           : Promise.resolve(null),
       ]);
+
+      console.log("Kết quả Biển báo:", signRes);
 
       // 1. Biển báo
       if (
         enableSign &&
-        signRes?.data?.data?.data &&
-        Array.isArray(signRes.data.data.data)
+        signRes?.data?.data?.data?.data &&
+        Array.isArray(signRes.data.data.data?.data)
       ) {
-        const dets = signRes.data.data.data;
+        const dets = signRes.data.data.data?.data;
         setDetections(dets);
         if (dets.length > 0) {
           const urgentSign = dets.find(
@@ -121,10 +144,10 @@ export default function CameraLive({
       // 2. Làn đường
       if (
         enableLane &&
-        laneRes?.data?.data &&
-        Array.isArray(laneRes.data.data)
+        laneRes?.data?.data?.data?.data &&
+        Array.isArray(laneRes.data.data.data.data)
       ) {
-        setLaneData(laneRes.data.data);
+        setLaneData(laneRes.data.data.data.data);
       } else {
         setLaneData([]);
       }
@@ -136,18 +159,24 @@ export default function CameraLive({
 
         // Kiểm tra trường hợp 3 lớp (Trường hợp hiện tại của bạn)
         if (
-          objectRes.data?.data?.data &&
+          objectRes.data?.data?.data?.data?.data &&
+          Array.isArray(objectRes.data.data.data.data.data)
+        ) {
+          objs = objectRes.data.data.data.data.data;
+        }
+        // Kiểm tra trường hợp 2 lớp (Nếu backend sửa lại gọn hơn)
+        else if (
+          objectRes.data?.data?.data?.data &&
+          Array.isArray(objectRes.data.data.data.data)
+        ) {
+          objs = objectRes.data.data.data.data;
+        }
+        // Kiểm tra trường hợp 1 lớp (Nếu gọn nhất)
+        else if (
+          objectRes.data.data.data &&
           Array.isArray(objectRes.data.data.data)
         ) {
           objs = objectRes.data.data.data;
-        }
-        // Kiểm tra trường hợp 2 lớp (Nếu backend sửa lại gọn hơn)
-        else if (objectRes.data?.data && Array.isArray(objectRes.data.data)) {
-          objs = objectRes.data.data;
-        }
-        // Kiểm tra trường hợp 1 lớp (Nếu gọn nhất)
-        else if (objectRes.data && Array.isArray(objectRes.data)) {
-          objs = objectRes.data;
         }
 
         console.log("Số lượng vật thể tìm thấy:", objs.length); // Debug xem có bao nhiêu xe

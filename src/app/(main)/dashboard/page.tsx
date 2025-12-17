@@ -22,6 +22,7 @@ import CameraLive from "../components/CameraLive";
 import { useDrowsy } from "@/hooks/useDrowsy";
 import { useCamera } from "@/hooks/useCamera";
 import { useLocationWeather } from "@/hooks/useLocationWeather";
+import { useSession } from "@/context/SessionContext";
 
 export default function DashboardPage() {
   // 1. Quản lý State
@@ -35,10 +36,13 @@ export default function DashboardPage() {
   const [rearCameraOn, setRearCameraOn] = useState(false);
   const [isSoundOn, setIsSoundOn] = useState(true);
 
-  const { location, weather, temperature, time } = useLocationWeather();
+  const { location, weather, temperature, time, latitude, longitude } =
+    useLocationWeather();
 
   // 2. Setup Refs & Hooks
   const frontRef = useRef<HTMLVideoElement>(null);
+
+  const { user } = useSession();
 
   // Hook Camera Trước
   const {
@@ -257,6 +261,9 @@ export default function DashboardPage() {
                   enableObject={features.objectDetect} // <--- Thêm dòng này
                   soundEnabled={isSoundOn}
                   className="w-full h-full"
+                  userId={user?.id} // Thay bằng ID người dùng thực tế nếu có
+                  latitude={latitude} // Thay bằng vĩ độ thực tế nếu có
+                  longitude={longitude} // Thay bằng kinh độ thực tế nếu có
                 />
                 {/* --------------------- */}
 

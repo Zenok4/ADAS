@@ -121,10 +121,10 @@ export default function CameraLive({
       // 2. Làn đường
       if (
         enableLane &&
-        laneRes?.data?.data &&
-        Array.isArray(laneRes.data.data)
+        laneRes?.data &&
+        Array.isArray(laneRes.data)
       ) {
-        setLaneData(laneRes.data.data);
+        setLaneData(laneRes.data);
       } else {
         setLaneData([]);
       }

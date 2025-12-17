@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { NotifyType } from "@/type/notify";
 
 
@@ -196,6 +196,7 @@ import { NotifyType } from "@/type/notify";
         className="max-w-3xl p-0 border-0 bg-transparent shadow-none"
         showCloseButton={false}
       >
+        <DialogTitle></DialogTitle>
         <Card className="w-full relative">
           {/* Close button */}
           <button
@@ -209,15 +210,15 @@ import { NotifyType } from "@/type/notify";
             <CardTitle>
               {role ? "Chỉnh sửa vai trò" : "Thêm vai trò mới"}
             </CardTitle>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 ">
               Cấu hình quyền truy cập cho các API và tính năng
             </p>
           </CardHeader>
 
           <CardContent>
-            <div className="flex gap-4 mb-6">
+            <div className="flex gap-4 mb-6 ">
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium mb-1 ">
                   Tên vai trò:
                 </label>
                 <input
@@ -225,7 +226,7 @@ import { NotifyType } from "@/type/notify";
                   value ={name}
                   onChange={(e) => setName(e.target.value)}
                 //  defaultValue={role?.name || ""}
-                  className="w-40 px-2 py-1 border rounded"
+                  className="w-40 px-2 py-1 border border-gray-400 rounded bg-gray-700 "
                 />
               </div>
               <div>
@@ -235,7 +236,7 @@ import { NotifyType } from "@/type/notify";
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 //  defaultValue={role?.description || ""}
-                  className="w-60 px-2 py-1 border rounded"
+                  className="w-60 px-2 py-1 border border-gray-400 rounded bg-gray-700"
                 />
               </div>
               <div> 
@@ -246,7 +247,7 @@ import { NotifyType } from "@/type/notify";
                   type="text"
                   value={level}
                   onChange={(e) => setLevel(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-20 px-2 py-1 border rounded"
+                  className="w-20 px-2 py-1 border border-gray-400 rounded bg-gray-700"
                   min ="1"
                 />
               </div>
@@ -258,7 +259,7 @@ import { NotifyType } from "@/type/notify";
                   value={isActive ? "true" : "false"}
                   onChange={(e) => setIsActive(e.target.value === "true")}
                 //  defaultValue={role?.status || "Kích hoạt"}
-                  className="w-32 px-2 py-1 border rounded text-gray-700
+                  className="w-32 px-2 py-1 border border-gray-400 rounded bg-gray-700 text-white
                              transition-colors"
                 >
                   <option
@@ -280,13 +281,13 @@ import { NotifyType } from "@/type/notify";
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="px-4 py-2 text-left text-xs font-semibold">
+                  <th className="px-4 py-2 text-left text-xs font-semibold dark:bg-gray-700 dark:text-gray-300">
                     Tên quyền
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold">
+                  <th className="px-4 py-2 text-left text-xs font-semibold dark:bg-gray-700 dark:text-gray-300">
                     Mô tả
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold">
+                  <th className="px-4 py-2 text-left text-xs font-semiboldy dark:bg-gray-700 dark:text-gray-300">
                     Trạng thái
                   </th>
                 </tr>

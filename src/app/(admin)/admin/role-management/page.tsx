@@ -190,14 +190,14 @@ export default function RolesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-6xl mx-auto">
         
         {/* ===  TIÊU ĐỀ VÀ NÚT === */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Quản lý vai trò</h1>
-            <p className="text-gray-600">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Quản lý vai trò</h1>
+            <p className="text-gray-600 dark:text-gray-400">
               Quản lý vai trò và quyền hạn của vai trò
             </p>
           </div>
@@ -216,16 +216,16 @@ export default function RolesPage() {
           <CardHeader>
             <CardTitle>Bộ lọc</CardTitle>
           </CardHeader>
-          <CardContent className="flex gap-4">
+          <CardContent className="flex gap-4 text-white ">
             <input
               type="text"
               placeholder="Tên vai trò..."
-              className="w-full px-3 py-2 border rounded"
+              className="w-full px-3 py-2 border border-gray-700 rounded bg-gray-700 focus:border-gray-400 focus:outline-none"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
             />
             <select
-              className="w-full px-3 py-2  border rounded text-gray-700 transition-colors"
+              className="w-full px-3 py-2  border border-gray-700 rounded bg-gray-700  transition-colors hover:border-gray-500 focus:border-gray-400 focus:outline-none"
               value={filters.is_active === null ? "" : String(filters.is_active)}
               onChange={(e) => 
                 setFilters(f => ({ 
@@ -234,9 +234,9 @@ export default function RolesPage() {
                 }))
               }
             >
-              <option value="" className="hover:bg-[#006DF0] hover:text-white">Tất cả trạng thái</option>
-              <option value="true" className="hover:bg-[#006DF0] hover:text-white">Kích hoạt</option>
-              <option value="false" className="hover:bg-[#006DF0] hover:text-white">Tạm ngưng</option>
+              <option value="" className="">Tất cả trạng thái</option>
+              <option value="true" className="">Kích hoạt</option>
+              <option value="false" className="">Tạm ngưng</option>
             </select>
             <Button 
               onClick={handleFilterSubmit}
@@ -252,7 +252,7 @@ export default function RolesPage() {
         <Card>
           <CardHeader>
             <CardTitle>Danh sách vai trò</CardTitle>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 ">
               {/* Hiển thị tổng số */}
               Tìm thấy tổng cộng {pagination.total} vai trò.
             </p>
@@ -266,54 +266,54 @@ export default function RolesPage() {
                   <tr>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:bg-gray-700 dark:text-gray-300"
                     >
                       Tên vai trò
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:bg-gray-700 dark:text-gray-300"
                     >
                       Cấp độ
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:bg-gray-700 dark:text-gray-300"
                     >
                       Trạng thái
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:bg-gray-700 dark:text-gray-300"
                     >
                       Mô tả
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:bg-gray-700 dark:text-gray-300"
                     >
                       Ngày tạo
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:bg-gray-700 dark:text-gray-300"
                     >
                       Thao tác
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200">
                   {roles.map((role) => (
-                    <tr key={role.id} className="hover:bg-gray-50">
+                    <tr key={role.id} className="hover:bg-gray-100 dark:hover:bg-gray-700">
                       {/* === BẮT ĐẦU NỘI DUNG THÊM VÀO === */}
                       {/* Thay thế comment cũ bằng nội dung cột thật */}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 line-clamp-1">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-1">
                           {role.name}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-900 dark:text-gray-100 ">
                           {role.level}
                         </div>
                       </td>
@@ -329,11 +329,11 @@ export default function RolesPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 line-clamp-1">
+                        <div className="text-sm text-gray-900 dark:text-gray-100 line-clamp-1">
                           {role.description}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-100">
                         {/* Format lại ngày tháng cho dễ đọc */}
                         {new Date(role.created_at).toLocaleString()}
                       </td>

@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { UserCircle2, FileEdit, Loader2 } from "lucide-react";
+import { UserCircle2, FileEdit } from "lucide-react";
 import { SettingsLinkItem, SettingsDestructiveItem } from "./settings-item";
 
 import { ProfileService, ProfileData } from "@/services/profileService";
 import { useSession } from "@/context/SessionContext";
 
-// Container chung cho Section
+import { useNotifyDialog } from "@/hooks/useNotifyDialog";
+import NotifyDialog from "@/components/NotifyDialog";
+import { NotifyType } from "@/type/notify";
+
 const SettingsSection = ({ children }: { children: React.ReactNode }) => (
   <div className="bg-white rounded-lg shadow-sm border border-gray-200 dark:bg-slate-900 dark:border-slate-800 overflow-hidden mb-4">
     <div className="divide-y divide-gray-100 dark:divide-slate-800">
@@ -17,7 +20,6 @@ const SettingsSection = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-// Component Profile Custom (Đã fix Dark Mode)
 const ProfileInfoItem = () => {
   const router = useRouter();
   const { user } = useSession();
@@ -44,7 +46,6 @@ const ProfileInfoItem = () => {
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-white dark:bg-slate-700 rounded-full shadow-sm">
-            {/* Avatar Placeholder */}
             <UserCircle2
               size={40}
               className="text-gray-400 dark:text-gray-300"
@@ -83,12 +84,30 @@ export const GeneralSettings = () => {
   const router = useRouter();
   const { logout } = useSession();
 
-  const handleLogout = async () => {
-    // Logic logout cũ...
-    if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
-      if (logout) await logout();
-      router.push("/login");
-    }
+  const {
+    open,
+    type,
+    title,
+    message,
+    primaryActionText,
+    showNotify,
+    hideNotify,
+    handlePrimaryAction,
+  } = useNotifyDialog();
+
+  const handleLogoutClick = () => {
+    showNotify({
+      // SỬA Ở ĐÂY: Đổi NotifyType.Destructive thành NotifyType.Error
+      // để khớp với file notify.ts hiện tại của bạn.
+      type: NotifyType.Error,
+      title: "Đăng xuất",
+      message: "Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?",
+      primaryActionText: "Đăng xuất",
+      onPrimaryAction: async () => {
+        if (logout) await logout();
+        router.push("/login");
+      },
+    });
   };
 
   return (
@@ -98,10 +117,8 @@ export const GeneralSettings = () => {
       </h3>
 
       <SettingsSection>
-        {/* Profile Card được đặt trên cùng */}
         <ProfileInfoItem />
 
-        {/* Các mục điều hướng */}
         <SettingsLinkItem
           title="Đổi mật khẩu"
           description="Cập nhật mật khẩu mới"
@@ -113,9 +130,19 @@ export const GeneralSettings = () => {
           title="Đăng xuất"
           description="Thoát tài khoản khỏi thiết bị"
           buttonLabel="Đăng xuất"
-          onClick={handleLogout}
+          onClick={handleLogoutClick}
         />
       </SettingsSection>
+
+      <NotifyDialog
+        open={open}
+        type={type}
+        title={title}
+        message={message}
+        primaryActionText={primaryActionText}
+        onPrimaryAction={handlePrimaryAction}
+        onClose={hideNotify}
+      />
     </div>
   );
 };

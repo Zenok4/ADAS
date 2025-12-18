@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+// Đã xóa import Moon, Sun từ lucide-react
 
 const PAGE_LIMIT = 10;
 type FormErrors = { username: string; email: string; phone: string };
@@ -37,75 +38,106 @@ const getErrorNotify = (error: any, defaultMessage: string) => {
   let finalErrorMessage: string = defaultMessage;
 
   const setError = (msg: any): boolean => {
-    if (msg && typeof msg === 'string') {
+    if (msg && typeof msg === "string") {
       finalErrorMessage = msg;
       return true;
     }
     return false;
   };
-
+  // Logic lấy lỗi chi tiết (giữ nguyên như cũ của bạn)
   if (setError(responseData?.message) || setError(responseData?.detail)) {
-  }
-  else if (responseData?.error && typeof responseData.error === 'object' && setError(responseData.error.message)) {
-  }
-  else if (setError(responseData?.error)) {
-  }
-  else if (responseData?.data && (setError(responseData.data.message) || setError(responseData.data.error) || setError(responseData.data.detail))) {
-  }
-  else if (responseData?.errors) {
+  } else if (
+    responseData?.error &&
+    typeof responseData.error === "object" &&
+    setError(responseData.error.message)
+  ) {
+  } else if (setError(responseData?.error)) {
+  } else if (
+    responseData?.data &&
+    (setError(responseData.data.message) ||
+      setError(responseData.data.error) ||
+      setError(responseData.data.detail))
+  ) {
+  } else if (responseData?.errors) {
     const errors = responseData.errors;
-    if (typeof errors === 'string') {
-      finalErrorMessage = errors;
-    }
-    else if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'string') {
-      finalErrorMessage = errors.join(', ');
-    }
-    else if (typeof errors === 'object' && !Array.isArray(errors)) {
+    if (typeof errors === "string") finalErrorMessage = errors;
+    else if (
+      Array.isArray(errors) &&
+      errors.length > 0 &&
+      typeof errors[0] === "string"
+    )
+      finalErrorMessage = errors.join(", ");
+    else if (typeof errors === "object" && !Array.isArray(errors)) {
       const firstErrorKey = Object.keys(errors)[0];
-      if (firstErrorKey && Array.isArray(errors[firstErrorKey]) && errors[firstErrorKey].length > 0) {
+      if (
+        firstErrorKey &&
+        Array.isArray(errors[firstErrorKey]) &&
+        errors[firstErrorKey].length > 0
+      )
         finalErrorMessage = errors[firstErrorKey][0];
-      }
     }
-  }
-  else if (typeof responseData === 'string') {
-    finalErrorMessage = responseData;
-  }
+  } else if (typeof responseData === "string") finalErrorMessage = responseData;
 
+  // Logic map lỗi sang tiếng Việt thân thiện (giữ nguyên)
   let title = "Lỗi";
   let userFriendlyMessage = finalErrorMessage;
-  
   const lowerMessage = finalErrorMessage.toLowerCase();
 
-  if (lowerMessage.includes("duplicate entry") && lowerMessage.includes("key 'users.username'")) {
+  if (
+    lowerMessage.includes("duplicate entry") &&
+    lowerMessage.includes("key 'users.username'")
+  ) {
     title = "Lỗi: Tên đăng nhập đã tồn tại";
-    userFriendlyMessage = "Tên đăng nhập này đã được sử dụng bởi một tài khoản khác. Vui lòng chọn tên khác.";
-  } else if (lowerMessage.includes("duplicate entry") && lowerMessage.includes("key 'users.email'")) {
+    userFriendlyMessage =
+      "Tên đăng nhập này đã được sử dụng bởi một tài khoản khác. Vui lòng chọn tên khác.";
+  } else if (
+    lowerMessage.includes("duplicate entry") &&
+    lowerMessage.includes("key 'users.email'")
+  ) {
     title = "Lỗi: Email đã tồn tại";
-    userFriendlyMessage = "Email này đã được sử dụng bởi một tài khoản khác. Vui lòng sử dụng email khác.";
-  } else if (lowerMessage.includes("duplicate entry") && lowerMessage.includes("key 'users.phone'")) {
+    userFriendlyMessage =
+      "Email này đã được sử dụng bởi một tài khoản khác. Vui lòng sử dụng email khác.";
+  } else if (
+    lowerMessage.includes("duplicate entry") &&
+    lowerMessage.includes("key 'users.phone'")
+  ) {
     title = "Lỗi: Số điện thoại đã tồn tại";
-    userFriendlyMessage = "Số điện thoại này đã được sử dụng bởi một tài khoản khác. Vui lòng sử dụng số khác.";
-  }
-  else if (lowerMessage.includes("username already exists") || lowerMessage.includes("tên đăng nhập đã tồn tại")) {
+    userFriendlyMessage =
+      "Số điện thoại này đã được sử dụng bởi một tài khoản khác. Vui lòng sử dụng số khác.";
+  } else if (
+    lowerMessage.includes("username already exists") ||
+    lowerMessage.includes("tên đăng nhập đã tồn tại")
+  ) {
     title = "Lỗi: Tên đăng nhập đã tồn tại";
-    userFriendlyMessage = "Tên đăng nhập này đã được sử dụng. Vui lòng chọn tên khác.";
-  } else if (lowerMessage.includes("email already exists") || lowerMessage.includes("email đã tồn tại")) {
+    userFriendlyMessage =
+      "Tên đăng nhập này đã được sử dụng. Vui lòng chọn tên khác.";
+  } else if (
+    lowerMessage.includes("email already exists") ||
+    lowerMessage.includes("email đã tồn tại")
+  ) {
     title = "Lỗi: Email đã tồn tại";
-    userFriendlyMessage = "Email này đã được sử dụng. Vui lòng sử dụng email khác.";
-  } else if (lowerMessage.includes("phone already exists") || lowerMessage.includes("số điện thoại đã tồn tại")) {
+    userFriendlyMessage =
+      "Email này đã được sử dụng. Vui lòng sử dụng email khác.";
+  } else if (
+    lowerMessage.includes("phone already exists") ||
+    lowerMessage.includes("số điện thoại đã tồn tại")
+  ) {
     title = "Lỗi: Số điện thoại đã tồn tại";
-    userFriendlyMessage = "Số điện thoại này đã được sử dụng. Vui lòng sử dụng số khác.";
-  } 
-  else if (lowerMessage.includes("already exists") || lowerMessage.includes("đã tồn tại") || lowerMessage.includes("unique constraint") || lowerMessage.includes("duplicate key") || lowerMessage.includes("duplicate entry")) {
+    userFriendlyMessage =
+      "Số điện thoại này đã được sử dụng. Vui lòng sử dụng số khác.";
+  } else if (
+    lowerMessage.includes("already exists") ||
+    lowerMessage.includes("đã tồn tại") ||
+    lowerMessage.includes("unique constraint") ||
+    lowerMessage.includes("duplicate key") ||
+    lowerMessage.includes("duplicate entry")
+  ) {
     title = "Lỗi Trùng Lặp";
-    userFriendlyMessage = "Một trường thông tin bạn nhập đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.";
+    userFriendlyMessage =
+      "Một trường thông tin bạn nhập đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.";
   }
 
-  return {
-    type: NotifyType.Error,
-    title: title,
-    message: userFriendlyMessage,
-  };
+  return { type: NotifyType.Error, title: title, message: userFriendlyMessage };
 };
 
 export function UserManagement() {
@@ -119,29 +151,37 @@ export function UserManagement() {
     hideNotify,
     handlePrimaryAction,
   } = useNotifyDialog();
-
-  // === 1. Lấy User từ Session Context ===
   const { user } = useSession();
+
+  // === DARK MODE SYNC (Chỉ đồng bộ, không có nút bấm) ===
+  // Logic này đảm bảo trang UserManagement cũng nhận class "dark" nếu Settings đã set.
+  // Tuy nhiên, nếu bạn dùng next-themes bọc toàn app thì đoạn này có thể không cần thiết,
+  // nhưng để chắc chắn tôi vẫn giữ đoạn check localStorage/system.
+  useEffect(() => {
+    // Nếu bạn dùng next-themes ở Root Layout, dòng này là thừa.
+    // Nếu không, dòng này giúp đồng bộ theme khi load trang này độc lập.
+    const isDark =
+      localStorage.getItem("theme") === "dark" ||
+      (!localStorage.getItem("theme") &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+  // =====================================================
 
   const [userList, setUserList] = useState<UserData[]>([]);
   const [availableRoles, setAvailableRoles] = useState<RoleData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userRoleId, setUserRoleId] = useState<number | null>(null);
-  
-  // === 2. Tính toán Level hiện tại (ĐÃ SỬA THEO page.tsx) ===
+
   const currentUserLevel = useMemo(() => {
     const userRoles = (user as any)?.roles;
-
-    // Debug log nếu cần, giống page.tsx
-    // console.log("User Roles in UserManagement:", userRoles);
-
-    if (!user || !userRoles || userRoles.length === 0) {
-      return 0; // Level 0 cho khách hoặc user không có role
-    }
-    
-    // Tìm level cao nhất từ mảng roles 
-    const highest_Level = Math.max(...userRoles.map((role: any) => role.level));
-    return highest_Level;
+    if (!user || !userRoles || userRoles.length === 0) return 0;
+    return Math.max(...userRoles.map((role: any) => role.level));
   }, [user]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -155,7 +195,7 @@ export function UserManagement() {
     is_active: true,
     selectedRoleIds: [],
   });
-  const [page, setPage] = useState(1); 
+  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState({
     search: "",
@@ -165,26 +205,30 @@ export function UserManagement() {
   const [uiSearchTerm, setUiSearchTerm] = useState("");
   const [uiFilterStatus, setUiFilterStatus] = useState("all");
   const [uiFilterRole, setUiFilterRole] = useState("all");
-
   const [addFormErrors, setAddFormErrors] = useState<FormErrors>(initialErrors);
-  const [editFormErrors, setEditFormErrors] = useState<FormErrors>(initialErrors);
+  const [editFormErrors, setEditFormErrors] =
+    useState<FormErrors>(initialErrors);
 
-  const validateEmail = (email: string): string => {
-    if (!email) return "Email là bắt buộc.";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Email không hợp lệ.";
-    return "";
-  };
-  const validatePhone = (phone: string): string => {
-    if (!phone) return "Số điện thoại là bắt buộc.";
-    if (!/^(03|05|07|08|09)\d{7,8}$/.test(phone)) return "Số điện thoại không hợp lệ.";
-    return "";
-  };
-  const validateUsername = (username: string): string => {
-    if (!username) return "Tên đăng nhập là bắt buộc.";
-    if (username.length < 4) return "Tên đăng nhập phải có ít nhất 4 ký tự.";
-    if (/\s/.test(username)) return "Tên đăng nhập không được chứa khoảng trắng.";
-    return "";
-  };
+  const validateEmail = (email: string) =>
+    !email
+      ? "Email là bắt buộc."
+      : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+      ? "Email không hợp lệ."
+      : "";
+  const validatePhone = (phone: string) =>
+    !phone
+      ? "Số điện thoại là bắt buộc."
+      : !/^(03|05|07|08|09)\d{7,8}$/.test(phone)
+      ? "Số điện thoại không hợp lệ."
+      : "";
+  const validateUsername = (username: string) =>
+    !username
+      ? "Tên đăng nhập là bắt buộc."
+      : username.length < 4
+      ? "Tên đăng nhập phải có ít nhất 4 ký tự."
+      : /\s/.test(username)
+      ? "Tên đăng nhập không được chứa khoảng trắng."
+      : "";
   const validators = { validateEmail, validatePhone, validateUsername };
 
   const fetchRoles = async () => {
@@ -192,26 +236,18 @@ export function UserManagement() {
       const response = await AuthorService.getAllRoles();
       let roles: RoleData[] = [];
       if (response.data) {
-        if (Array.isArray(response.data.data)) {
-          roles = response.data.data;
-        } else if (
-          response.data.data &&
-          Array.isArray(response.data.data.roles)
-        ) {
+        if (Array.isArray(response.data.data)) roles = response.data.data;
+        else if (response.data.data && Array.isArray(response.data.data.roles))
           roles = response.data.data.roles;
-        } else if (Array.isArray(response.data.roles)) {
+        else if (Array.isArray(response.data.roles))
           roles = response.data.roles;
-        }
       }
-      
       roles.sort((a, b) => (b.level || 0) - (a.level || 0));
       setAvailableRoles(roles);
-      
       const userRole = roles.find((r) => r.name.toLowerCase() === "user");
       setUserRoleId(userRole ? userRole.id : null);
-      if (userRole) {
+      if (userRole)
         setNewUser((prev) => ({ ...prev, selectedRoleIds: [userRole.id] }));
-      }
     } catch (error) {
       console.error("Failed to fetch roles:", error);
       showNotify({
@@ -226,20 +262,18 @@ export function UserManagement() {
     setIsLoading(true);
     try {
       const response = await UserService.getAllUsers(
-        page, 
+        page,
         PAGE_LIMIT,
-        filters.search, 
-        filters.status, 
-        filters.role 
+        filters.search,
+        filters.status,
+        filters.role
       );
       if (response.data && response.data.data && response.data.data.users) {
         setUserList(response.data.data.users);
         setTotalPages(Math.ceil(response.data.data.total / PAGE_LIMIT));
-      } else {
-        setUserList([]);
-      }
+      } else setUserList([]);
     } catch (error) {
-      console.error("Failed to fetch users (catch):", error);
+      console.error("Failed to fetch users:", error);
       showNotify({
         type: NotifyType.Error,
         title: "Lỗi",
@@ -253,7 +287,6 @@ export function UserManagement() {
   useEffect(() => {
     fetchRoles();
   }, []);
-
   useEffect(() => {
     fetchUsers();
   }, [page, filters]);
@@ -272,15 +305,13 @@ export function UserManagement() {
   };
 
   const handleNewUserRoleChange = (roleId: number, checked: boolean) => {
-    if (roleId === userRoleId && !checked) {
-      return;
-    }
-    setNewUser((prev) => {
-      const newRoleIds = checked
+    if (roleId === userRoleId && !checked) return;
+    setNewUser((prev) => ({
+      ...prev,
+      selectedRoleIds: checked
         ? [...prev.selectedRoleIds, roleId]
-        : prev.selectedRoleIds.filter((id) => id !== roleId);
-      return { ...prev, selectedRoleIds: newRoleIds };
-    });
+        : prev.selectedRoleIds.filter((id) => id !== roleId),
+    }));
   };
 
   const handleAddUser = async () => {
@@ -299,7 +330,6 @@ export function UserManagement() {
       return;
     }
     setAddFormErrors(initialErrors);
-
     try {
       const payload: UserCreatePayload = {
         username: newUser.username,
@@ -308,7 +338,6 @@ export function UserManagement() {
         password: newUser.password,
       };
       const response = await UserService.createUser(payload);
-
       if (!response.data || !response.data.data) {
         showNotify({
           type: NotifyType.Error,
@@ -317,20 +346,15 @@ export function UserManagement() {
         });
         return;
       }
-
       const createdUser = response.data.data;
-      // Nếu tạo thành công, tiếp tục cập nhật status và role
-      if (!newUser.is_active) {
+      if (!newUser.is_active)
         await UserService.toggleUserStatus(createdUser.id, {
           is_active: false,
         });
-      }
-      if (newUser.selectedRoleIds.length > 0) {
+      if (newUser.selectedRoleIds.length > 0)
         await AuthorService.assignRolesToUser(createdUser.id, {
           role_ids: newUser.selectedRoleIds,
         });
-      }
-
       showNotify({
         type: NotifyType.Success,
         title: "Thành công",
@@ -344,20 +368,16 @@ export function UserManagement() {
   };
 
   const handleEditUser = async (user: UserData) => {
-    // --- CHECK QUYỀN: BẮT CHƯỚC page.tsx (>=) ---
-    const targetMaxLevel = user.roles?.reduce((max, r) => Math.max(max, r.level || 0), 0) || 0;
-    
-    // Nếu target level LỚN HƠN HOẶC BẰNG level hiện tại -> Chặn
+    const targetMaxLevel =
+      user.roles?.reduce((max, r) => Math.max(max, r.level || 0), 0) || 0;
     if (targetMaxLevel >= currentUserLevel) {
       showNotify({
         type: NotifyType.Error,
         title: "Không đủ quyền",
-        message: `Bạn không thể chỉnh sửa người dùng có cấp độ (${targetMaxLevel}) cao hơn hoặc bằng bạn (${currentUserLevel}).`
+        message: `Bạn không thể chỉnh sửa người dùng có cấp độ (${targetMaxLevel}) cao hơn hoặc bằng bạn (${currentUserLevel}).`,
       });
       return;
     }
-    // -------------------
-
     try {
       const response = await UserService.getUserDetail(user.id, true);
       if (!response.data || !response.data.data) {
@@ -376,7 +396,6 @@ export function UserManagement() {
       setEditFormErrors(initialErrors);
       setIsEditModalOpen(true);
     } catch (error) {
-      console.error("Failed to fetch user details:", error);
       showNotify({
         type: NotifyType.Error,
         title: "Lỗi",
@@ -384,19 +403,20 @@ export function UserManagement() {
       });
     }
   };
-  
+
   const handleEditRoleChange = (roleId: number, checked: boolean) => {
-    if (roleId === userRoleId && !checked) {
-      return;
-    }
+    if (roleId === userRoleId && !checked) return;
     if (!editingUser) return;
-    setEditingUser((prev) => {
-      if (!prev) return null;
-      const newRoleIds = checked
-        ? [...prev.selectedRoleIds, roleId]
-        : prev.selectedRoleIds.filter((id) => id !== roleId);
-      return { ...prev, selectedRoleIds: newRoleIds };
-    });
+    setEditingUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            selectedRoleIds: checked
+              ? [...prev.selectedRoleIds, roleId]
+              : prev.selectedRoleIds.filter((id) => id !== roleId),
+          }
+        : null
+    );
   };
 
   const handleSaveUser = async () => {
@@ -416,7 +436,6 @@ export function UserManagement() {
       return;
     }
     setEditFormErrors(initialErrors);
-
     try {
       await UserService.updateUser(editingUser.id, {
         username: editingUser.username,
@@ -430,7 +449,6 @@ export function UserManagement() {
       await AuthorService.assignRolesToUser(editingUser.id, {
         role_ids: editingUser.selectedRoleIds,
       });
-
       showNotify({
         type: NotifyType.Success,
         title: "Thành công",
@@ -445,24 +463,20 @@ export function UserManagement() {
   };
 
   const handleDeleteUser = (user: UserData) => {
-    // --- CHECK QUYỀN: BẮT CHƯỚC page.tsx (>=) ---
-    const targetMaxLevel = user.roles?.reduce((max, r) => Math.max(max, r.level || 0), 0) || 0;
-    
-    // Nếu target level LỚN HƠN HOẶC BẰNG level hiện tại -> Chặn
+    const targetMaxLevel =
+      user.roles?.reduce((max, r) => Math.max(max, r.level || 0), 0) || 0;
     if (targetMaxLevel >= currentUserLevel) {
       showNotify({
         type: NotifyType.Error,
         title: "Không đủ quyền",
-        message: `Bạn không thể xóa người dùng có cấp độ (${targetMaxLevel}) cao hơn hoặc bằng bạn (${currentUserLevel}).`
+        message: `Bạn không thể xóa người dùng có cấp độ (${targetMaxLevel}) cao hơn hoặc bằng bạn (${currentUserLevel}).`,
       });
       return;
     }
-    // -------------------
-
     showNotify({
       type: NotifyType.Warning,
       title: "Xác nhận xóa người dùng",
-      message: `Bạn có chắc chắn muốn xóa người dùng "${user.username}" không? Hành động này không thể hoàn tác.`,
+      message: `Bạn có chắc chắn muốn xóa người dùng "${user.username}" không?`,
       primaryActionText: "Xóa",
       onPrimaryAction: () => confirmDeleteUser(user.id),
     });
@@ -476,11 +490,8 @@ export function UserManagement() {
         title: "Thành công",
         message: "Đã xóa người dùng.",
       });
-      if (userList.length === 1 && page > 1) {
-        setPage(page - 1);
-      } else {
-        fetchUsers();
-      }
+      if (userList.length === 1 && page > 1) setPage(page - 1);
+      else fetchUsers();
     } catch (error: any) {
       showNotify(getErrorNotify(error, "Xóa người dùng thất bại."));
     }
@@ -488,33 +499,33 @@ export function UserManagement() {
 
   const handleApplyFilters = () => {
     setPage(1);
-    setFilters({ 
+    setFilters({
       search: uiSearchTerm,
       status: uiFilterStatus,
       role: uiFilterRole,
     });
   };
-
   const handleClearFilters = () => {
-    setPage(1); 
+    setPage(1);
     setUiSearchTerm("");
     setUiFilterStatus("all");
     setUiFilterRole("all");
-    setFilters({
-      search: "",
-      status: "all",
-      role: "all",
-    });
+    setFilters({ search: "", status: "all", role: "all" });
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto p-6 max-w-7xl transition-colors duration-300 relative">
+      {/* NÚT DARK MODE ĐÃ BỊ XÓA Ở ĐÂY */}
+
       <UserManagementHeader onOpenAddModal={handleOpenAddModal} />
 
-      <Card className="mb-6">
+      <Card className="mb-6 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
         <CardContent className="p-4 flex flex-col md:flex-row flex-wrap gap-4">
           <div className="flex-grow min-w-[200px]">
-            <label htmlFor="search" className="text-sm font-medium text-gray-700 block mb-1">
+            <label
+              htmlFor="search"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1"
+            >
               Tìm kiếm
             </label>
             <Input
@@ -523,37 +534,74 @@ export function UserManagement() {
               value={uiSearchTerm}
               onChange={(e) => setUiSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+              className="bg-white dark:bg-slate-900 border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white"
             />
           </div>
 
           <div className="w-full md:w-48">
-            <label htmlFor="status" className="text-sm font-medium text-gray-700 block mb-1">
+            <label
+              htmlFor="status"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1"
+            >
               Trạng thái
             </label>
             <Select value={uiFilterStatus} onValueChange={setUiFilterStatus}>
-              <SelectTrigger id="status" className="w-full">
+              <SelectTrigger
+                id="status"
+                className="w-full bg-white dark:bg-slate-900 border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white"
+              >
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="active">Hoạt động</SelectItem>
-                <SelectItem value="suspended">Tạm khóa</SelectItem>
+              <SelectContent className="bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
+                <SelectItem
+                  value="all"
+                  className="dark:text-gray-200 dark:focus:bg-slate-700"
+                >
+                  Tất cả trạng thái
+                </SelectItem>
+                <SelectItem
+                  value="active"
+                  className="dark:text-gray-200 dark:focus:bg-slate-700"
+                >
+                  Hoạt động
+                </SelectItem>
+                <SelectItem
+                  value="suspended"
+                  className="dark:text-gray-200 dark:focus:bg-slate-700"
+                >
+                  Tạm khóa
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="w-full md:w-48">
-            <label htmlFor="role" className="text-sm font-medium text-gray-700 block mb-1">
+            <label
+              htmlFor="role"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1"
+            >
               Vai trò
             </label>
             <Select value={uiFilterRole} onValueChange={setUiFilterRole}>
-              <SelectTrigger id="role" className="w-full">
+              <SelectTrigger
+                id="role"
+                className="w-full bg-white dark:bg-slate-900 border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white"
+              >
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả vai trò</SelectItem>
+              <SelectContent className="bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
+                <SelectItem
+                  value="all"
+                  className="dark:text-gray-200 dark:focus:bg-slate-700"
+                >
+                  Tất cả vai trò
+                </SelectItem>
                 {availableRoles.map((role) => (
-                  <SelectItem key={role.id} value={String(role.id)}>
+                  <SelectItem
+                    key={role.id}
+                    value={String(role.id)}
+                    className="dark:text-gray-200 dark:focus:bg-slate-700"
+                  >
                     {role.name}
                   </SelectItem>
                 ))}
@@ -562,11 +610,18 @@ export function UserManagement() {
           </div>
 
           <div className="flex gap-2 self-end pt-5">
-            <Button onClick={handleApplyFilters} className="flex items-center gap-2">
+            <Button
+              onClick={handleApplyFilters}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white"
+            >
               <Search className="h-4 w-4" />
               Lọc
             </Button>
-            <Button variant="outline" onClick={handleClearFilters}>
+            <Button
+              variant="outline"
+              onClick={handleClearFilters}
+              className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700"
+            >
               Xóa
             </Button>
           </div>
@@ -578,10 +633,10 @@ export function UserManagement() {
         isLoading={isLoading}
         onEditUser={handleEditUser}
         onDeleteUser={handleDeleteUser}
-        currentPage={page} 
+        currentPage={page}
         totalPages={totalPages}
         onPageChange={(newPage) => setPage(newPage)}
-        currentUserLevel={currentUserLevel} 
+        currentUserLevel={currentUserLevel}
       />
 
       <EditUserModal
@@ -615,13 +670,13 @@ export function UserManagement() {
       />
 
       <NotifyDialog
+        onClose={hideNotify}
         open={open}
         type={type}
         title={title}
         message={message}
         primaryActionText={primaryActionText}
         onPrimaryAction={handlePrimaryAction}
-        onClose={hideNotify}
       />
     </div>
   );

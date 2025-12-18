@@ -19,8 +19,6 @@ export interface AppSettings {
     frequency: "high" | "medium" | "low";
   };
   display: {
-    // Theme giờ được quản lý bởi next-themes, nhưng giữ lại key này
-    // nếu bạn muốn lưu preference vào DB sau này.
     theme: string;
     showWeather: boolean;
     showTime: boolean;
@@ -43,7 +41,7 @@ const DEFAULT_SETTINGS: AppSettings = {
 };
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("canhbao");
+  const [activeTab, setActiveTab] = useState("chung"); // Mặc định vào tab Chung
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
 
   // Hook thông báo
@@ -58,7 +56,7 @@ export default function SettingsPage() {
     handlePrimaryAction,
   } = useNotifyDialog();
 
-  // 1. Load Settings từ LocalStorage (chỉ load các setting khác ngoài theme)
+  // 1. Load Settings từ LocalStorage
   useEffect(() => {
     const saved = localStorage.getItem("adas_settings");
     if (saved) {
@@ -72,9 +70,6 @@ export default function SettingsPage() {
       }
     }
   }, []);
-
-  // LƯU Ý: Đã xóa useEffect xử lý Dark Mode thủ công ở đây
-  // vì DisplaySettings đã dùng useTheme() để xử lý rồi.
 
   // Update State helper
   const updateAlert = (key: keyof AppSettings["alert"], value: any) => {
@@ -91,20 +86,19 @@ export default function SettingsPage() {
     }));
   };
 
-  // 2. Hàm Lưu
+  // 2. Hàm Lưu (Đã sửa lỗi hiển thị nút thừa)
   const handleSave = () => {
-    // Lưu vào localStorage cho các component khác (Camera, Dashboard) đọc
     localStorage.setItem("adas_settings", JSON.stringify(settings));
-
-    // Dispatch event để Dashboard cập nhật widget ngay lập tức
     window.dispatchEvent(new Event("adas_settings_updated"));
 
+    // FIX: Không truyền primaryActionText để tránh hiện 2 nút "Đóng"
+    // Chỉ hiện thông báo thành công, người dùng bấm X hoặc click ra ngoài để đóng
     showNotify({
       type: NotifyType.Success,
-      title: "Đã lưu cài đặt",
-      message: "Cấu hình hệ thống đã được cập nhật thành công.",
-      primaryActionText: "Đóng",
-      onPrimaryAction: hideNotify,
+      title: "Thành công",
+      message: "Cấu hình hệ thống đã được lưu và áp dụng.",
+      // primaryActionText: "Đóng", // <-- Đã xóa dòng này để bỏ nút Xanh thừa
+      // onPrimaryAction: hideNotify, // <-- Đã xóa
     });
   };
 
@@ -117,13 +111,20 @@ export default function SettingsPage() {
       onPrimaryAction: () => {
         setSettings(DEFAULT_SETTINGS);
         hideNotify();
+        // Thông báo lại sau khi reset xong
+        setTimeout(() => {
+          showNotify({
+            type: NotifyType.Info,
+            title: "Đã khôi phục",
+            message: "Các cài đặt đã về mặc định.",
+          });
+        }, 300);
       },
     });
   };
 
   return (
     <main className="p-4 min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
-      {/* Container thu nhỏ max-w-2xl để giao diện gọn gàng */}
       <div className="max-w-2xl mx-auto space-y-4">
         {/* Header */}
         <div className="flex justify-between items-center">

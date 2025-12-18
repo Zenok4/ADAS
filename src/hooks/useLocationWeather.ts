@@ -7,6 +7,8 @@ export function useLocationWeather() {
   const [weather, setWeather] = useState("Đang tải...");
   const [temperature, setTemperature] = useState("...");
   const [time, setTime] = useState("--:--:--");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
 
   // =====================
   //  ⏰ Đồng hồ realtime
@@ -34,6 +36,10 @@ export function useLocationWeather() {
       async (pos) => {
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
+        setLatitude(lat);
+        setLongitude(lon);
+
+        console.log("Vị trí GPS:", lat, lon);
 
         try {
           // --------- Lấy địa chỉ (Nominatim) ---------
@@ -99,5 +105,5 @@ export function useLocationWeather() {
     );
   }, []);
 
-  return { location, weather, temperature, time };
+  return { location, weather, temperature, time, latitude, longitude };
 }

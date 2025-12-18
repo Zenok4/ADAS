@@ -1,14 +1,12 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { laneService } from "@/services/laneService";
-import { objectService } from "@/services/objectService"; // Import mới
 import { useCamera } from "@/hooks/useCamera";
 import { useAudioAlert } from "@/hooks/useAudioAlert";
 
 import {
   drawLanes,
   drawSigns,
-  drawObjects, // Import mới
+  drawObjects,
   captureVideoFrame,
   Detection,
 } from "@/lib/drawUtils";
@@ -19,7 +17,7 @@ interface CameraLiveProps {
   startCamera: boolean;
   enableSign: boolean;
   enableLane: boolean;
-  enableObject: boolean; // Prop mới
+  enableObject: boolean;
   soundEnabled: boolean;
   userId?: string;
   latitude?: number;
@@ -37,6 +35,12 @@ export default function CameraLive({
   latitude,
   longitude,
 }: CameraLiveProps) {
+  const FREQUENCY_MAP = {
+    high: 330, // ~3 req/s
+    medium: 1000, // 1 req/s
+    low: 2000, // 0.5 req/s
+  };
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
@@ -53,6 +57,35 @@ export default function CameraLive({
 
   const loadingRef = useRef(false);
 
+  // State lưu thời gian interval hiện tại
+  const [intervalMs, setIntervalMs] = useState(500);
+
+  // 0. Đọc cấu hình từ LocalStorage khi component mount hoặc khi có sự kiện update
+  useEffect(() => {
+    const loadSettings = () => {
+      try {
+        const saved = localStorage.getItem("adas_settings");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const freq = parsed.alert?.frequency as keyof typeof FREQUENCY_MAP;
+          if (freq && FREQUENCY_MAP[freq]) {
+            setIntervalMs(FREQUENCY_MAP[freq]);
+          }
+        }
+      } catch (e) {
+        console.warn("Dùng cấu hình mặc định do lỗi đọc storage");
+      }
+    };
+
+    loadSettings();
+
+    // Lắng nghe sự kiện nếu settings thay đổi ở tab khác
+    window.addEventListener("adas_settings_updated", loadSettings);
+    return () =>
+      window.removeEventListener("adas_settings_updated", loadSettings);
+  }, []);
+
+  // 1. Khởi động camera
   useEffect(() => {
     if (startCamera) {
       openCamera("ivcam");
@@ -142,11 +175,7 @@ export default function CameraLive({
       }
 
       // 2. Làn đường
-      if (
-        enableLane &&
-        laneRes?.data &&
-        Array.isArray(laneRes.data)
-      ) {
+      if (enableLane && laneRes?.data && Array.isArray(laneRes.data)) {
         setLaneData(laneRes.data);
       } else {
         setLaneData([]);
@@ -219,7 +248,7 @@ export default function CameraLive({
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (startCamera && (enableSign || enableLane || enableObject)) {
-      interval = setInterval(sendFrameToAI, 500);
+      interval = setInterval(sendFrameToAI, intervalMs);
     }
     return () => {
       if (interval) clearInterval(interval);
@@ -246,7 +275,7 @@ export default function CameraLive({
     if (enableLane) drawLanes(ctx, laneData);
     if (enableObject) drawObjects(ctx, objectData); // Vẽ Object
     if (enableSign) drawSigns(ctx, detections);
-  }, [detections, laneData, objectData, enableSign, enableLane, enableObject]);
+  }, [detections, laneData, objectData, enableSign, enableLane, enableObject, intervalMs]);
 
   return (
     <div

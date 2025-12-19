@@ -18,11 +18,13 @@ import {
 import FeatureCard from "./components/feature-card";
 import InfoCard from "./components/info-card";
 import CameraLive from "../components/CameraLive";
+
 // Hooks
 import { useDrowsy } from "@/hooks/useDrowsy";
 import { useCamera } from "@/hooks/useCamera";
 import { useLocationWeather } from "@/hooks/useLocationWeather";
 import { useSession } from "@/context/SessionContext";
+import { useAdasSettings } from "@/hooks/useAdasSettings"; // <--- MỚI: Import hook setting
 
 export default function DashboardPage() {
   // 1. Quản lý State
@@ -35,6 +37,12 @@ export default function DashboardPage() {
 
   const [rearCameraOn, setRearCameraOn] = useState(false);
   const [isSoundOn, setIsSoundOn] = useState(true);
+
+  // --- MỚI: Lấy cấu hình từ Settings ---
+  const { settings } = useAdasSettings();
+  const { showTime, showWeather, showLocation, showTemperature } =
+    settings.display;
+  // ------------------------------------
 
   const { location, weather, temperature, time, latitude, longitude } =
     useLocationWeather();
@@ -49,8 +57,6 @@ export default function DashboardPage() {
   useEffect(() => {
     coordsRef.current = { lat: latitude, lng: longitude };
   }, [latitude, longitude]);
-
-  console.log("Vị trí hiện tại trong Dashboard:", coordsRef.current.lat, coordsRef.current.lng);
 
   // Hook Camera Trước
   const {
@@ -97,7 +103,6 @@ export default function DashboardPage() {
     setFeatures((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
 
-  // --- SỬA LOGIC: MỞ/TẮT ĐỒNG THỜI CẢ 2 CAMERA ---
   const handleMainButton = () => {
     const isAnyOn = frontReady || rearCameraOn;
 
@@ -119,7 +124,6 @@ export default function DashboardPage() {
       setRearCameraOn(true); // Bật cam sau
     }
   };
-  // ------------------------------------------------
 
   const drowsyDanger = !!drowsyResult?.data?.is_drowsy;
   const drowsyBadge = drowsyResult
@@ -133,7 +137,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <div className="flex flex-1 flex-col lg:flex-row">
-        {/* --- CỘT TRÁI --- */}
+        {/* --- CỘT TRÁI (Main Controls & Camera) --- */}
         <div className="flex-1 space-y-6 m-4 lg:m-6">
           <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200">
             Bảng điều khiển ADAS
@@ -172,7 +176,6 @@ export default function DashboardPage() {
 
           {/* Cụm nút điều khiển */}
           <div className="flex justify-center items-center gap-3 mt-6">
-            {/* Nút Master Camera */}
             <button
               className={`px-6 py-3 rounded-lg font-bold shadow-md transition-all flex items-center gap-2 text-white ${
                 frontReady || rearCameraOn
@@ -185,7 +188,6 @@ export default function DashboardPage() {
               {frontReady || rearCameraOn ? "Tắt camera" : "Mở camera"}
             </button>
 
-            {/* Nút Âm thanh (Giữ nguyên UI cũ) */}
             <button
               className={`p-3 rounded-lg border shadow-sm transition-all flex items-center justify-center ${
                 isSoundOn
@@ -264,19 +266,17 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex-1 bg-black relative">
-                {/* --- SỬA ĐOẠN NÀY --- */}
                 <CameraLive
                   startCamera={rearCameraOn}
                   enableSign={features.signDetect}
                   enableLane={features.laneMonitor}
-                  enableObject={features.objectDetect} // <--- Thêm dòng này
+                  enableObject={features.objectDetect}
                   soundEnabled={isSoundOn}
                   className="w-full h-full"
-                  userId={user?.id} // Thay bằng ID người dùng thực tế nếu có
-                  latitude={coordsRef.current.lat} // Thay bằng vĩ độ thực tế nếu có
-                  longitude={coordsRef.current.lng} // Thay bằng kinh độ thực tế nếu có
+                  userId={user?.id}
+                  latitude={coordsRef.current.lat}
+                  longitude={coordsRef.current.lng}
                 />
-                {/* --------------------- */}
 
                 {!rearCameraOn && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 bg-gray-100/10">
@@ -288,15 +288,33 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* --- CỘT PHẢI --- */}
+        {/* --- CỘT PHẢI (Widget Thông tin) - ĐÃ CẬP NHẬT --- */}
         <div className="w-full lg:w-72 bg-white border-l p-6 space-y-4 dark:bg-gray-800 dark:border-gray-700">
           <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider dark:text-gray-200">
             Thông tin hành trình
           </h3>
-          <InfoCard icon={MapPin} label="Vị trí" value={location} />
-          <InfoCard icon={Sun} label="Thời tiết" value={weather} />
-          <InfoCard icon={Thermometer} label="Nhiệt độ" value={temperature} />
-          <InfoCard icon={Clock} label="Thời gian" value={time} />
+
+          {/* Chỉ render nếu trong Setting bật (true) */}
+          {showLocation && (
+            <InfoCard icon={MapPin} label="Vị trí" value={location} />
+          )}
+
+          {showWeather && (
+            <InfoCard icon={Sun} label="Thời tiết" value={weather} />
+          )}
+
+          {showTemperature && (
+            <InfoCard icon={Thermometer} label="Nhiệt độ" value={temperature} />
+          )}
+
+          {showTime && <InfoCard icon={Clock} label="Thời gian" value={time} />}
+
+          {/* Nếu tắt hết thì hiển thị thông báo nhỏ cho đỡ trống */}
+          {!showLocation && !showWeather && !showTemperature && !showTime && (
+            <div className="text-sm text-gray-400 italic text-center py-4">
+              Các tiện ích đã được ẩn trong Cài đặt.
+            </div>
+          )}
         </div>
       </div>
     </div>

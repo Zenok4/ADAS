@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Mail, User } from "lucide-react"; // Đã xóa Moon, Sun
 import Link from "next/link";
-import { AuthService } from "@/services/authService";
 import NotifyDialog from "@/components/NotifyDialog";
 import FullScreenLoader from "@/helper/loader";
 import { useNotifyDialog } from "@/hooks/useNotifyDialog";
 import { NotifyType } from "@/type/notify";
+import Logo from "@/components/logo";
+import { useSession } from "@/context/SessionContext";
 
 type LoginMethod = "username" | "email";
 
@@ -41,6 +42,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const { loginWithUsername, loginWithEmail } = useSession();
 
   // === Sync Dark Mode (Tự động nhận diện, không nút bấm) ===
   useEffect(() => {
@@ -79,28 +82,29 @@ export default function LoginPage() {
 
       if (method === "username") {
         if (!username) throw "Vui lòng nhập tên đăng nhập";
-        res = await AuthService.loginWithUsername(username, password);
+        res = await loginWithUsername(username, password);
       } else {
         if (!email) throw "Vui lòng nhập email";
         // Chỉ gửi Email + Password
-        res = await AuthService.loginWithEmail(email, password);
+        res = await loginWithEmail(email, password);
       }
 
-      const data = res.data?.data || res.data;
-
-      if (data?.access_token) {
-        localStorage.setItem("access_token", data.access_token);
-
+      if(!res) {
         await showNotify({
-          type: NotifyType.Success,
-          title: "Xin chào",
-          message: "Đăng nhập thành công!",
-        });
-
-        router.push("/");
-      } else {
-        throw "Phản hồi không hợp lệ từ máy chủ.";
+        type: NotifyType.Error,
+        title: "Đăng nhập thất bại",
+        message: "Sai tài khoản hoặc mật khẩu",
+      });
+        return;
       }
+
+      await showNotify({
+        type: NotifyType.Success,
+        title: "Xin chào",
+        message: "Đăng nhập thành công!",
+      });
+
+      router.push("/dashboard");
     } catch (e: any) {
       const msg = getErrorMessage(e, "Sai tài khoản hoặc mật khẩu");
       await showNotify({
@@ -115,17 +119,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F6F9FD] dark:bg-slate-900 transition-colors duration-300 relative">
-      {/* ĐÃ XÓA NÚT TOGGLE Ở ĐÂY */}
 
       <div className="w-full max-w-4xl bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row transition-colors duration-300">
         {/* Left Banner */}
         <div className="hidden md:flex md:w-1/2 flex-col items-center justify-center bg-[#F6F9FD] dark:bg-slate-900 p-8 border-r border-gray-100 dark:border-slate-700">
           <div className="flex flex-col items-center">
-            <img
-              src="https://img.icons8.com/fluency/96/steering-wheel.png"
-              alt="logo"
-              className="w-20 h-20 mb-4"
-            />
+            <Logo width={20} height={20} />
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
               ADAS
             </h2>
@@ -208,12 +207,6 @@ export default function LoginPage() {
                 <label className="block text-sm text-gray-600 dark:text-gray-300 font-medium">
                   Mật khẩu
                 </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Quên mật khẩu?
-                </Link>
               </div>
               <div className="relative">
                 <input
@@ -231,6 +224,13 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+
+              <Link
+                href="/forgot-password"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Quên mật khẩu?
+              </Link>
             </div>
 
             <Button

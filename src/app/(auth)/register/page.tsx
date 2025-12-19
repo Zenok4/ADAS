@@ -10,6 +10,7 @@ import NotifyDialog from "@/components/NotifyDialog";
 import FullScreenLoader from "@/helper/loader";
 import { useNotifyDialog } from "@/hooks/useNotifyDialog";
 import { NotifyType } from "@/type/notify";
+import Logo from "@/components/logo";
 
 type RegisterMethod = "username" | "email";
 
@@ -198,16 +199,12 @@ export default function RegisterPage() {
         {/* Left Banner */}
         <div className="hidden md:flex md:w-1/2 flex-col items-center justify-center bg-[#F6F9FD] dark:bg-slate-900 p-8 border-r border-gray-100 dark:border-slate-700">
           <div className="flex flex-col items-center">
-            <img
-              src="https://img.icons8.com/fluency/96/steering-wheel.png"
-              alt="logo"
-              className="w-20 h-20 mb-4"
-            />
+            <Logo width={20} height={20} />
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
               ADAS
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
-              Hệ thống hỗ trợ lái xe tiên tiến
+              Hệ thống hỗ trợ lái xe nâng cao
             </p>
           </div>
         </div>

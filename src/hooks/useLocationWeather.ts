@@ -116,7 +116,14 @@ export function useLocationWeather() {
       setLocation("Không lấy được vị trí");
     };
 
-    navigator.geolocation.getCurrentPosition(geoSuccess, geoError);
+    const watchId = navigator.geolocation.watchPosition(geoSuccess, geoError, {
+      enableHighAccuracy: true,
+      maximumAge: 3000,
+      timeout: 10000,
+    });
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
   }, [
     needGPS,
     settings.display.showLocation,

@@ -1,6 +1,6 @@
 import { DemoSection } from "./components/demo-section";
-import { TrialSection } from "./components/trial-section";
 import { FeaturesSection } from "./components/features-section";
+import TrialSection from "./components/trial-section";
 
 export const metadata = {
   title: "ADAS - Hệ thống hỗ trợ lái xe thông minh",

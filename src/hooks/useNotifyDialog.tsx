@@ -18,6 +18,7 @@ type ShowNotifyArgs = {
   primaryActionText?: string;
   // optional callback to be invoked if user clicks primary action (before close)
   onPrimaryAction?: (() => void) | undefined;
+  onClose?: (() => void) | undefined;
 };
 
 export function useNotifyDialog() {
@@ -27,6 +28,7 @@ export function useNotifyDialog() {
   const [message, setMessage] = useState("");
   const [primaryActionText, setPrimaryActionText] = useState<string | undefined>(undefined);
   const primaryActionRef = useRef<(() => void) | undefined>(undefined);
+  const closeActionRef = useRef<(() => void) | undefined>(undefined);
 
   const resolverRef = useRef<(() => void) | null>(null);
 
@@ -42,6 +44,7 @@ export function useNotifyDialog() {
     setMessage(args.message);
     setPrimaryActionText(args.primaryActionText);
     primaryActionRef.current = args.onPrimaryAction;
+    closeActionRef.current = args.onClose;
 
     setOpen(true);
 
@@ -51,11 +54,13 @@ export function useNotifyDialog() {
   }, []);
 
   const hideNotify = useCallback(() => {
+    closeActionRef.current?.();
     setOpen(false);
     if (resolverRef.current) {
       resolverRef.current();
       resolverRef.current = null;
     }
+    closeActionRef.current = undefined;
   }, []);
 
   const handlePrimaryAction = useCallback(() => {

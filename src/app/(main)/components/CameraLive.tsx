@@ -52,9 +52,14 @@ export default function CameraLive({
   const loadingObject = useRef(false);
 
   /* ================= HOOKS ================= */
-  const { openCamera, stopCamera } = useCamera(videoRef as React.RefObject<HTMLVideoElement>);
-  const { alertDrowsiness: playAlert, warnObstacle } =
-    useAudioAlert(soundEnabled);
+  const { openCamera, stopCamera } = useCamera(
+    videoRef as React.RefObject<HTMLVideoElement>
+  );
+  const {
+    alertDrowsiness: playAlert,
+    warnObstacle,
+    announceTrafficSign,
+  } = useAudioAlert(soundEnabled);
 
   /* ================= STATE ================= */
   const [detections, setDetections] = useState<Detection[]>([]);
@@ -115,23 +120,26 @@ export default function CameraLive({
     /* ---------- SIGN ---------- */
     if (enableSign && !loadingSign.current) {
       loadingSign.current = true;
-      CoreFunctionService.sign(
-        onlyBase64,
-        userId || "",
-        latitude,
-        longitude
-      )
+      CoreFunctionService.sign(onlyBase64, userId || "", latitude, longitude)
         .then((res) => {
           const dets = res?.data?.data?.data?.data;
+
           if (Array.isArray(dets)) {
-            setDetections(dets);
-            if (dets.length > 0) {
-              const best = dets.reduce((a: any, b: any) =>
+            const signsOnly = dets.filter(
+              (item) => item.confidence !== undefined
+            );
+
+            setDetections(signsOnly);
+
+            if (signsOnly.length > 0) {
+              const best = signsOnly.reduce((a, b) =>
                 a.confidence > b.confidence ? a : b
               );
-              playAlert(best.class_name);
+              announceTrafficSign(best.class_name);
             }
-          } else setDetections([]);
+          } else {
+            setDetections([]);
+          }
         })
         .catch(console.error)
         .finally(() => {
@@ -149,7 +157,8 @@ export default function CameraLive({
         longitude
       )
         .then((res) => {
-          if (Array.isArray(res?.data)) setLaneData(res.data);
+          console.log("Lane response:", res.data.data);
+          if (Array.isArray(res?.data.data)) setLaneData(res.data.data);
           else setLaneData([]);
         })
         .catch(console.error)
@@ -161,12 +170,7 @@ export default function CameraLive({
     /* ---------- OBJECT ---------- */
     if (enableObject && !loadingObject.current) {
       loadingObject.current = true;
-      CoreFunctionService.object(
-        onlyBase64,
-        userId || "",
-        latitude,
-        longitude
-      )
+      CoreFunctionService.object(onlyBase64, userId || "", latitude, longitude)
         .then((res) => {
           let objs: any[] = [];
 
@@ -233,21 +237,21 @@ export default function CameraLive({
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    console.log("Drawing overlays:", {
+      enableLane,
+      laneData,
+    });
+
     if (enableLane) drawLanes(ctx, laneData);
     if (enableObject) drawObjects(ctx, objectData);
     if (enableSign) drawSigns(ctx, detections);
-  }, [
-    detections,
-    laneData,
-    objectData,
-    enableSign,
-    enableLane,
-    enableObject,
-  ]);
+  }, [detections, laneData, objectData, enableSign, enableLane, enableObject]);
 
   /* ================= UI ================= */
   return (
-    <div className={`${className} relative overflow-hidden bg-black rounded-lg`}>
+    <div
+      className={`${className} relative overflow-hidden bg-black rounded-lg`}
+    >
       <video
         ref={videoRef}
         autoPlay

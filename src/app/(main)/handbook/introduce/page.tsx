@@ -78,6 +78,15 @@ export default function HandbookIntroducePage() {
         </div>
       </section>
 
+      <section className="py-12 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">Lưu ý</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-8">
+            Hệ thống hoạt động hạn chế trong điều kiện ánh sáng yếu, thời tiết xấu hoặc đường xá phức tạp. Vui lòng luôn tuân thủ luật lệ giao thông và giữ an toàn khi lái xe.
+          </p>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-12 px-6">
         <div className="max-w-4xl mx-auto text-center">

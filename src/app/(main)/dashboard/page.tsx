@@ -126,9 +126,41 @@ export default function DashboardPage() {
   };
 
   const drowsyDanger = !!drowsyResult?.data?.is_drowsy;
+  const drowsyMessage = drowsyResult?.data?.message ?? "";
+
+  const drowsyState = (() => {
+    if (!drowsyResult) return null;
+
+    if (drowsyMessage.includes("NGU GUC SANG TRAI")) {
+      return "LEFT";
+    }
+    if (drowsyMessage.includes("NGU GUC SANG PHAI")) {
+      return "RIGHT";
+    }
+    if (drowsyMessage.includes("NGU GAT")) {
+      return "CENTER";
+    }
+    if (drowsyMessage.includes("Drowsy")) {
+      return "DROWSY";
+    }
+    if (drowsyMessage.includes("FOCUS")) {
+      return "NO_FACE";
+    }
+
+    return "AWAKE";
+  })();
+
   const drowsyBadge = drowsyResult
-    ? drowsyResult?.data?.is_drowsy
-      ? { text: "CẢNH BÁO: TÀI XẾ NGỦ GẬT!", cls: "bg-red-600 animate-pulse" }
+    ? drowsyState === "LEFT"
+      ? { text: "Ngủ gật Nghiêng trái", cls: "bg-red-600 animate-pulse" }
+      : drowsyState === "RIGHT"
+      ? { text: "Ngủ gật Nghiêng phải", cls: "bg-red-600 animate-pulse" }
+      : drowsyState === "CENTER"
+      ? { text: "Tài xế ngủ gật", cls: "bg-red-600 animate-pulse" }
+      : drowsyState === "DROWSY"
+      ? { text: "Buồn ngủ", cls: "bg-yellow-500" }
+      : drowsyState === "NO_FACE"
+      ? { text: "Không nhận diện khuôn mặt", cls: "bg-gray-500" }
       : { text: "Tài xế tỉnh táo", cls: "bg-green-600" }
     : drowsyBusy
     ? { text: "Đang xử lý...", cls: "bg-blue-600" }

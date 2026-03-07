@@ -119,7 +119,7 @@ export default function NotifyDialog({
             <Button
               variant="outline"
               onClick={onClose}
-              className="px-6 py-2.5 rounded-xl font-semibold border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 bg-transparent"
+              className="px-6 py-2.5 rounded-xl font-semibold border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 bg-transparent dark:hover:text-gray-600 dark:hover:bg-gray-100"
             >
               Đóng
             </Button>

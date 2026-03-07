@@ -5,7 +5,7 @@ import { loadToken, clearToken, saveToken, loadSessionId, saveSessionId, clearSe
 import { AuthService } from "@/services/authService";
 
 type User = {
-  id: number;
+  id: string;
   username: string;
   email: string;
   // thêm các field khác nếu cần
@@ -20,15 +20,26 @@ type ReponseData<T> = {
 type SessionContextType = {
   user: User | null;
   loading: boolean;
-  loginWithUsername: (username: string, password: string) => Promise<ReponseData<any> | boolean>;
-  loginWithEmail: (username: string, password: string, otp_code?: string) => Promise<ReponseData<any> | boolean>;
+  loginWithUsername: (
+    username: string,
+    password: string
+  ) => Promise<ReponseData<any> | boolean>;
+  loginWithEmail: (
+    username: string,
+    password: string,
+    otp_code?: string
+  ) => Promise<ReponseData<any> | boolean>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
 };
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
-export const SessionProvider = ({ children }: { children: React.ReactNode }) => {
+export const SessionProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -44,7 +55,7 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
       .then((res) => {
         // === SỬA TẠI ĐÂY ===
         // API /me trả về { message: "...", data: { user object } }
-        setUser(res.data.data); 
+        setUser(res.data.data);
       })
       .catch(() => clearToken())
       .finally(() => setLoading(false));
@@ -56,7 +67,7 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
       const res = await AuthService.loginWithUsername(username, password);
       console.log("res", res);
       // Hàm này có vẻ đúng vì bạn lấy user từ res.data.data.user
-      const { access_token, session_id, user } = res.data.data; 
+      const { access_token, session_id, user } = res.data.data;
 
       console.log("user", user);
 
@@ -69,10 +80,17 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
     }
   };
 
-  
-  const loginWithEmail = async (username: string, password: string, otp_code?: string) => {
+  const loginWithEmail = async (
+    username: string,
+    password: string,
+    otp_code?: string
+  ) => {
     try {
-      const res = await AuthService.loginWithEmail(username, password, otp_code);
+      const res = await AuthService.loginWithEmail(
+        username,
+        password,
+        otp_code
+      );
       // Cần đảm bảo cấu trúc response này là đúng
       const { access_token, user, session_id } = res.data; 
 
@@ -124,7 +142,14 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
 
   return (
     <SessionContext.Provider
-      value={{ user, loading, loginWithUsername, loginWithEmail, logout, refreshSession }}
+      value={{
+        user,
+        loading,
+        loginWithUsername,
+        loginWithEmail,
+        logout,
+        refreshSession,
+      }}
     >
       {children}
     </SessionContext.Provider>

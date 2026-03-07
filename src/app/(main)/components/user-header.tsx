@@ -32,9 +32,12 @@ export const UserHeader = () => {
     : "US";
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border h-16 flex items-center justify-between px-6">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border h-16 flex items-center justify-between px-6 cursor-pointer">
       {/* Logo + Title */}
-      <div className="flex items-center gap-2 text-[#004572] dark:text-white transition-colors duration-200">
+      <div
+        className="flex items-center gap-2 text-[#004572] dark:text-white transition-colors duration-200"
+        onClick={() => router.push("/dashboard")}
+      >
         <Logo />
         <div>
           <p className="text-xl font-bold uppercase">ADAS Dashboard</p>
@@ -53,7 +56,9 @@ export const UserHeader = () => {
                     transition-colors duration-200"
         >
           <Bell className="h-4 w-4 text-[#004572] dark:text-white transition-colors duration-200" />
-          <p className="text-sm text-[#004572] dark:text-white transition-colors duration-200">Thông báo</p>
+          <p className="text-sm text-[#004572] dark:text-white transition-colors duration-200">
+            Thông báo
+          </p>
         </Button>
 
         {/* User Menu */}
@@ -81,9 +86,9 @@ export const UserHeader = () => {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            
+
             {/* Link đến Profile */}
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="cursor-pointer"
               onClick={() => router.push("/user/profile")}
             >
@@ -92,18 +97,18 @@ export const UserHeader = () => {
             </DropdownMenuItem>
 
             {/* Link đến Settings */}
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="cursor-pointer"
-              onClick={() => router.push("/user/settings")} 
+              onClick={() => router.push("/user/settings")}
             >
               <Settings className="mr-2 h-4 w-4" />
               <span>Cài đặt hệ thống</span>
             </DropdownMenuItem>
-            
+
             <DropdownMenuSeparator />
-            
+
             {/* Link Đăng xuất */}
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="cursor-pointer text-red-600 focus:text-red-600"
               onClick={handleLogout}
             >

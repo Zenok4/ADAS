@@ -47,13 +47,9 @@ export default function HandbookIntroducePage() {
               icon: Route, title: "Hỗ trợ giữ làn", color: "text-green-600",
               desc: "Cảnh báo khi xe sắp vượt qua vạch kẻ đường, hỗ trợ tài xế giữ đúng làn đường."
             }].map((f, i) => (
-<<<<<<< HEAD
-              <Card key={i} className="hover:shadow-lg bg-white dark:bg-gray-800 hover:scale-105 transition-all duration-300">
-=======
               <Card key={i} className="hover:shadow-lg transition-shadow bg-white dark:bg-gray-800">
->>>>>>> f7b0f23 (Merge branch 'nlinh' of https://github.com/Zenok4/ADAS)
-                <CardHeader className="pb-2 border-b border-gray-300 dark:border-gray-700">
-                  <div className="flex items-center gap-2 mb-1">
+                <CardHeader className="border-b border-gray-300 dark:border-gray-700">
+                  <div className="flex items-center gap-2">
                     <f.icon className={`h-6 w-6 ${f.color}`} />
                     <CardTitle className="text-lg text-gray-800 dark:text-gray-200">{f.title}</CardTitle>
                   </div>
@@ -79,6 +75,15 @@ export default function HandbookIntroducePage() {
               <p className="text-gray-400">Hình ảnh camera trực tiếp</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="py-12 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">Lưu ý</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-8">
+            Hệ thống hoạt động hạn chế trong điều kiện ánh sáng yếu, thời tiết xấu hoặc đường xá phức tạp. Vui lòng luôn tuân thủ luật lệ giao thông và giữ an toàn khi lái xe.
+          </p>
         </div>
       </section>
 

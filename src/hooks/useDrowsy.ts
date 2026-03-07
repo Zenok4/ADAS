@@ -1,6 +1,7 @@
 import { CoreFunctionService } from "@/services/coreFunctionService";
 import { useState, useEffect, useCallback } from "react";
 import { useAudioAlert } from "./useAudioAlert";
+import { useSession } from "@/context/SessionContext";
 
 type DrowsyResult = {
   code: number;
@@ -19,18 +20,25 @@ type UseDrowsyOptions = {
   videoRef: React.RefObject<HTMLVideoElement>;
   enabled?: boolean;
   intervalMs?: number;
-  soundEnabled?: boolean; // 🔊 bật/tắt cảnh báo âm thanh
+  soundEnabled?: boolean;
+  user_id?: string;
+  longitude?: number;
+  latitude?: number;
 };
 
 export function useDrowsy({
   videoRef,
   enabled = false,
   intervalMs = 1000,
+  soundEnabled = true,
+  user_id,
+  latitude,
+  longitude,
 }: UseDrowsyOptions) {
   const [result, setResult] = useState<DrowsyResult | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const { alertDrowsiness } = useAudioAlert(true); // true = bật âm thanh
+  const { alertDrowsiness } = useAudioAlert(true);
 
   // 🔹 Hàm chụp ảnh và gửi lên server
   const captureAndSend = useCallback(async () => {
@@ -47,10 +55,11 @@ export function useDrowsy({
     const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
 
     setBusy(true);
+
     try {
-      const { data } = await CoreFunctionService.drowsy(dataUrl);
+      const { data } = await CoreFunctionService.drowsy(dataUrl, user_id, latitude, longitude);
       setResult(data);
-      if (data?.data?.is_drowsy) {
+      if (data?.data?.is_drowsy && soundEnabled) {
         alertDrowsiness(`Cảnh báo buồn ngủ!`);
       }
     } catch (err) {
@@ -58,7 +67,7 @@ export function useDrowsy({
     } finally {
       setBusy(false);
     }
-  }, [videoRef]);
+  }, [videoRef, latitude, longitude, user_id, soundEnabled]);
 
   // 🔹 Reset kết quả
   const resetDrowsy = useCallback(() => setResult(null), []);

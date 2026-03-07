@@ -14,7 +14,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-// Import Custom Hooks & Components đã tách
 import { useProfile } from "@/hooks/useProfile";
 import {
   Card,
@@ -149,8 +148,6 @@ export default function ProfilePage() {
   );
 }
 
-// Helper nhỏ cho Button để đỡ lặp code trong file chính
-// Bạn có thể đưa cái này vào file Components luôn nếu muốn
 const ActionButton = ({ icon: Icon, label, onClick, variant }: any) => {
   const baseStyle =
     "w-full px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors";

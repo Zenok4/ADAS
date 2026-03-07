@@ -85,4 +85,9 @@ export const ApiUrls = {
     lane: "/lane/predict",
     object: "/object/predict",
   },
+
+  trip: {
+    list: "/trip/",
+    summary: "/trip/summary",
+  },
 } as const;

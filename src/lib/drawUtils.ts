@@ -27,9 +27,29 @@ export const drawLanes = (
     const [x1, y1, x2, y2] = lane.box;
     const isBroken = lane.class_name.includes("broken");
 
-    ctx.strokeStyle = isBroken ? "#00FFFF" : "#00FF00";
+    // Chọn màu: Xanh cyan cho vạch đứt, Xanh lá cho vạch liền
+    const color = isBroken ? "#00FFFF" : "#00FF00";
+
+    // 1. Vẽ khung hình chữ nhật cho làn đường
+    ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+
+    // 2. Vẽ nhãn Class Name
+    ctx.font = "bold 12px Arial";
+    const text = lane.class_name;
+    const textWidth = ctx.measureText(text).width;
+
+    // Vẽ nền cho chữ để dễ đọc hơn trên nền đường xám
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = color;
+    // Vẽ khung nền nhỏ phía trên box
+    ctx.fillRect(x1, y1 - 18, textWidth + 8, 18);
+    ctx.globalAlpha = 1.0;
+
+    // Vẽ chữ (màu đen để tương phản với nền sáng)
+    ctx.fillStyle = "#000000";
+    ctx.fillText(text, x1 + 4, y1 - 5);
   });
 };
 

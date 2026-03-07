@@ -1,7 +1,6 @@
-// components/profile/ProfileComponents.tsx
 import { Loader2, AlertCircle } from "lucide-react";
 
-// 1. COMPONENT CARD (Chỉnh màu nền Darkmode ở đây)
+// 1. COMPONENT CARD
 export const Card = ({
   children,
   className = "",
@@ -16,7 +15,7 @@ export const Card = ({
   </div>
 );
 
-// 2. COMPONENT TEXT TIÊU ĐỀ (Chỉnh màu chữ Darkmode ở đây)
+// 2. COMPONENT TEXT TIÊU ĐỀ
 export const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
     {children}

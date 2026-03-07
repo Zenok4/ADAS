@@ -14,7 +14,7 @@ export default function HandbookGuidePage() {
       content: (
         <div className="space-y-2 text-gray-700 dark:text-gray-300">
           <p><strong>1. Khởi động hệ thống ADAS</strong><br />
-            Truy cập trang <strong>Bảng điều khiển</strong> hệ thống sẽ kiểm tra camera, cảm biến và GPS.</p>
+            Truy cập trang <strong>Bảng điều khiển</strong> hệ thống sẽ kiểm tra camera và GPS.</p>
           <p><strong>2. Giao diện hiển thị</strong><br />
             Thanh trạng thái hiển thị kết nối camera, GPS, cảm biến. Biểu tượng các chức năng cảnh báo: mắt, buồn ngủ, làn đường, vật cản.</p>
           <p><strong>3. Điều chỉnh âm lượng cảnh báo</strong><br />
@@ -96,7 +96,7 @@ export default function HandbookGuidePage() {
                   onClick={() => setExpandedId(expandedId === guide.id ? null : guide.id)}
                 >
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold mb-2 transition-colors text-gray-800 dark:text-gray-200 hover:text-blue-600">
+                    <h3 className="text-lg font-bold transition-colors text-gray-800 dark:text-gray-200 hover:text-blue-600">
                       {guide.title}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300">{guide.description}</p>

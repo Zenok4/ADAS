@@ -4,11 +4,12 @@ export interface Detection {
   box: number[];
   class_name: string;
   confidence: number;
+  speed?: number; // Hỗ trợ hiển thị tốc độ
 }
 
 // 1. Helper chọn màu biển báo
 export const getBoxColor = (className: string): string => {
-  const name = className.toLowerCase();
+  const name = (className || "").toLowerCase();
   if (name.includes("phụ")) return "#a020f0";
   if (name.includes("nguy hiểm") || name.includes("cảnh báo")) return "#ff0000";
   if (name.includes("hiệu lệnh")) return "#007bff";
@@ -17,110 +18,115 @@ export const getBoxColor = (className: string): string => {
   return "#ffff00";
 };
 
-// 2. Helper vẽ làn đường
+// 2. Helper vẽ Làn đường (Hỗ trợ tiếng Việt)
 export const drawLanes = (
   ctx: CanvasRenderingContext2D,
-  lanes: Detection[]
-) => {
-  lanes.forEach((lane) => {
-    if (!lane.box || lane.box.length !== 4) return;
-    const [x1, y1, x2, y2] = lane.box;
-    const isBroken = lane.class_name.includes("broken");
-
-    // Chọn màu: Xanh cyan cho vạch đứt, Xanh lá cho vạch liền
-    const color = isBroken ? "#00FFFF" : "#00FF00";
-
-    // 1. Vẽ khung hình chữ nhật cho làn đường
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-
-    // 2. Vẽ nhãn Class Name
-    ctx.font = "bold 12px Arial";
-    const text = lane.class_name;
-    const textWidth = ctx.measureText(text).width;
-
-    // Vẽ nền cho chữ để dễ đọc hơn trên nền đường xám
-    ctx.globalAlpha = 0.6;
-    ctx.fillStyle = color;
-    // Vẽ khung nền nhỏ phía trên box
-    ctx.fillRect(x1, y1 - 18, textWidth + 8, 18);
-    ctx.globalAlpha = 1.0;
-
-    // Vẽ chữ (màu đen để tương phản với nền sáng)
-    ctx.fillStyle = "#000000";
-    ctx.fillText(text, x1 + 4, y1 - 5);
-  });
-};
-
-// 3. Helper vẽ vật cản (MỚI THÊM)
-export const drawObjects = (
-  ctx: CanvasRenderingContext2D,
-  objects: Detection[]
+  lanes: Detection[],
 ) => {
   const width = ctx.canvas.width;
-  const height = ctx.canvas.height;
+  const reverseScale = 1 / Math.min(1, 640 / width);
 
-  objects.forEach((obj) => {
-    if (!obj.box || obj.box.length !== 4) return;
+  lanes.forEach((lane) => {
+    if (!lane.box || lane.box.length !== 4) return;
 
-    let [b1, b2, b3, b4] = obj.box;
+    // Bù trừ tỷ lệ scale
+    let [b1, b2, b3, b4] = lane.box.map((v) => v * reverseScale);
     let x, y, w, h;
 
-    // --- LOGIC TỰ ĐỘNG SỬA TỌA ĐỘ ---
-
-    // 1. Kiểm tra nếu tọa độ đang là dạng chuẩn hóa (0.0 -> 1.0)
-    // Nếu giá trị lớn nhất < 2, chắc chắn là normalized -> Nhân với kích thước thật
-    if (b1 < 2 && b3 < 2 && b2 < 2 && b4 < 2) {
-      b1 *= width;
-      b2 *= height;
-      b3 *= width;
-      b4 *= height;
-    }
-
-    // 2. Kiểm tra định dạng: Là [x1, y1, x2, y2] hay [x, y, w, h]?
-    // Nếu b3 (số thứ 3) > b1 (số thứ 1), khả năng cao là x2 (tọa độ điểm cuối)
-    // Cách tính width an toàn:
+    // Linh hoạt định dạng tọa độ
     if (b3 > b1) {
-      // Dạng [x1, y1, x2, y2]
       x = b1;
       y = b2;
       w = b3 - b1;
       h = b4 - b2;
     } else {
-      // Dạng [x, y, w, h]
       x = b1;
       y = b2;
       w = b3;
       h = b4;
     }
 
-    // --- VẼ KHUNG ---
-    const name = obj.class_name.toLowerCase();
-    let color = "#FFFF00"; // Vàng
-    if (name.includes("person") || name.includes("nguoi"))
-      color = "#FF0000"; // Đỏ
+    const classNameStr = lane.class_name || "Làn đường";
+    const nameLower = classNameStr.toLowerCase();
+
+    // Đổi màu thông minh theo từ khóa tiếng Việt
+    let color = "#00FF00"; // Mặc định xanh lá
+    if (nameLower.includes("đứt") || nameLower.includes("broken"))
+      color = "#00FFFF"; // Cyan cho nét đứt
+    else if (nameLower.includes("hướng") || nameLower.includes("mũi tên"))
+      color = "#FFA500"; // Cam cho hướng đi
+
+    // Vẽ khung
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x, y, w, h);
+
+    // Vẽ nền chữ
+    ctx.font = "bold 14px Arial";
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y - 22, ctx.measureText(classNameStr).width + 10, 22);
+    ctx.globalAlpha = 1.0;
+
+    // Vẽ chữ
+    ctx.fillStyle = "#000000";
+    ctx.fillText(classNameStr, x + 5, y - 6);
+  });
+};
+
+// 3. Helper vẽ vật cản (Hiển thị km/h)
+export const drawObjects = (
+  ctx: CanvasRenderingContext2D,
+  objects: Detection[],
+) => {
+  const width = ctx.canvas.width;
+  const reverseScale = 1 / Math.min(1, 640 / width);
+
+  objects.forEach((obj) => {
+    if (!obj.box || obj.box.length !== 4) return;
+
+    let [b1, b2, b3, b4] = obj.box.map((v) => v * reverseScale);
+    let x, y, w, h;
+
+    // Linh hoạt định dạng tọa độ
+    if (b3 > b1) {
+      x = b1;
+      y = b2;
+      w = b3 - b1;
+      h = b4 - b2;
+    } else {
+      x = b1;
+      y = b2;
+      w = b3;
+      h = b4;
+    }
+
+    const classNameStr = obj.class_name || "Vật cản";
+    const name = classNameStr.toLowerCase();
+
+    let color = "#FFFF00";
+    if (name.includes("person") || name.includes("nguoi")) color = "#FF0000";
     else if (
       ["car", "truck", "bus", "xe", "o to"].some((v) => name.includes(v))
     )
-      color = "#00FFFF"; // Cyan
+      color = "#00FFFF";
 
     ctx.strokeStyle = color;
     ctx.lineWidth = 3;
     ctx.strokeRect(x, y, w, h);
 
-    // --- VẼ CHỮ (Đảm bảo không bị mất) ---
+    // Vẽ nền chữ và hiển thị km/h
     ctx.fillStyle = color;
-    ctx.font = "bold 16px Arial"; // Chữ to hơn chút
-    const text = `${obj.class_name} ${Math.round(obj.confidence * 100)}%`;
-    const textWidth = ctx.measureText(text).width;
+    ctx.font = "bold 16px Arial";
 
-    // Vẽ nền cho chữ dễ đọc
+    const speedValue = obj.speed !== undefined ? Math.round(obj.speed) : 0;
+    const text = `${classNameStr} ${speedValue}km/h`;
+
     ctx.globalAlpha = 0.7;
-    ctx.fillRect(x, y - 25, textWidth + 10, 25);
+    ctx.fillRect(x, y - 25, ctx.measureText(text).width + 10, 25);
     ctx.globalAlpha = 1.0;
 
-    ctx.fillStyle = "#000000"; // Chữ đen trên nền màu
+    ctx.fillStyle = "#000000";
     ctx.fillText(text, x + 5, y - 7);
   });
 };
@@ -128,27 +134,53 @@ export const drawObjects = (
 // 4. Helper vẽ biển báo
 export const drawSigns = (
   ctx: CanvasRenderingContext2D,
-  signs: Detection[]
+  signs: Detection[],
 ) => {
+  const width = ctx.canvas.width;
+  const reverseScale = 1 / Math.min(1, 640 / width);
+
   signs.forEach((det) => {
     if (!det.box || det.box.length !== 4) return;
-    const [x1, y1, x2, y2] = det.box;
-    const color = getBoxColor(det.class_name);
+
+    let [b1, b2, b3, b4] = det.box.map((v) => v * reverseScale);
+    let x, y, w, h;
+
+    // Linh hoạt định dạng tọa độ
+    if (b3 > b1) {
+      x = b1;
+      y = b2;
+      w = b3 - b1;
+      h = b4 - b2;
+    } else {
+      x = b1;
+      y = b2;
+      w = b3;
+      h = b4;
+    }
+
+    const classNameStr = det.class_name || "Biển báo";
+    const color = getBoxColor(classNameStr);
 
     ctx.strokeStyle = color;
     ctx.lineWidth = 3;
-    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+    ctx.strokeRect(x, y, w, h);
 
     ctx.fillStyle = color;
     ctx.font = "bold 14px Arial";
-    ctx.fillText(`${det.class_name}`, x1 + 5, y1 - 7);
+
+    ctx.globalAlpha = 0.7;
+    ctx.fillRect(x, y - 22, ctx.measureText(classNameStr).width + 10, 22);
+    ctx.globalAlpha = 1.0;
+
+    ctx.fillStyle = "#000000";
+    ctx.fillText(classNameStr, x + 5, y - 6);
   });
 };
 
 // 5. Helper chụp ảnh
 export const captureVideoFrame = (
   video: HTMLVideoElement,
-  canvas: HTMLCanvasElement
+  canvas: HTMLCanvasElement,
 ): string | null => {
   if (video.videoWidth === 0 || video.videoHeight === 0) return null;
 

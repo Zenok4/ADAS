@@ -4,38 +4,53 @@ export const useCamera = (videoRef: React.RefObject<HTMLVideoElement>) => {
   const [camReady, setCamReady] = useState(false);
   const [camError, setCamError] = useState<string | null>(null);
 
-  // 🔹 Mở camera
   const openCamera = useCallback(
     async (preferred: "ivcam" | "webcam" = "webcam") => {
       try {
-        // Lấy danh sách thiết bị
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter((d) => d.kind === "videoinput");
+        let devices = await navigator.mediaDevices.enumerateDevices();
+        let videoDevices = devices.filter((d) => d.kind === "videoinput");
 
         if (videoDevices.length === 0)
           throw new Error("Không tìm thấy camera nào.");
 
-        let selectedCam;
-
-        // Chọn camera theo preference
-        if (preferred === "ivcam") {
-          selectedCam =
-            videoDevices.find((d) =>
-              d.label.toLowerCase().includes("ivcam")
-            ) || videoDevices[0];
-        } else {
-          selectedCam =
-            videoDevices.find(
-              (d) =>
-                d.label.toLowerCase().includes("integrated") ||
-                d.label.toLowerCase().includes("webcam") ||
-                d.label.toLowerCase().includes("user facing")
-            ) ||
-            videoDevices.find((d) => !d.label.toLowerCase().includes("ivcam")) ||
-            videoDevices[0];
+        // Ép lấy label thật nếu trình duyệt đang ẩn tên do chưa cấp quyền
+        if (videoDevices[0].label === "") {
+          const tempStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+          devices = await navigator.mediaDevices.enumerateDevices();
+          videoDevices = devices.filter((d) => d.kind === "videoinput");
+          tempStream.getTracks().forEach((track) => track.stop());
         }
 
-        // Lấy stream video
+        console.log(
+          `[Yêu cầu mở: ${preferred}] Camera hiện có:`,
+          videoDevices.map((d) => d.label),
+        );
+
+        let selectedCam;
+        if (preferred === "ivcam") {
+          // Bắt buộc tìm iVCam cho bên phải
+          selectedCam = videoDevices.find((d) =>
+            d.label.toLowerCase().includes("ivcam"),
+          );
+          if (!selectedCam) {
+            throw new Error(
+              "Không tìm thấy iVCam! Vui lòng bật kết nối iVCam trên máy tính.",
+            );
+          }
+        } else {
+          // Bắt buộc dùng Webcam mặc định cho bên trái (Loại trừ iVCam)
+          selectedCam = videoDevices.find(
+            (d) => !d.label.toLowerCase().includes("ivcam"),
+          );
+          if (!selectedCam) {
+            throw new Error(
+              "Không tìm thấy Webcam mặc định! (Máy chỉ nhận iVCam)",
+            );
+          }
+        }
+
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { deviceId: { exact: selectedCam.deviceId } },
         });
@@ -47,20 +62,20 @@ export const useCamera = (videoRef: React.RefObject<HTMLVideoElement>) => {
           setCamError(null);
         }
       } catch (err: any) {
-        console.error("Camera error:", err);
-        setCamError("Không mở được camera: " + (err.message || err));
+        console.error(`Lỗi mở ${preferred}:`, err);
+        setCamError(err.message || "Lỗi camera không xác định");
         setCamReady(false);
       }
     },
-    [videoRef]
+    [videoRef],
   );
 
-  // 🔹 Dừng camera
   const stopCamera = useCallback(() => {
     const stream = videoRef.current?.srcObject as MediaStream | null;
     stream?.getTracks().forEach((track) => track.stop());
     if (videoRef.current) videoRef.current.srcObject = null;
     setCamReady(false);
+    setCamError(null);
   }, [videoRef]);
 
   return { camReady, camError, openCamera, stopCamera };

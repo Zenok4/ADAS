@@ -154,17 +154,17 @@ export default function DashboardPage() {
     ? drowsyState === "LEFT"
       ? { text: "Ngủ gật Nghiêng trái", cls: "bg-red-600 animate-pulse" }
       : drowsyState === "RIGHT"
-      ? { text: "Ngủ gật Nghiêng phải", cls: "bg-red-600 animate-pulse" }
-      : drowsyState === "CENTER"
-      ? { text: "Tài xế ngủ gật", cls: "bg-red-600 animate-pulse" }
-      : drowsyState === "DROWSY"
-      ? { text: "Buồn ngủ", cls: "bg-yellow-500" }
-      : drowsyState === "NO_FACE"
-      ? { text: "Không nhận diện khuôn mặt", cls: "bg-gray-500" }
-      : { text: "Tài xế tỉnh táo", cls: "bg-green-600" }
+        ? { text: "Ngủ gật Nghiêng phải", cls: "bg-red-600 animate-pulse" }
+        : drowsyState === "CENTER"
+          ? { text: "Tài xế ngủ gật", cls: "bg-red-600 animate-pulse" }
+          : drowsyState === "DROWSY"
+            ? { text: "Buồn ngủ", cls: "bg-yellow-500" }
+            : drowsyState === "NO_FACE"
+              ? { text: "Không nhận diện khuôn mặt", cls: "bg-gray-500" }
+              : { text: "Tài xế tỉnh táo", cls: "bg-green-600" }
     : drowsyBusy
-    ? { text: "Đang xử lý...", cls: "bg-blue-600" }
-    : null;
+      ? { text: "Đang xử lý...", cls: "bg-blue-600" }
+      : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors duration-300">

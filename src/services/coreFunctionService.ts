@@ -3,17 +3,19 @@ import api from "@/lib/api";
 import { ApiUrls } from "@/type/apiUrls";
 import { randomBytes } from "crypto";
 
+const session_id = randomBytes(16).toString("hex") || "0"; // Tạo session_id duy nhất cho mỗi phiên làm việc này.
+
 export const CoreFunctionService = {
   drowsy: (
     imageBase64: string,
     user_id?: string,
     latitude?: number,
-    longitude?: number
+    longitude?: number,
   ) => {
     // gửi JSON: { image_base64: "data:image/jpeg;base64,..." }
     return api.post(ApiUrls.core_functions.drowsy, {
       image_base64: imageBase64,
-      session_id: randomBytes(16).toString("hex"),
+      session_id: session_id,
       user_id: user_id,
       latitude: latitude,
       longitude: longitude,
@@ -24,7 +26,7 @@ export const CoreFunctionService = {
     imageBase64: string,
     user_id?: string,
     latitude?: number,
-    longitude?: number
+    longitude?: number,
   ) => {
     return await api.post(ApiUrls.core_functions.sign, {
       image_base64: imageBase64,
@@ -38,7 +40,7 @@ export const CoreFunctionService = {
     imageBase64: string,
     user_id?: string,
     latitude?: number,
-    longitude?: number
+    longitude?: number,
   ) => {
     return await api.post(ApiUrls.core_functions.lane, {
       image_base64: imageBase64,
@@ -52,7 +54,7 @@ export const CoreFunctionService = {
     imageBase64: string,
     user_id?: string,
     latitude?: number,
-    longitude?: number
+    longitude?: number,
   ) => {
     return await api.post(ApiUrls.core_functions.object, {
       image_base64: imageBase64,

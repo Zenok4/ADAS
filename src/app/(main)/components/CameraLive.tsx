@@ -35,11 +35,7 @@ export default function CameraLive({
   longitude,
 }: CameraLiveProps) {
   /* ================= CONFIG ================= */
-  const FREQUENCY_MAP = {
-    high: 330,
-    medium: 1000,
-    low: 2000,
-  };
+  const FREQUENCY_MAP = { high: 330, medium: 1000, low: 2000 };
 
   /* ================= REFS ================= */
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -54,11 +50,7 @@ export default function CameraLive({
   const { openCamera, stopCamera, camError } = useCamera(
     videoRef as React.RefObject<HTMLVideoElement>,
   );
-  const {
-    alertDrowsiness: playAlert,
-    warnObstacle,
-    announceTrafficSign,
-  } = useAudioAlert(soundEnabled);
+  const { warnObstacle, announceTrafficSign } = useAudioAlert(soundEnabled);
 
   /* ================= STATE ================= */
   const [detections, setDetections] = useState<Detection[]>([]);
@@ -74,15 +66,12 @@ export default function CameraLive({
         if (saved) {
           const parsed = JSON.parse(saved);
           const freq = parsed.alert?.frequency as keyof typeof FREQUENCY_MAP;
-          if (freq && FREQUENCY_MAP[freq]) {
-            setIntervalMs(FREQUENCY_MAP[freq]);
-          }
+          if (freq && FREQUENCY_MAP[freq]) setIntervalMs(FREQUENCY_MAP[freq]);
         }
       } catch {
-        console.warn("Không đọc được settings, dùng mặc định");
+        console.warn("Không đọc được settings");
       }
     };
-
     loadSettings();
     window.addEventListener("adas_settings_updated", loadSettings);
     return () =>
@@ -91,9 +80,8 @@ export default function CameraLive({
 
   /* ================= CAMERA CONTROL ================= */
   useEffect(() => {
-    if (startCamera) {
-      openCamera("ivcam");
-    } else {
+    if (startCamera) openCamera("ivcam");
+    else {
       stopCamera();
       setDetections([]);
       setLaneData([]);
@@ -104,13 +92,9 @@ export default function CameraLive({
 
   /* ================= AI PIPELINE ================= */
   const sendFrameToAI = () => {
-    if (!startCamera) return;
-    if (!enableSign && !enableLane && !enableObject) return;
-    if (!videoRef.current || !canvasRef.current) return;
-
+    if (!startCamera || !videoRef.current || !canvasRef.current) return;
     const base64 = captureVideoFrame(videoRef.current, canvasRef.current);
     if (!base64) return;
-
     const onlyBase64 = base64.replace(
       /^data:image\/(png|jpeg|jpg);base64,/,
       "",
@@ -121,29 +105,17 @@ export default function CameraLive({
       loadingSign.current = true;
       CoreFunctionService.sign(onlyBase64, userId || "", latitude, longitude)
         .then((res) => {
-          // 1. HÀM QUÉT TỰ ĐỘNG BẤT CHẤP TÊN BIẾN
-          const extractArray = (obj: any): any[] => {
-            if (!obj) return [];
-            if (Array.isArray(obj)) return obj; // Nếu bản thân nó là mảng -> Lụm
-            if (typeof obj === "object") {
-              // Tìm ở tầng hiện tại xem có key nào là mảng không
-              for (const key in obj) {
-                if (Array.isArray(obj[key])) return obj[key]; // Lụm ngay
-              }
-              // Nếu không có, đào sâu xuống các tầng dưới
-              for (const key in obj) {
-                const found = extractArray(obj[key]);
-                if (found.length > 0) return found;
-              }
-            }
-            return [];
-          };
+          const d = res?.data?.data?.data || res?.data?.data || res?.data || {};
+          const rawSigns = Array.isArray(d.detections)
+            ? d.detections
+            : Array.isArray(d.signs)
+              ? d.signs
+              : Array.isArray(d.objects)
+                ? d.objects
+                : Array.isArray(d.data)
+                  ? d.data
+                  : [];
 
-          // Chạy hàm quét
-          const rawSigns = extractArray(res?.data);
-          console.log("👉 MẢNG BIỂN BÁO TÌM ĐƯỢC:", rawSigns);
-
-          // 2. CHUẨN HÓA DỮ LIỆU
           const formattedSigns = rawSigns.map((s: any) => ({
             ...s,
             class_name: s.class_name || s.label || s.name || "Biển báo",
@@ -156,25 +128,14 @@ export default function CameraLive({
                   : 1,
           }));
 
-          // 3. LỌC TỌA ĐỘ HỢP LỆ VÀ HIỂN THỊ
           const signsOnly = formattedSigns.filter(
             (item) => Array.isArray(item.box) && item.box.length === 4,
           );
-
           setDetections(signsOnly);
-
-          // 4. PHÁT ÂM THANH
-          if (signsOnly.length > 0) {
-            const best = signsOnly.reduce((a: any, b: any) =>
-              (a.confidence || 0) > (b.confidence || 0) ? a : b,
-            );
-            announceTrafficSign(best.class_name);
-          }
+          if (signsOnly.length > 0)
+            announceTrafficSign(signsOnly[0].class_name);
         })
-        .catch(console.error)
-        .finally(() => {
-          loadingSign.current = false;
-        });
+        .finally(() => (loadingSign.current = false));
     }
 
     /* ---------- LANE ---------- */
@@ -187,21 +148,17 @@ export default function CameraLive({
         longitude,
       )
         .then((res) => {
-          // Khám phá các tầng JSON
-          const d = res?.data?.data || res?.data || {};
-
-          // QUÉT MẠNH: Thêm trường 'detections' theo đúng cấu trúc JSON mới của Backend
+          const d = res?.data?.data?.data || res?.data?.data || res?.data || {};
           const rawLanes = Array.isArray(d.detections)
-            ? d.detections // Trúng phóc cấu trúc mới
-            : Array.isArray(d.data)
-              ? d.data
-              : Array.isArray(d.lanes)
-                ? d.lanes
-                : Array.isArray(d)
-                  ? d
+            ? d.detections
+            : Array.isArray(d.lanes)
+              ? d.lanes
+              : Array.isArray(d.data)
+                ? d.data
+                : Array.isArray(d.objects)
+                  ? d.objects
                   : [];
 
-          // Chuẩn hóa tên và tọa độ
           const formattedLanes = rawLanes.map((l: any) => ({
             ...l,
             class_name: l.class_name || l.label || l.name || "Làn đường",
@@ -214,17 +171,12 @@ export default function CameraLive({
                   : 1,
           }));
 
-          // Lọc kết quả hợp lệ
           const validLanes = formattedLanes.filter(
             (item) => Array.isArray(item.box) && item.box.length === 4,
           );
-
           setLaneData(validLanes);
         })
-        .catch(console.error)
-        .finally(() => {
-          loadingLane.current = false;
-        });
+        .finally(() => (loadingLane.current = false));
     }
 
     /* ---------- OBJECT ---------- */
@@ -232,24 +184,49 @@ export default function CameraLive({
       loadingObject.current = true;
       CoreFunctionService.object(onlyBase64, userId || "", latitude, longitude)
         .then((res) => {
-          const rawObjs = res?.data?.data?.data?.objects || [];
+          const d = res?.data?.data?.data || res?.data?.data || res?.data || {};
+          const rawObjs = Array.isArray(d.objects)
+            ? d.objects
+            : Array.isArray(d.detections)
+              ? d.detections
+              : Array.isArray(d.data)
+                ? d.data
+                : [];
 
-          // MAP QUAN TRỌNG: Đổi label -> class_name và bbox -> box
           const formattedObjs = rawObjs.map((o: any) => ({
             ...o,
-            class_name: o.label,
-            box: o.bbox,
+            class_name: o.class_name || o.label || o.name || "Vật cản",
+            box: o.bbox || o.box || o.bounding_box || o.coordinates,
+            confidence:
+              o.confidence !== undefined
+                ? o.confidence
+                : o.score !== undefined
+                  ? o.score
+                  : 1,
+
+            // DỮ LIỆU TỐC ĐỘ / KHOẢNG CÁCH / VA CHẠM THỰC TẾ TỪ BACKEND
+            distance: o.distance,
+            speed: o.speed,
+            warning_level: o.warning_level,
+            warning_message: o.warning_message,
           }));
 
-          setObjectData(formattedObjs);
+          const validObjs = formattedObjs.filter(
+            (item) => Array.isArray(item.box) && item.box.length === 4,
+          );
+          setObjectData(validObjs);
 
-          const danger = formattedObjs.find((o: any) => o.confidence > 0.4);
-          if (danger) warnObstacle(`Chú ý, có ${danger.class_name}`);
+          // Lọc ra các cảnh báo nguy hiểm mức High để phát âm thanh
+          const highDanger = validObjs.find(
+            (o) => o.warning_level && o.warning_level.toLowerCase() === "high",
+          );
+          if (highDanger) {
+            warnObstacle(
+              `Nguy hiểm, coi chừng va chạm ${highDanger.class_name}`,
+            );
+          }
         })
-        .catch(console.error)
-        .finally(() => {
-          loadingObject.current = false;
-        });
+        .finally(() => (loadingObject.current = false));
     }
   };
 
@@ -268,14 +245,12 @@ export default function CameraLive({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
     const onLoaded = () => {
       if (overlayRef.current) {
         overlayRef.current.width = video.videoWidth;
         overlayRef.current.height = video.videoHeight;
       }
     };
-
     video.addEventListener("loadedmetadata", onLoaded);
     return () => video.removeEventListener("loadedmetadata", onLoaded);
   }, []);
@@ -285,18 +260,29 @@ export default function CameraLive({
     const canvas = overlayRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     if (enableLane) drawLanes(ctx, laneData);
     if (enableObject) drawObjects(ctx, objectData);
     if (enableSign) drawSigns(ctx, detections);
   }, [detections, laneData, objectData, enableSign, enableLane, enableObject]);
 
-  /* ================= UI ================= */
+  /* ================= TRÍCH XUẤT STATE CẢNH BÁO ================= */
+  // CHỈ lấy đối tượng có warning_level là "high"
+  const dangerObj = objectData.find(
+    (o) => o.warning_level && o.warning_level.toLowerCase() === "high",
+  );
+
+  const isDanger = !!dangerObj;
+  const warningLevel = dangerObj?.warning_level?.toLowerCase();
+  const warningMsg =
+    dangerObj?.warning_message || "CHÚ Ý: CÓ VẬT CẢN PHÍA TRƯỚC!";
+
+  /* ================= UI ĐỒNG BỘ VỚI CHỨC NĂNG CẢNH BÁO BUỒN NGỦ ================= */
   return (
     <div
-      className={`${className} relative overflow-hidden bg-black rounded-lg`}
+      className={`${className} relative overflow-hidden bg-black rounded-lg transition-all duration-300 ${
+        warningLevel === "high" ? "ring-4 ring-red-600" : ""
+      }`}
     >
       <video
         ref={videoRef}
@@ -311,6 +297,15 @@ export default function CameraLive({
         className="absolute inset-0 w-full h-full pointer-events-none"
       />
 
+      {/* BẢNG CẢNH BÁO TEXT GỌN GÀNG Ở TRUNG TÂM PHÍA TRÊN */}
+      {isDanger && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 pointer-events-none w-max">
+          <div className="font-black px-6 py-2 rounded-md shadow-lg text-white bg-red-600">
+            {warningMsg}
+          </div>
+        </div>
+      )}
+
       {camError && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
           <span className="text-red-500 font-bold p-4 text-center">
@@ -319,7 +314,7 @@ export default function CameraLive({
         </div>
       )}
 
-      <div className="absolute bottom-2 left-2 flex flex-col gap-1 pointer-events-none">
+      <div className="absolute bottom-2 left-2 flex flex-col gap-1 pointer-events-none z-20">
         {startCamera && enableSign && detections.length > 0 && (
           <div className="bg-yellow-500/90 text-black font-bold p-1 px-2 rounded text-xs">
             {detections.length} Biển báo

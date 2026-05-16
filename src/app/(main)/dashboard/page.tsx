@@ -131,19 +131,38 @@ export default function DashboardPage() {
   const drowsyState = (() => {
     if (!drowsyResult) return null;
 
-    if (drowsyMessage.includes("NGU GUC SANG TRAI")) {
+    const message = drowsyResult?.data?.message?.toUpperCase?.() || "";
+
+    console.log("DROWSY MESSAGE:", message);
+
+    // Ngủ gục sang trái
+    if (
+      message.includes("SANG TRAI") ||
+      message.includes("NGU GUC SANG TRAI")
+    ) {
       return "LEFT";
     }
-    if (drowsyMessage.includes("NGU GUC SANG PHAI")) {
+
+    // Ngủ gục sang phải
+    if (
+      message.includes("SANG PHAI") ||
+      message.includes("NGU GUC SANG PHAI")
+    ) {
       return "RIGHT";
     }
-    if (drowsyMessage.includes("NGU GAT")) {
+
+    // Ngủ gật chính diện
+    if (message.includes("NGU GAT") || message.includes("NGU GUC")) {
       return "CENTER";
     }
-    if (drowsyMessage.includes("Drowsy")) {
+
+    // Buồn ngủ nhẹ
+    if (message.includes("DROWSY")) {
       return "DROWSY";
     }
-    if (drowsyMessage.includes("FOCUS")) {
+
+    // Không thấy mặt
+    if (message.includes("FOCUS") || message.includes("KHONG NHAN DIEN")) {
       return "NO_FACE";
     }
 

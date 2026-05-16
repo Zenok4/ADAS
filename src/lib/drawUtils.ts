@@ -4,10 +4,13 @@ export interface Detection {
   box: number[];
   class_name: string;
   confidence: number;
-  speed?: number; // Hỗ trợ hiển thị tốc độ
+  speed?: number;
+  distance?: number;
+  warning_level?: string; // <-- THÊM MỚI: Mức độ cảnh báo
+  warning_message?: string; // <-- THÊM MỚI: Câu cảnh báo
 }
 
-// 1. Helper chọn màu biển báo
+// 1. Helper chọn màu Biển báo
 export const getBoxColor = (className: string): string => {
   const name = (className || "").toLowerCase();
   if (name.includes("phụ")) return "#a020f0";
@@ -18,7 +21,7 @@ export const getBoxColor = (className: string): string => {
   return "#ffff00";
 };
 
-// 2. Helper vẽ Làn đường (Hỗ trợ tiếng Việt)
+// 2. Helper vẽ Làn đường
 export const drawLanes = (
   ctx: CanvasRenderingContext2D,
   lanes: Detection[],
@@ -29,11 +32,9 @@ export const drawLanes = (
   lanes.forEach((lane) => {
     if (!lane.box || lane.box.length !== 4) return;
 
-    // Bù trừ tỷ lệ scale
     let [b1, b2, b3, b4] = lane.box.map((v) => v * reverseScale);
     let x, y, w, h;
 
-    // Linh hoạt định dạng tọa độ
     if (b3 > b1) {
       x = b1;
       y = b2;
@@ -49,32 +50,28 @@ export const drawLanes = (
     const classNameStr = lane.class_name || "Làn đường";
     const nameLower = classNameStr.toLowerCase();
 
-    // Đổi màu thông minh theo từ khóa tiếng Việt
-    let color = "#00FF00"; // Mặc định xanh lá
+    let color = "#00FF00";
     if (nameLower.includes("đứt") || nameLower.includes("broken"))
-      color = "#00FFFF"; // Cyan cho nét đứt
+      color = "#00FFFF";
     else if (nameLower.includes("hướng") || nameLower.includes("mũi tên"))
-      color = "#FFA500"; // Cam cho hướng đi
+      color = "#FFA500";
 
-    // Vẽ khung
     ctx.strokeStyle = color;
     ctx.lineWidth = 3;
     ctx.strokeRect(x, y, w, h);
 
-    // Vẽ nền chữ
     ctx.font = "bold 14px Arial";
     ctx.globalAlpha = 0.7;
     ctx.fillStyle = color;
     ctx.fillRect(x, y - 22, ctx.measureText(classNameStr).width + 10, 22);
     ctx.globalAlpha = 1.0;
 
-    // Vẽ chữ
     ctx.fillStyle = "#000000";
     ctx.fillText(classNameStr, x + 5, y - 6);
   });
 };
 
-// 3. Helper vẽ vật cản (Hiển thị km/h)
+// 3. Helper vẽ Vật cản (Đã cập nhật Báo động Đỏ)
 export const drawObjects = (
   ctx: CanvasRenderingContext2D,
   objects: Detection[],
@@ -88,7 +85,6 @@ export const drawObjects = (
     let [b1, b2, b3, b4] = obj.box.map((v) => v * reverseScale);
     let x, y, w, h;
 
-    // Linh hoạt định dạng tọa độ
     if (b3 > b1) {
       x = b1;
       y = b2;
@@ -104,23 +100,28 @@ export const drawObjects = (
     const classNameStr = obj.class_name || "Vật cản";
     const name = classNameStr.toLowerCase();
 
+    // ĐỔI MÀU NẾU NGUY HIỂM CAO
     let color = "#FFFF00";
-    if (name.includes("person") || name.includes("nguoi")) color = "#FF0000";
-    else if (
+    if (obj.warning_level && obj.warning_level.toLowerCase() === "high") {
+      color = "#FF0000"; // Đỏ rực nếu cảnh báo mức HIGH
+    } else if (name.includes("person") || name.includes("nguoi")) {
+      color = "#FF9900"; // Cam cho người
+    } else if (
       ["car", "truck", "bus", "xe", "o to"].some((v) => name.includes(v))
-    )
+    ) {
       color = "#00FFFF";
+    }
 
     ctx.strokeStyle = color;
     ctx.lineWidth = 3;
     ctx.strokeRect(x, y, w, h);
 
-    // Vẽ nền chữ và hiển thị km/h
     ctx.fillStyle = color;
     ctx.font = "bold 16px Arial";
 
     const speedValue = obj.speed !== undefined ? Math.round(obj.speed) : 0;
-    const text = `${classNameStr} ${speedValue}km/h`;
+    let text = `${classNameStr} ${speedValue}km/h`;
+    if (obj.distance !== undefined) text += ` - ${Math.round(obj.distance)}m`;
 
     ctx.globalAlpha = 0.7;
     ctx.fillRect(x, y - 25, ctx.measureText(text).width + 10, 25);
@@ -131,7 +132,7 @@ export const drawObjects = (
   });
 };
 
-// 4. Helper vẽ biển báo
+// 4. Helper vẽ Biển báo
 export const drawSigns = (
   ctx: CanvasRenderingContext2D,
   signs: Detection[],
@@ -145,7 +146,6 @@ export const drawSigns = (
     let [b1, b2, b3, b4] = det.box.map((v) => v * reverseScale);
     let x, y, w, h;
 
-    // Linh hoạt định dạng tọa độ
     if (b3 > b1) {
       x = b1;
       y = b2;
@@ -167,7 +167,6 @@ export const drawSigns = (
 
     ctx.fillStyle = color;
     ctx.font = "bold 14px Arial";
-
     ctx.globalAlpha = 0.7;
     ctx.fillRect(x, y - 22, ctx.measureText(classNameStr).width + 10, 22);
     ctx.globalAlpha = 1.0;
@@ -177,22 +176,18 @@ export const drawSigns = (
   });
 };
 
-// 5. Helper chụp ảnh
+// 5. Helper chụp ảnh Frame
 export const captureVideoFrame = (
   video: HTMLVideoElement,
   canvas: HTMLCanvasElement,
 ): string | null => {
   if (video.videoWidth === 0 || video.videoHeight === 0) return null;
-
   const MAX_WIDTH = 640;
   const scale = Math.min(1, MAX_WIDTH / video.videoWidth);
-
   canvas.width = video.videoWidth * scale;
   canvas.height = video.videoHeight * scale;
-
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) return null;
-
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
   return canvas.toDataURL("image/jpeg", 0.6);
 };

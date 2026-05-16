@@ -13,7 +13,7 @@ export const useCamera = (videoRef: React.RefObject<HTMLVideoElement>) => {
         if (videoDevices.length === 0)
           throw new Error("Không tìm thấy camera nào.");
 
-        // Ép lấy label thật nếu trình duyệt đang ẩn tên do chưa cấp quyền
+        // Ép trình duyệt hiển thị tên thiết bị (label) nếu đang bị ẩn
         if (videoDevices[0].label === "") {
           const tempStream = await navigator.mediaDevices.getUserMedia({
             video: true,
@@ -23,11 +23,6 @@ export const useCamera = (videoRef: React.RefObject<HTMLVideoElement>) => {
           tempStream.getTracks().forEach((track) => track.stop());
         }
 
-        console.log(
-          `[Yêu cầu mở: ${preferred}] Camera hiện có:`,
-          videoDevices.map((d) => d.label),
-        );
-
         let selectedCam;
         if (preferred === "ivcam") {
           // Bắt buộc tìm iVCam cho bên phải
@@ -36,7 +31,7 @@ export const useCamera = (videoRef: React.RefObject<HTMLVideoElement>) => {
           );
           if (!selectedCam) {
             throw new Error(
-              "Không tìm thấy iVCam! Vui lòng bật kết nối iVCam trên máy tính.",
+              "Không tìm thấy iVCam! Hãy bật app iVCam trên máy tính.",
             );
           }
         } else {
@@ -44,11 +39,7 @@ export const useCamera = (videoRef: React.RefObject<HTMLVideoElement>) => {
           selectedCam = videoDevices.find(
             (d) => !d.label.toLowerCase().includes("ivcam"),
           );
-          if (!selectedCam) {
-            throw new Error(
-              "Không tìm thấy Webcam mặc định! (Máy chỉ nhận iVCam)",
-            );
-          }
+          if (!selectedCam) selectedCam = videoDevices[0];
         }
 
         const stream = await navigator.mediaDevices.getUserMedia({
